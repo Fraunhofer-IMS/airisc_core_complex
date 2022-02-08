@@ -23,7 +23,7 @@ Support for the F and C extensions will be added soon.
 
 ### Contact
 - Maintainer: [Carsten Rolfes - Fraunhofer IMS](mailto:carsten.rolfes@ims.fraunhofer.de) 
-- Contact for questions regarding license and exploitation: [Carsten Rolfes - Fraunhofer IMS](mailto:carsten.rolfes@ims.fraunhofer.de)
+- Contact for questions regarding license and exploitation: [AIRISC-support](mailto:airisc@ims.fraunhofer.de)
 
 ### License
 - Solderpad Hardware License v2.1 maintained by [FOSSi Foundation](http://solderpad.org/)
