@@ -1,0 +1,131 @@
+//
+// Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
+// --- All rights reserved --- 
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
+// You may obtain a copy of the License at
+// https://solderpad.org/licenses/SHL-2.1/
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and limitations under the License.
+//
+//
+// File             : airi5c_regfile.v
+// Author           : A. Stanitzki
+// Creation Date    : 09.10.20
+// Last Modified    : Wed 19 Jan 2022 05:08:31 PM CET
+// Version          : 1.0
+// Abstract         : airi5c register file 
+// History          : 20.02.18 - added debug module (Ast)
+//
+`include "rv32_opcodes.vh"
+`include "airi5c_arch_options.vh"
+
+module airi5c_regfile(
+  // regular operation port
+  input                             clk_i,
+  input                             rst_ni,
+  input       [`REG_ADDR_WIDTH-1:0] ra1_i,
+  output      [`XPR_LEN-1:0]        rd1_o,
+  input       [`REG_ADDR_WIDTH-1:0] ra2_i,
+  output      [`XPR_LEN-1:0]        rd2_o,
+  input       [`REG_ADDR_WIDTH-1:0] ra3_i,
+  output      [`XPR_LEN-1:0]        rd3_o,
+  input                             wen_i,
+  input       [`REG_ADDR_WIDTH-1:0] wa_i,
+  input       [`XPR_LEN-1:0]        wd_i,
+  input       [`XPR_LEN-1:0]        wd2_i,
+  input                             use_rd64_i,
+`ifdef ISA_EXT_F
+  input                             sel_fpu_rs1_i,
+  input                             sel_fpu_rs2_i,
+  input                             sel_fpu_rd_i,
+  input                             dm_sel_fpu_reg_i,
+`endif
+
+  // debug module port      
+  input       [`REG_ADDR_WIDTH-1:0] dm_wara_i,
+  
+  input       [`XPR_LEN-1:0]        dm_wd_i,
+  input                             dm_wen_i,
+  output reg  [`XPR_LEN-1:0]        dm_rd_o
+);
+
+`ifndef ISA_EXT_E
+  reg     [`XPR_LEN-1:0]  data [31:1];  // full 32 x 32 bit regs
+`else
+  reg     [`XPR_LEN-1:0]  data [15:1];  // reduced 16 x 32 bit regs
+`endif
+
+`ifdef ISA_EXT_F
+  reg     [31:0]          data_fpu [31:0];
+  assign  rd1_o = sel_fpu_rs1_i ? data_fpu[ra1_i] : (|ra1_i ? data[ra1_i] : 0);
+  assign  rd2_o = sel_fpu_rs2_i ? data_fpu[ra2_i] : (|ra2_i ? data[ra2_i] : 0);
+  assign  rd3_o = 0;
+`else
+  assign  rd1_o = |ra1_i ? data[ra1_i] : 0;
+  assign  rd2_o = |ra2_i ? data[ra2_i] : 0;           
+  assign  rd3_o = |ra3_i ? data[ra3_i] : 0;           
+`endif
+  integer i;
+
+  always @(*) begin
+  `ifdef ISA_EXT_F
+    if (dm_sel_fpu_reg_i)
+      dm_rd_o = data_fpu[dm_wara_i];
+    else if (|dm_wara_i)
+      dm_rd_o = data[dm_wara_i];
+  `else
+    if (|dm_wara_i)
+      dm_rd_o = data[dm_wara_i];
+  `endif
+    else
+      dm_rd_o = 0;
+  end
+
+  always @(posedge clk_i or negedge rst_ni) begin
+    if(~rst_ni) begin
+      for (i = 1; i < 32; i = i + 1)
+        data[i] <= (32'hdeadbe00 + i);
+    
+  `ifdef ISA_EXT_F
+      for (i = 0; i < 32; i = i + 1)
+        data_fpu[i] <= 32'h7fc00000;
+  `endif
+    end
+  
+    else begin
+      if (dm_wen_i) begin
+      `ifdef ISA_EXT_F
+        if (dm_sel_fpu_reg_i)
+          data_fpu[dm_wara_i] <= dm_wd_i;
+        else
+          data[dm_wara_i]     <= dm_wd_i;
+      `else
+        data[dm_wara_i] <= dm_wd_i;
+      `endif
+      end									
+
+      else if (wen_i) begin
+      `ifdef ISA_EXT_F
+        if (sel_fpu_rd_i) begin
+          data_fpu[wa_i] <= wd_i;
+        end else if (use_rd64_i) begin
+          data[{wa_i[4:1],1'b0}] <= wd_i;
+          data[{wa_i[4:1],1'b1}] <= wd2_i;
+        end else begin
+          data[wa_i] <= wd_i;
+        end
+      `else
+        if (use_rd64_i) begin
+          data[{wa_i[4:1],1'b0}] <= wd_i;
+          data[{wa_i[4:1],1'b1}] <= wd2_i;
+        end else begin
+          data[wa_i] <= wd_i;
+        end
+      `endif
+      end
+    end
+  end
+endmodule

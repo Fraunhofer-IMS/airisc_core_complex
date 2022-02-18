@@ -10,6 +10,7 @@ Fraunhofer IMS processor core. RISC-V ISA (RV32IM) with additional periperals. F
 - [User Guide](#user-guide)
 - [Feedback](#feedback)
 - [Development](#development)
+- [External Sources](#external-sources)
 
 ## Overview
 The AIRISC Core Complex implements the [RISC-V specification](https://riscv.org/technical/specifications/) in a 32-bit Harvard architecture with an four-level pipeline and separate AHB-Lite interface for the instruction and data bus. RV32I is used as the base ISA. Extensions to the ISA can be added via a coprocessor interface (PCPI). Standard extensions available are a hardware MUL/DIV/REM (RV32M).
@@ -68,3 +69,9 @@ If you want to run the precompiled hardware bitstream and hello world program
 
 ## Development
 - The project is primarily developed in a private Fraunhofer IMS repository to take advantage of all CI stages that need licensed EDA tools.
+
+## External Sources
+The .mem files in _tb/memfiles_ to test the RISC-V ISA compliance are precompiled. The source files are located on Github: https://github.com/riscv-software-src/riscv-tests. Maintained by RISC-V International.  
+Copyright (c) 2012-2015, The Regents of the University of California (Regents).
+All Rights Reserved.
+

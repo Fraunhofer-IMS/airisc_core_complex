@@ -1,0 +1,5 @@
+echo Toogle LEDs \n
+monitor mww 0xc0000008 0xaaaaaaaa
+monitor mww 0xc0000008 0x55555555
+echo Done. \n
+

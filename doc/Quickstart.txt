@@ -1,0 +1,177 @@
+#############################################
+1. Program FPGA with bitfile
+
+rolfes@T4753:~/gits/airi5c-base-core/fpga$ make program-fpga
+FPGA board needs to be connected to JTAG and powered
+vivado -mode batch -source prog_fpga.tcl -tclargs ARTY_A7_AIRI5C_FPGA
+
+****** Vivado v2019.2.1 (64-bit)
+  **** SW Build 2729669 on Thu Dec  5 04:48:12 MST 2019
+  **** IP Build 2729494 on Thu Dec  5 07:38:25 MST 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+source prog_fpga.tcl
+# if { $argc != 1 } {
+#         puts "The script requires one input. PROJ_NAME"
+#       } else {
+#       set PROJ_NAME [lindex $argv 0]
+#       }
+# open_project $PROJ_NAME/$PROJ_NAME.xpr
+Scanning sources...
+Finished scanning sources
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/opt/Vivado/Vivado/2019.2/data/ip'.
+# open_hw_manager
+# connect_hw_server
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2019.2.1
+  **** Build date : Dec  5 2019 at 05:22:19
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:3042
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+****** Xilinx cs_server v2019.2.0
+  **** Build date : Nov 07 2019-06:41:48
+    ** Copyright 2017-2019 Xilinx, Inc. All Rights Reserved.
+
+
+
+# open_hw_target {localhost:3121/xilinx_tcf/Digilent/210319B0C184A}
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/210319B0C184A
+# set_property PROGRAM.FILE {./sdcard/FPGA_Top.bit} [get_hw_devices xc7a35t_0]
+# current_hw_device [get_hw_devices xc7a35t_0]
+# refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7a35t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a35t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+# set_property PROBES.FILE {} [get_hw_devices xc7a35t_0]
+# set_property FULL_PROBES.FILE {} [get_hw_devices xc7a35t_0]
+# program_hw_devices [get_hw_devices xc7a35t_0]
+INFO: [Labtools 27-3164] End of startup status: HIGH
+# refresh_hw_device [lindex [get_hw_devices xc7a35t_0] 0]
+INFO: [Labtools 27-1434] Device xc7a35t (JTAG device index = 0) is programmed with a design that has no supported debug core(s) in it.
+# close_project
+# exit
+INFO: [Common 17-206] Exiting Vivado at Thu Jul 29 12:36:32 2021...
+
+#############################################
+2. Start openocd
+
+rolfes@T4753:~/gits/airi5c-base-core$ openocd -f /usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg -f bsp/airi5c.cfg
+Open On-Chip Debugger 0.10.0+dev-01259-gfb477376d (2020-10-13-09:29)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.org/doc/doxygen/bugs.html
+Info : auto-selecting first available session transport "jtag". To override use 'transport select <transport>'.
+airi5c.tap
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : clock speed 1000 kHz
+Info : JTAG tap: airi5c.tap tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
+Info : datacount=1 progbufsize=2
+Info : Examined RISC-V core; found 1 harts
+Info :  hart 0: XLEN=32, misa=0x40101120
+Info : starting gdb server for airi5ctarget on 3333
+Info : Listening on port 3333 for gdb connections
+
+#############################################
+3. Start GDB Session
+
+rolfes@T4753:~/gits/airi5c-base-core/tools$ ./start-gdb.sh
+GNU gdb (GDB) 9.1
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "--host=x86_64-pc-linux-gnu --target=riscv32-unknown-elf".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+Es wird angenommen, dass die Ziel-Architektur riscv:rv32 ist
+
+Warnung: No executable has been specified and target does not support
+determining executable automatically.  Try using the "file" command.
+0x80000000 in ?? ()
+JTAG tap: airi5c.tap tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
+Toogle LEDs
+Done.
+Load Hello_World.elf
+
+Loading section .init, size 0x218 lma 0x80000000
+Loading section .text, size 0x12e6c lma 0x80000218
+Loading section .rodata, size 0x13a4 lma 0x80013088
+Loading section .srodata.cst4, size 0xb0 lma 0x8001442c
+Loading section .srodata.ailayer_dense_type_s, size 0x8 lma 0x800144dc
+Loading section .srodata.ailayer_input_type_s, size 0x8 lma 0x800144e4
+Loading section .srodata.ailayer_relu_type_s, size 0x8 lma 0x800144ec
+Loading section .srodata.ailayer_sigmoid_type_s, size 0x8 lma 0x800144f4
+Loading section .srodata.ailayer_softmax_type_s, size 0x8 lma 0x800144fc
+Loading section .srodata.ailoss_crossentropy_type_s, size 0x8 lma 0x80014504
+Loading section .srodata.ailoss_mse_type_s, size 0x8 lma 0x8001450c
+Loading section .srodata.aiopti_adam_type_s, size 0x8 lma 0x80014514
+Loading section .srodata._global_impure_ptr, size 0x4 lma 0x8001451c
+Loading section .srodata.cst8, size 0x50 lma 0x80014520
+Loading section .srodata.halF, size 0x8 lma 0x80014570
+Loading section .srodata.ln2HI, size 0x8 lma 0x80014578
+Loading section .srodata.ln2LO, size 0x8 lma 0x80014580
+Loading section .data, size 0x193c lma 0x80014588
+Loading section .sdata.ledstat.0, size 0x4 lma 0x80015ec4
+Loading section .sdata.seed3_volatile, size 0x4 lma 0x80015ec8
+Loading section .sdata.seed4_volatile, size 0x4 lma 0x80015ecc
+Loading section .sdata._impure_ptr, size 0x4 lma 0x80015ed0
+Loading section .sdata.__fdlib_version, size 0x4 lma 0x80015ed4
+Start address 0x80000000, load size 89812
+Transfer rate: 57 KB/sec, 3326 bytes/write.
+
+Done. Connect to UART 76800 8E1
+(gdb)
+
+#############################################
+4. Display UART output with picocom
+
+rolfes@T4753:~/gits/airi5c-base-core$ picocom -b 76800 -p e /dev/ttyUSB2
+picocom v3.2a
+
+port is        : /dev/ttyUSB2
+flowcontrol    : none
+baudrate is    : 76800
+parity is      : even
+databits are   : 8
+stopbits are   : 1
+escape is      : C-a
+local echo is  : no
+noinit is      : no
+noreset is     : no
+hangup is      : no
+nolock is      : no
+send_cmd is    : sz -vv
+receive_cmd is : rz -vv -E
+imap is        :
+omap is        :
+emap is        : crcrlf,delbs,
+logfile is     : none
+initstring     : none
+exit_after is  : not set
+exit is        : no
+
+Type [C-a] [C-h] to see available commands
+Terminal ready
+== Select option ===
+1 - toggle LED
+2 - start/stop timer
+3 - run custom instr
+4 - run coremark
+5 - run train_XOR
+6 - run train model
