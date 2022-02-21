@@ -1,7 +1,7 @@
 #############################################
 1. Program FPGA with bitfile
 
-rolfes@T4753:~/gits/airi5c-base-core/fpga$ make program-fpga
+:~/airisc_core_complex/fpga$ make program-fpga
 FPGA board needs to be connected to JTAG and powered
 vivado -mode batch -source prog_fpga.tcl -tclargs ARTY_A7_AIRI5C_FPGA
 
@@ -63,7 +63,7 @@ INFO: [Common 17-206] Exiting Vivado at Thu Jul 29 12:36:32 2021...
 #############################################
 2. Start openocd
 
-rolfes@T4753:~/gits/airi5c-base-core$ openocd -f /usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg -f bsp/airi5c.cfg
+:~/airisc_core_complex/$ openocd -f /usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg -f sw/tools/gdb/airisc.cfg
 Open On-Chip Debugger 0.10.0+dev-01259-gfb477376d (2020-10-13-09:29)
 Licensed under GNU GPL v2
 For bug reports, read
@@ -83,7 +83,7 @@ Info : Listening on port 3333 for gdb connections
 #############################################
 3. Start GDB Session
 
-rolfes@T4753:~/gits/airi5c-base-core/tools$ ./start-gdb.sh
+:~/airisc_core_complex/sw/tools$ ./start-gdb.sh
 GNU gdb (GDB) 9.1
 Copyright (C) 2020 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
@@ -109,31 +109,18 @@ Toogle LEDs
 Done.
 Load Hello_World.elf
 
-Loading section .init, size 0x218 lma 0x80000000
-Loading section .text, size 0x12e6c lma 0x80000218
-Loading section .rodata, size 0x13a4 lma 0x80013088
-Loading section .srodata.cst4, size 0xb0 lma 0x8001442c
-Loading section .srodata.ailayer_dense_type_s, size 0x8 lma 0x800144dc
-Loading section .srodata.ailayer_input_type_s, size 0x8 lma 0x800144e4
-Loading section .srodata.ailayer_relu_type_s, size 0x8 lma 0x800144ec
-Loading section .srodata.ailayer_sigmoid_type_s, size 0x8 lma 0x800144f4
-Loading section .srodata.ailayer_softmax_type_s, size 0x8 lma 0x800144fc
-Loading section .srodata.ailoss_crossentropy_type_s, size 0x8 lma 0x80014504
-Loading section .srodata.ailoss_mse_type_s, size 0x8 lma 0x8001450c
-Loading section .srodata.aiopti_adam_type_s, size 0x8 lma 0x80014514
-Loading section .srodata._global_impure_ptr, size 0x4 lma 0x8001451c
-Loading section .srodata.cst8, size 0x50 lma 0x80014520
-Loading section .srodata.halF, size 0x8 lma 0x80014570
-Loading section .srodata.ln2HI, size 0x8 lma 0x80014578
-Loading section .srodata.ln2LO, size 0x8 lma 0x80014580
-Loading section .data, size 0x193c lma 0x80014588
-Loading section .sdata.ledstat.0, size 0x4 lma 0x80015ec4
-Loading section .sdata.seed3_volatile, size 0x4 lma 0x80015ec8
-Loading section .sdata.seed4_volatile, size 0x4 lma 0x80015ecc
-Loading section .sdata._impure_ptr, size 0x4 lma 0x80015ed0
-Loading section .sdata.__fdlib_version, size 0x4 lma 0x80015ed4
-Start address 0x80000000, load size 89812
-Transfer rate: 57 KB/sec, 3326 bytes/write.
+Loading section .init, size 0x234 lma 0x80000000
+Loading section .text, size 0x76fc lma 0x80000234
+Loading section .rodata, size 0x738 lma 0x80007930
+Loading section .srodata.gpio1, size 0x4 lma 0x80008068
+Loading section .srodata.uart1, size 0x4 lma 0x8000806c
+Loading section .srodata.cst4, size 0x4 lma 0x80008070
+Loading section .srodata._global_impure_ptr, size 0x4 lma 0x80008074
+Loading section .srodata.cst8, size 0x50 lma 0x80008078
+Loading section .data, size 0x1cc lma 0x800080c8
+Loading section .sdata._impure_ptr, size 0x4 lma 0x80008294
+Start address 0x80000000, load size 33432
+Transfer rate: 57 KB/sec, 3039 bytes/write.
 
 Done. Connect to UART 76800 8E1
 (gdb)
@@ -141,7 +128,7 @@ Done. Connect to UART 76800 8E1
 #############################################
 4. Display UART output with picocom
 
-rolfes@T4753:~/gits/airi5c-base-core$ picocom -b 76800 -p e /dev/ttyUSB2
+:~/airisc_core_complex$ picocom -b 76800 -p e /dev/ttyUSB2
 picocom v3.2a
 
 port is        : /dev/ttyUSB2
@@ -168,10 +155,5 @@ exit is        : no
 
 Type [C-a] [C-h] to see available commands
 Terminal ready
-== Select option ===
-1 - toggle LED
-2 - start/stop timer
-3 - run custom instr
-4 - run coremark
-5 - run train_XOR
-6 - run train model
+Hello World!
+Program executed in 2562 clock cycles (0.000080 s at 32 MHz)
