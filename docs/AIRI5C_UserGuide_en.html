@@ -1,0 +1,2117 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>AIRISC User Guide &mdash; AIRISC Core Complex  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to AIRI5C Base Core’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> AIRISC Core Complex
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AIRISC User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#target-audience">Target Audience</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#compliance-with-the-risc-v-specification">Compliance with the RISC-V specification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#airisc-architecture-overview">AIRISC architecture overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#memory-map">Memory map</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#airisc-core-complex">AIRISC Core Complex</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-of-ports-of-in-the-top-level-module">List of ports of in the top level module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#instruction-set-extensions">Instruction set extensions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#e-extension-reduced-register-set">E extension, reduced register set</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c-extension-compressed-instructions">C extension, compressed instructions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#standard-peripherals">Standard peripherals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#timer1-mtime-compliant-timer-0xc0000100">TIMER1 - MTIME Compliant Timer - 0xC0000100</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uart">UART</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#summary">Summary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#registers">Registers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#control-register">Control Register</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tx-status-register">Tx Status Register</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rx-status-register">Rx Status Register</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#interrupts">Interrupts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#functionality">Functionality</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#flow-control">Flow Control</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#gpio">GPIO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icap">ICAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spi">SPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#jtag-debug-transport-module-dtm">JTAG Debug Transport Module (DTM)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#system-bus">System-Bus</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ahb-lite">AHB-Lite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#axi4">AXI4</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#airisc-architecture-in-detail">AIRISC architecture in detail</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipeline">Pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#instruction-prefetch-and-decompression-if">Instruction Prefetch and Decompression (IF)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fetch-and-decode-unit-de">Fetch and Decode Unit (DE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#execute-unit-ex">Execute Unit (EX)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#writeback-wb">Writeback (WB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#control-unit-ctrl">Control Unit (CTRL)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pcpi-interface">PCPI-Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#privilege-mode">Privilege Mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">Interrupts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#debug-support">Debug Support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#resource-requirements-and-benchmark">Resource requirements and benchmark</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#first-steps-with-the-virtual-prototype">First steps with the virtual prototype</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisite-for-the-commissioning-of-the-virtual-prototype">Prerequisite for the commissioning of the virtual prototype</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#commissioning-of-the-virtual-prototype">Commissioning of the virtual prototype</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#airisc-on-an-fpga-quickstart">AIRISC on an FPGA - Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisite-for-bitstream-generation-and-fpga-deployment">Prerequisite for bitstream generation and FPGA deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#commissioning-on-the-digilent-nexys-video-fpga-board">Commissioning on the Digilent Nexys Video FPGA Board</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#create-vivado-project-and-fpga-bitstream-automatically-using-the-makefile">Create Vivado project and FPGA Bitstream automatically using the makefile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-vivado-project-manually-and-generate-bitstream">Create Vivado project manually and generate bitstream</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#commissioning-on-the-digilent-arty-a7-fpga-board">Commissioning on the Digilent Arty-A7 FPGA Board</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#software-development-on-the-airisc">Software development on the AIRISC</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#software-prerequisite-for-software-development-for-airisc">Software prerequisite for software development for AIRISC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#other-prerequisite-for-software-development">Other Prerequisite for software development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#components-of-the-software-development-and-debugging-setup">Components of the software development and debugging setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#install-ide-and-the-toolchain">Install IDE and the toolchain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#board-support-package-bsp">Board Support Package (BSP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#connection-of-the-olimex-jtag-adapter-arty-a7-only">Connection of the Olimex JTAG Adapter (Arty-A7 only)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">OpenOCD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gdb">GDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#eclipse">Eclipse</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#import-of-the-software-project-into-eclipse">Import of the software project into Eclipse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#eclipse-configuration">Eclipse configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#test-and-validation">Test and validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hello-world">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#benchmarking">Benchmarking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#coremark">CoreMark</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#reference-portings">Reference portings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#freertos">FreeRTOS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AIRISC Core Complex</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>AIRISC User Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/AIRI5C_UserGuide_en.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="airisc-user-guide">
+<h1><a class="toc-backref" href="#id21">AIRISC User Guide</a><a class="headerlink" href="#airisc-user-guide" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="content">
+<p class="topic-title">Content</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#airisc-user-guide" id="id21">AIRISC User Guide</a></p></li>
+<li><p><a class="reference internal" href="#target-audience" id="id22">Target Audience</a></p></li>
+<li><p><a class="reference internal" href="#introduction" id="id23">Introduction</a></p>
+<ul>
+<li><p><a class="reference internal" href="#compliance-with-the-risc-v-specification" id="id24">Compliance with the RISC-V specification</a></p></li>
+<li><p><a class="reference internal" href="#airisc-architecture-overview" id="id25">AIRISC architecture overview</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#memory-map" id="id26">Memory map</a></p></li>
+<li><p><a class="reference internal" href="#airisc-core-complex" id="id27">AIRISC Core Complex</a></p>
+<ul>
+<li><p><a class="reference internal" href="#configuration" id="id28">Configuration</a></p></li>
+<li><p><a class="reference internal" href="#list-of-ports-of-in-the-top-level-module" id="id29">List of ports of in the top level module</a></p></li>
+<li><p><a class="reference internal" href="#instruction-set-extensions" id="id30">Instruction set extensions</a></p></li>
+<li><p><a class="reference internal" href="#standard-peripherals" id="id31">Standard peripherals</a></p></li>
+<li><p><a class="reference internal" href="#system-bus" id="id32">System-Bus</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#airisc-architecture-in-detail" id="id33">AIRISC architecture in detail</a></p>
+<ul>
+<li><p><a class="reference internal" href="#pipeline" id="id34">Pipeline</a></p></li>
+<li><p><a class="reference internal" href="#pcpi-interface" id="id35">PCPI-Interface</a></p></li>
+<li><p><a class="reference internal" href="#privilege-mode" id="id36">Privilege Mode</a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id37">Interrupts</a></p></li>
+<li><p><a class="reference internal" href="#exceptions" id="id38">Exceptions</a></p></li>
+<li><p><a class="reference internal" href="#debug-support" id="id39">Debug Support</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#resource-requirements-and-benchmark" id="id40">Resource requirements and benchmark</a></p></li>
+<li><p><a class="reference internal" href="#first-steps-with-the-virtual-prototype" id="id41">First steps with the virtual prototype</a></p>
+<ul>
+<li><p><a class="reference internal" href="#prerequisite-for-the-commissioning-of-the-virtual-prototype" id="id42">Prerequisite for the commissioning of the virtual prototype</a></p></li>
+<li><p><a class="reference internal" href="#commissioning-of-the-virtual-prototype" id="id43">Commissioning of the virtual prototype</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#airisc-on-an-fpga-quickstart" id="id44">AIRISC on an FPGA - Quickstart</a></p>
+<ul>
+<li><p><a class="reference internal" href="#prerequisite-for-bitstream-generation-and-fpga-deployment" id="id45">Prerequisite for bitstream generation and FPGA deployment</a></p></li>
+<li><p><a class="reference internal" href="#commissioning-on-the-digilent-nexys-video-fpga-board" id="id46">Commissioning on the Digilent Nexys Video FPGA Board</a></p></li>
+<li><p><a class="reference internal" href="#commissioning-on-the-digilent-arty-a7-fpga-board" id="id47">Commissioning on the Digilent Arty-A7 FPGA Board</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#software-development-on-the-airisc" id="id48">Software development on the AIRISC</a></p>
+<ul>
+<li><p><a class="reference internal" href="#software-prerequisite-for-software-development-for-airisc" id="id49">Software prerequisite for software development for AIRISC</a></p></li>
+<li><p><a class="reference internal" href="#other-prerequisite-for-software-development" id="id50">Other Prerequisite for software development</a></p></li>
+<li><p><a class="reference internal" href="#components-of-the-software-development-and-debugging-setup" id="id51">Components of the software development and debugging setup</a></p></li>
+<li><p><a class="reference internal" href="#install-ide-and-the-toolchain" id="id52">Install IDE and the toolchain</a></p></li>
+<li><p><a class="reference internal" href="#board-support-package-bsp" id="id53">Board Support Package (BSP)</a></p></li>
+<li><p><a class="reference internal" href="#connection-of-the-olimex-jtag-adapter-arty-a7-only" id="id54">Connection of the Olimex JTAG Adapter (Arty-A7 only)</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id55">OpenOCD</a></p></li>
+<li><p><a class="reference internal" href="#gdb" id="id56">GDB</a></p></li>
+<li><p><a class="reference internal" href="#eclipse" id="id57">Eclipse</a></p></li>
+<li><p><a class="reference internal" href="#test-and-validation" id="id58">Test and validation</a></p></li>
+<li><p><a class="reference internal" href="#hello-world" id="id59">Hello World</a></p></li>
+<li><p><a class="reference internal" href="#benchmarking" id="id60">Benchmarking</a></p></li>
+<li><p><a class="reference internal" href="#reference-portings" id="id61">Reference portings</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="target-audience">
+<h1><a class="toc-backref" href="#id22">Target Audience</a><a class="headerlink" href="#target-audience" title="Permalink to this headline">¶</a></h1>
+<p>This document is targeting hardware developers who aim to integrate the AIRISC RISC-V core or the AIRISC Core Complex into their own FPGA- or ASIC-designs as well as embedded software developers using AIRISC based target platforms.</p>
+</section>
+<section id="introduction">
+<h1><a class="toc-backref" href="#id23">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<section id="compliance-with-the-risc-v-specification">
+<h2><a class="toc-backref" href="#id24">Compliance with the RISC-V specification</a><a class="headerlink" href="#compliance-with-the-risc-v-specification" title="Permalink to this headline">¶</a></h2>
+<p>The following revisions of the RISC-V specification is implemented in the current version:</p>
+<ul class="simple">
+<li><p>Unprivileged ISA spec v. 20191213</p></li>
+<li><p>Privileged ISA spec v. 20190608</p></li>
+<li><p>External Debug spec v. 0.13.0</p></li>
+</ul>
+</section>
+<section id="airisc-architecture-overview">
+<h2><a class="toc-backref" href="#id25">AIRISC architecture overview</a><a class="headerlink" href="#airisc-architecture-overview" title="Permalink to this headline">¶</a></h2>
+<p>The AIRISC core implements the RISC-V specification in form of a 32 bit harvard architecture with a five-stage pipeline and separate AHB lite interfaces for the instruction and and data busses. Base ISA is RV32I. Extensions to the ISA can be added via a coprocessor interface (PCPI). The AIRISC Core Complex comprises a hardware multiplier / divider unit (MUL/DIV) as well as compressed instructions (RV32IMC) as standard extensions.</p>
+<p>Additional peripherals included in the AIRISC Core Complex are a MTIME compatible timer, a UART and a JTAG debug transport module according to the external debug support specification.</p>
+</section>
+</section>
+<section id="memory-map">
+<h1><a class="toc-backref" href="#id26">Memory map</a><a class="headerlink" href="#memory-map" title="Permalink to this headline">¶</a></h1>
+<p>Fig. 1 shows the memory map of the processor. A modification of the memory partitioning is feasible, e.g. to change mapping of peripherals of add additional memory areas (e.g. for non volatile memory). The following list shows a suggestion for the basic memory organization:</p>
+<ul class="simple">
+<li><p>Address <code class="docutils literal notranslate"><span class="pre">0x80000000</span></code> is the entrance point after reset</p></li>
+<li><p>The area below <code class="docutils literal notranslate"><span class="pre">0x80000000</span></code> is reserved for debug functionality</p></li>
+<li><p>The area above <code class="docutils literal notranslate"><span class="pre">0xC0000000</span></code> is reserved for peripheral modules</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id4">
+<a class="reference internal image-reference" href="_images/Memory_Map.jpg"><img alt="_images/Memory_Map.jpg" src="_images/Memory_Map.jpg" style="width: 640px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 1: AIRISC memory map</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Modules can be freely distributed within the memory area reserved for peripherals. The base address for all peripherals included in the Core Complex can be configured in the file <code class="docutils literal notranslate"><span class="pre">airi5c_arch_options.vh</span></code>. Tab. 1 shows a summary of all available peripherals.</p>
+<p>Tab. 1: Peripherals and corresponding memory addresses in the AIRISC Core Complex</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 15%" />
+<col style="width: 16%" />
+<col style="width: 48%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>address</p></th>
+<th class="head"><p>access</p></th>
+<th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000100</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>TIMEL</p></td>
+<td><p>System Timer Register (LSB)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000104</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>TIMEH</p></td>
+<td><p>System Timer Register (MSB)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000108</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>TIMECMPL</p></td>
+<td><p>System Timer Compare Register (LSB)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC000010C</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>TIMECMPH</p></td>
+<td><p>System Timer Compare Register (MSB)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000200</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>DATA</p></td>
+<td><p>Tx/rx FIFO stack</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000204</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>CTRL</p></td>
+<td><p>Control Reg (data bits, baud etc.)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000208</span></code></p></td>
+<td><p>W</p></td>
+<td><p>CTRL_SET</p></td>
+<td><p>Set bits in control register</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC000020C</span></code></p></td>
+<td><p>W</p></td>
+<td><p>CTRL_CLR</p></td>
+<td><p>Clear bits in control register</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000210</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>TX_STAT</p></td>
+<td><p>tx status register (tx size, errors)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000214</span></code></p></td>
+<td><p>W</p></td>
+<td><p>TX_STAT_SET</p></td>
+<td><p>set bits in tx status register</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000218</span></code></p></td>
+<td><p>W</p></td>
+<td><p>TX_STAT_CLR</p></td>
+<td><p>Clear bits in tx status register</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC000021C</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>RX_STAT</p></td>
+<td><p>Rx status register (rx size, errors)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000220</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>RX_STAT_SET</p></td>
+<td><p>Set bits in rx status register</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000224</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>RX_STAT_CLR</p></td>
+<td><p>Clear bits in rx status register</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000330</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>SPICTRL</p></td>
+<td><p>SPI Control/Config register</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000334</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>SPIDATAL</p></td>
+<td><p>SPI Data register (LSB)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000338</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>SPIDATAH</p></td>
+<td><p>SPI Data register (MSB)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000340</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>ICAPCTRL</p></td>
+<td><p>Dynamic Function Exchange control</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000344</span></code></p></td>
+<td><p>R/W</p></td>
+<td><p>ICAPDATA</p></td>
+<td><p>Dynamic Function Exchange data</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="airisc-core-complex">
+<h1><a class="toc-backref" href="#id27">AIRISC Core Complex</a><a class="headerlink" href="#airisc-core-complex" title="Permalink to this headline">¶</a></h1>
+<p>The so called Core Complex comprises a timer, UART, SPI and GPIO in addition to the base core. A block diagram of the AIRISC core complex is shown in Fig. 2.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id5">
+<a class="reference internal image-reference" href="_images/airi5c_core_complex.jpg"><img alt="_images/airi5c_core_complex.jpg" src="_images/airi5c_core_complex.jpg" style="width: 612px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 2: Block diagram of the AIRISC Core Complex</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="configuration">
+<h2><a class="toc-backref" href="#id28">Configuration</a><a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>All configurable parameters, such as the base address of peripherals or the activation of instruction set extensions are applied in the file <code class="docutils literal notranslate"><span class="pre">src/airi5c_arch_options.vh</span></code>.</p>
+</section>
+<section id="list-of-ports-of-in-the-top-level-module">
+<h2><a class="toc-backref" href="#id29">List of ports of in the top level module</a><a class="headerlink" href="#list-of-ports-of-in-the-top-level-module" title="Permalink to this headline">¶</a></h2>
+<p>The following table shows an overview of all ports within the top level module.</p>
+<p>Tab. 2: Ports of the top level module</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 15%" />
+<col style="width: 71%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>direction</p></th>
+<th class="head"><p>symbol</p></th>
+<th class="head"><p>description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">clk</span></code></p></td>
+<td><p>System clock input</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nreset</span></code></p></td>
+<td><p>Asynchronous, low active reset</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ext_interrupt</span></code></p></td>
+<td><p>external interrupts</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tck</span></code></p></td>
+<td><p>JTAG TCK</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tms</span></code></p></td>
+<td><p>JTAG TMS</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tdi</span></code></p></td>
+<td><p>JTAG TDI</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tdo</span></code></p></td>
+<td><p>JTAG TDO</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[31:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_haddr</span></code></p></td>
+<td><p>Instruction memory address</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hwrite</span></code></p></td>
+<td><p>Instruction memory write enable (normally 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[2:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hsize</span></code></p></td>
+<td><p>Size of an instruction memory data access (normally 4 byte)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[2:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hburst</span></code></p></td>
+<td><p>AHB-Lite burst (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hmastlock</span></code></p></td>
+<td><p>AHB-Lite master lock (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[3:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hprot</span></code></p></td>
+<td><p>AHB-Lite protection (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[1:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_htrans</span></code></p></td>
+<td><p>AHB-Lite transaction (b10 at new access, b00 otherwise)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[31:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hwdata</span></code></p></td>
+<td><p>Write data CPU –&gt; instruction memory (normally 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[31:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hrdata</span></code></p></td>
+<td><p>Read data instruction memory –&gt; CPU</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hready</span></code></p></td>
+<td><p>AHB-Lite ready (0 –&gt; processor stalled, 1 –&gt; memory ready for new data)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">imem_hresp</span></code></p></td>
+<td><p>AHB-Lite response (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[31:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_haddr</span></code></p></td>
+<td><p>Address data memory</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hwrite</span></code></p></td>
+<td><p>Write enable data memory (0 –&gt; read access, 1 –&gt; write access)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[2:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hsize</span></code></p></td>
+<td><p>Data access size (0 –&gt; byte, 1 –&gt; halfword, 2 –&gt; word)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[2:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hburst</span></code></p></td>
+<td><p>AHB-Lite burst (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hmastlock</span></code></p></td>
+<td><p>AHB-Lite master lock (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[3:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hprot</span></code></p></td>
+<td><p>AHB-Lite protection (not supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[1:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_htrans</span></code></p></td>
+<td><p>AHB-Lite transaction (b10 at new access, b00 otherwise)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[31:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hwdata</span></code></p></td>
+<td><p>Write data CPU –&gt; data memory (normally 0)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[31:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hrdata</span></code></p></td>
+<td><p>Read data instruction memory –&gt; CPU</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hready</span></code></p></td>
+<td><p>AHB-Lite ready (0 –&gt; processor stalled, 1 –&gt; memory ready for new data)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmem_hresp</span></code></p></td>
+<td><p>AHB-Lite response (nor supported –&gt; constantly 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output[7:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oGPIO_D</span></code></p></td>
+<td><p>Outputs for GPIO pins</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output[7:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oGPIO_EN</span></code></p></td>
+<td><p>GPIO output enable</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input[7:0]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">iGPIO_I</span></code></p></td>
+<td><p>Inputs for GPIO Pins</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oUART_RX</span></code></p></td>
+<td><p>UART output (RX of the external system)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">iUART_TX</span></code></p></td>
+<td><p>UART input (TX of the external system)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oSPI1_MOSI</span></code></p></td>
+<td><p>SPI master out slave in</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oSPI1_SCLK</span></code></p></td>
+<td><p>SPI clock</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oSPI1_NSS</span></code></p></td>
+<td><p>SPI slave select (low active)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">input</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">iSPI1_MISO</span></code></p></td>
+<td><p>SPI master in slave out</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">output</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">debug_out</span></code></p></td>
+<td><p>Debugging output for simulations</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="instruction-set-extensions">
+<h2><a class="toc-backref" href="#id30">Instruction set extensions</a><a class="headerlink" href="#instruction-set-extensions" title="Permalink to this headline">¶</a></h2>
+<p>The standard configuration contains the ISA extensions <code class="docutils literal notranslate"><span class="pre">M</span></code> and <code class="docutils literal notranslate"><span class="pre">C</span></code>. All extensions can be activated and deactivated in the corresponding configuration file to optimize for are and current consumption.</p>
+<section id="e-extension-reduced-register-set">
+<h3>E extension, reduced register set<a class="headerlink" href="#e-extension-reduced-register-set" title="Permalink to this headline">¶</a></h3>
+<p>A substantial amount of are consumption is caused by the general purpose registers (GPR). The number of GPR can be reduced from 32 to 16 for extreme area critical applications, e.g. when the AIRISC core simply replaced the implementation of a state machine (FSM). Additionally, some optional control and status registers (CSR) are deactivated when applying the E extension.</p>
+</section>
+<section id="c-extension-compressed-instructions">
+<h3>C extension, compressed instructions<a class="headerlink" href="#c-extension-compressed-instructions" title="Permalink to this headline">¶</a></h3>
+<p>The C extension introduces 16 bit instructions and the strict demand on 32 bit alignment is relaxed. The 16 bit compressed instructions are decoded to their 32 bit equivalent in the first pipeline stage. For correct operation, the used memory has to support 32 bit read accesses with 16 bit alignment.</p>
+</section>
+</section>
+<section id="standard-peripherals">
+<h2><a class="toc-backref" href="#id31">Standard peripherals</a><a class="headerlink" href="#standard-peripherals" title="Permalink to this headline">¶</a></h2>
+<p>The AIRISC Core Complex comprises a set of standard peripherals that are controlled via memory mapped registers. These are described in the following sections.</p>
+<section id="timer1-mtime-compliant-timer-0xc0000100">
+<h3>TIMER1 - MTIME Compliant Timer - 0xC0000100<a class="headerlink" href="#timer1-mtime-compliant-timer-0xc0000100" title="Permalink to this headline">¶</a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 20%" />
+<col style="width: 9%" />
+<col style="width: 10%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Adresse</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Width</p></th>
+<th class="head"><p>Zugriff</p></th>
+<th class="head"><p>Beschreibung</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000100</span></code></p></td>
+<td><p>TIMEL</p></td>
+<td><p>32</p></td>
+<td><p>R/W</p></td>
+<td><p>64 Bit Timer Register (LSB)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000104</span></code></p></td>
+<td><p>TIMEH</p></td>
+<td><p>32</p></td>
+<td><p>R/W</p></td>
+<td><p>64 Bit Timer Reigster (MSB)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000108</span></code></p></td>
+<td><p>TIMECMPL</p></td>
+<td><p>32</p></td>
+<td><p>R/W</p></td>
+<td><p>64 Bit Timer Compare Register (LSB)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC000010C</span></code></p></td>
+<td><p>TIMECMPH</p></td>
+<td><p>32</p></td>
+<td><p>R/W</p></td>
+<td><p>64 Bit Timer Compare Register (MSB)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The timer consists of a 64 bit counter (MTIMEH/MTIMEL) and a 64 bit compare register (MTIMECMPH/MTIMECMPL). The counter is incremented with every system clock. As soon and as long as the content of the counter is greater or equal to the timer compare register a timer interrupt is triggered. An interrupt will never be triggered if the timer compare register is set to <code class="docutils literal notranslate"><span class="pre">0x00000000_00000000</span></code>.</p>
+<p>The timer is often used to realize a scheduler for simple multi-threading or multi-tasking.</p>
+</section>
+<section id="uart">
+<h3>UART<a class="headerlink" href="#uart" title="Permalink to this headline">¶</a></h3>
+<section id="summary">
+<h4>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h4>
+<p>Acting as a peripheral, the UART module provides serial communication capabilities to the Airi5c processor. After a complete redesign, this Module now supports the following features:</p>
+<ul class="simple">
+<li><p>AHB-Lite interface</p></li>
+<li><p>Separate registers for control, rx and tx status, all with set/clear access capability</p></li>
+<li><p>configurable and independent rx and tx fifo stack size (1 – 256 frames)</p></li>
+<li><p>configurable number of data bits (5, 6, 7, 8, 9)</p></li>
+<li><p>configurable parity settings (none, odd, even)</p></li>
+<li><p>configurable number of stop bits (1, 1.5, 2)</p></li>
+<li><p>support for hardware flow control (rts/cts)</p></li>
+<li><p>support for default and none default baud rates</p></li>
+<li><p>accessible rx and tx FIFO stack size</p></li>
+<li><p>configurable and independent watermark settings for rx and tx stack size with interrupt generation</p></li>
+<li><p>error detection</p></li>
+<li><p>extensive interrupt capabilities</p></li>
+</ul>
+</section>
+<section id="parameters">
+<h4>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h4>
+<p>These parameters have to be set at compile time, they cannot be changed at runtime.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 79%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BASE_ADDR</p></td>
+<td><p>0xC0000200</p></td>
+<td><p>Base address of the UART module, the addresses of all registers are increments of 4 beginning at this address</p></td>
+</tr>
+<tr class="row-odd"><td><p>TX_ADDR_WIDTH</p></td>
+<td><p>5</p></td>
+<td><p>Address width of the tx stack, defining the max size of the tx stack (size=2^width)</p></td>
+</tr>
+<tr class="row-even"><td><p>RX_ADDR_WIDTH</p></td>
+<td><p>5</p></td>
+<td><p>Address width of the rx stack, defining the max size of the rx stack (size=2^width)</p></td>
+</tr>
+<tr class="row-odd"><td><p>TX_MARK</p></td>
+<td><p>8</p></td>
+<td><p>Tx watermark, a status signal is generated, when the tx stack size falls below this value</p></td>
+</tr>
+<tr class="row-even"><td><p>RX_MARK</p></td>
+<td><p>24</p></td>
+<td><p>Rx watermark, a status signal is generated, when the rx stack size exceeds this value</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="registers">
+<h4>Registers<a class="headerlink" href="#registers" title="Permalink to this headline">¶</a></h4>
+<p>The UART module includes the following 10 32-bit data, control and status registers, which can be accessed via AHB-Lite interface. In the old processor design, the address space of each peripheral was restricted to 4 32-bit words. With the introduction of the new UART module this number has been increased to 64. Remember that the base address of each peripheral has been changed accordingly and need to be changed in your programs too!</p>
+<p>Reserved fields are hardwired to zero, writing to those fields has no effect. Errors are normally set at the end of the particular frame where the error occurred. The only exceptions are tx overflow error and rx underflow error, which are set immediately. Once set, all error stay set as long as they get reset manually.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 11%" />
+<col style="width: 70%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Address</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>BASE_ADDR + 0x00 (0xC0000200)</p></td>
+<td><p>FIFO stack</p></td>
+<td><p>Write access writes to tx stack, read access reads from rx stack</p></td>
+</tr>
+<tr class="row-odd"><td><p>BASE_ADDR + 0x04 (0xC0000204)</p></td>
+<td><p>Ctrl reg</p></td>
+<td><p>This register contains all communication settings, such as data bits, parity, stop bits, flow control and baud rate</p></td>
+</tr>
+<tr class="row-even"><td><p>BASE_ADDR + 0x08 (0xC0000208)</p></td>
+<td><p>Ctrl reg set</p></td>
+<td><p>Writing to this register automatically sets the specified bits in ctrl reg</p></td>
+</tr>
+<tr class="row-odd"><td><p>BASE_ADDR + 0x0C (0xC000020C)</p></td>
+<td><p>Ctrl reg clr</p></td>
+<td><p>Writing to this register automatically clears the specified bits in ctrl reg</p></td>
+</tr>
+<tr class="row-even"><td><p>BASE_ADDR + 0x10 (0xC0000210)</p></td>
+<td><p>Tx stat reg</p></td>
+<td><p>This register contains the tx status, such as tx stack size, errors and interrupt enables</p></td>
+</tr>
+<tr class="row-odd"><td><p>BASE_ADDR + 0x14 (0xC0000214)</p></td>
+<td><p>Tx stat reg set</p></td>
+<td><p>Writing to this register automatically sets the specified bits in tx stat reg</p></td>
+</tr>
+<tr class="row-even"><td><p>BASE_ADDR + 0x18 (0xC0000218)</p></td>
+<td><p>Tx stat reg clr</p></td>
+<td><p>Writing to this register automatically clears the specified bits in tx stat reg</p></td>
+</tr>
+<tr class="row-odd"><td><p>BASE_ADDR + 0x1C (0xC000021C)</p></td>
+<td><p>Rx stat reg</p></td>
+<td><p>This register contains the rx status, such as rx stack size, errors and interrupt enables</p></td>
+</tr>
+<tr class="row-even"><td><p>BASE_ADDR + 0x20 (0xC0000220)</p></td>
+<td><p>Rx stat reg set</p></td>
+<td><p>Writing to this register automatically sets the specified bits in rx stat reg</p></td>
+</tr>
+<tr class="row-odd"><td><p>BASE_ADDR + 0x24 (0xC0000224)</p></td>
+<td><p>Rx stat reg clr</p></td>
+<td><p>Writing to this register automatically clears the specified bits in rx stat reg</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="control-register">
+<h4>Control Register<a class="headerlink" href="#control-register" title="Permalink to this headline">¶</a></h4>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 13%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Bits</p></th>
+<th class="head"><p>Access</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31:29</p></td>
+<td><p>rw</p></td>
+<td><p>Number of data bits (0b000: 5, …, 0b011: 8, 0b100: 9)</p></td>
+</tr>
+<tr class="row-odd"><td><p>28:27</p></td>
+<td><p>rw</p></td>
+<td><p>Parity setting (0b00: none, 0b01: even, 0b10: odd)</p></td>
+</tr>
+<tr class="row-even"><td><p>26:25</p></td>
+<td><p>rw</p></td>
+<td><p>Number of stop bits (0b00: 1, 0b01: 1.5, 0b10: 2)</p></td>
+</tr>
+<tr class="row-odd"><td><p>24</p></td>
+<td><p>rw</p></td>
+<td><p>Flow control (0b0: none, 0b1: rts/cts)</p></td>
+</tr>
+<tr class="row-even"><td><p>23:0</p></td>
+<td><p>rw</p></td>
+<td><p>Number of clock cycles per bit (c_bit=f_osc/BAUD)</p></td>
+</tr>
+</tbody>
+</table>
+<p>If the number of data bits is set to 9, the number of stop bits is automatically set to 1 and parity is set to none. When writing an invalid value (e.g. 0b101: 10 data bits), the particular field is set to the highest possible value instead. A set access resulting in an invalid value is ignored. Modifications of the bits in the control register come into effect immediately. Make sure that there is no active communication when modifying this register, otherwise data loss and communication errors can occur. The default communication settings are:</p>
+<ul class="simple">
+<li><p>Data bits: 8</p></li>
+<li><p>Parity: none</p></li>
+<li><p>Stop bits: 1</p></li>
+<li><p>Flow control: none</p></li>
+<li><p>Baud rate: 9600 (at 32 MHz)</p></li>
+</ul>
+</section>
+<section id="tx-status-register">
+<h4>Tx Status Register<a class="headerlink" href="#tx-status-register" title="Permalink to this headline">¶</a></h4>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 15%" />
+<col style="width: 74%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Bits</p></th>
+<th class="head"><p>Access</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31:20</p></td>
+<td><p>r</p></td>
+<td><p>reserved</p></td>
+</tr>
+<tr class="row-odd"><td><p>19</p></td>
+<td><p>rw</p></td>
+<td><p>Tx overflow error interrupt enable</p></td>
+</tr>
+<tr class="row-even"><td><p>18</p></td>
+<td><p>rw</p></td>
+<td><p>Tx watermark reached interrupt enable</p></td>
+</tr>
+<tr class="row-odd"><td><p>17</p></td>
+<td><p>rw</p></td>
+<td><p>Tx stack empty interrupt enable</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p>rw</p></td>
+<td><p>Tx stack full interrupt enable</p></td>
+</tr>
+<tr class="row-odd"><td><p>15:12</p></td>
+<td><p>r</p></td>
+<td><p>reserved</p></td>
+</tr>
+<tr class="row-even"><td><p>11</p></td>
+<td><p>rw</p></td>
+<td><p>Tx overflow error (write to full tx stack)</p></td>
+</tr>
+<tr class="row-odd"><td><p>10</p></td>
+<td><p>r</p></td>
+<td><p>Tx stack size leq tx watermark</p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>r</p></td>
+<td><p>Tx stack empty</p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>r</p></td>
+<td><p>Tx stack full</p></td>
+</tr>
+<tr class="row-even"><td><p>7:0</p></td>
+<td><p>r</p></td>
+<td><p>Tx stack size</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="rx-status-register">
+<h4>Rx Status Register<a class="headerlink" href="#rx-status-register" title="Permalink to this headline">¶</a></h4>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 12%" />
+<col style="width: 79%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Bits</p></th>
+<th class="head"><p>Access</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31:24</p></td>
+<td><p>rw</p></td>
+<td><p>reserved</p></td>
+</tr>
+<tr class="row-odd"><td><p>23</p></td>
+<td><p>rw</p></td>
+<td><p>Rx frame error interrupt enable</p></td>
+</tr>
+<tr class="row-even"><td><p>22</p></td>
+<td><p>rw</p></td>
+<td><p>Rx parity error interrupt enable</p></td>
+</tr>
+<tr class="row-odd"><td><p>21</p></td>
+<td><p>rw</p></td>
+<td><p>Rx noise error interrupt enable</p></td>
+</tr>
+<tr class="row-even"><td><p>20</p></td>
+<td><p>rw</p></td>
+<td><p>Rx underflow error interrupt enable</p></td>
+</tr>
+<tr class="row-odd"><td><p>19</p></td>
+<td><p>rw</p></td>
+<td><p>Rx overflow error interrupt enable</p></td>
+</tr>
+<tr class="row-even"><td><p>18</p></td>
+<td><p>rw</p></td>
+<td><p>Rx watermark reached interrupt enable</p></td>
+</tr>
+<tr class="row-odd"><td><p>17</p></td>
+<td><p>rw</p></td>
+<td><p>Rx stack empty interrupt enable</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p>rw</p></td>
+<td><p>Rx stack full interrupt enable</p></td>
+</tr>
+<tr class="row-odd"><td><p>15</p></td>
+<td><p>rw</p></td>
+<td><p>Rx frame error (no stop bit detected)</p></td>
+</tr>
+<tr class="row-even"><td><p>14</p></td>
+<td><p>rw</p></td>
+<td><p>Rx parity error (parity received neq calculated)</p></td>
+</tr>
+<tr class="row-odd"><td><p>13</p></td>
+<td><p>rw</p></td>
+<td><p>Rx noise error (samples taken from one bit differ)</p></td>
+</tr>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>rw</p></td>
+<td><p>Rx underflow error (read from empty rx stack)</p></td>
+</tr>
+<tr class="row-odd"><td><p>11</p></td>
+<td><p>rw</p></td>
+<td><p>Rx overflow error (received data while rx stack was full)</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>r</p></td>
+<td><p>Rx stack size geq rx watermark</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>r</p></td>
+<td><p>Rx stack empty</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>r</p></td>
+<td><p>Rx stack full</p></td>
+</tr>
+<tr class="row-odd"><td><p>7:0</p></td>
+<td><p>r</p></td>
+<td><p>Rx stack size</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="interrupts">
+<h4>Interrupts<a class="headerlink" href="#interrupts" title="Permalink to this headline">¶</a></h4>
+<p>The UART module supports several interrupts, which are stated in the tx and rx status register. All interrupts are disabled by default and have to be enabled manually if desired. Besides the individual interrupt signals, there is also a special signal “int_any” available at the port of this module which is set whenever at least one interrupt has occurred. Some interrupt signals are connected to the specific error signals. In this case an interrupt service routine has to reset the specific error flag, otherwise the interrupt will fire again and again.</p>
+</section>
+<section id="functionality">
+<h4>Functionality<a class="headerlink" href="#functionality" title="Permalink to this headline">¶</a></h4>
+<p>Transmitting data can be achieved writing to the FIFO stack address, which effectively writes to the tx stack. As long as the tx stack is not full, new data can be written to it immediately in a row. The UART module automatically reads the data in the tx stack and transmits it via the tx pin. When writing to the tx stack while it is full, the data written to it is lost and the tx overflow error is set.
+Incoming data via the rx pin is automatically written to the rx stack, which can be read from by reading from the FIFO stack address. As long as the rx stack is not full, data can be received. As soon as the rx stack is full, any incoming data is lost and the rx overflow error is set. The data in the rx stack (as well as the tx stack) never gets overwritten. In order to free stack memory, data has to be read.
+Each bit of incoming data is sampled 3 times at and around its timed midpoint. If the samples differ, the noise error is set at the end of the specific frame.</p>
+</section>
+<section id="flow-control">
+<h4>Flow Control<a class="headerlink" href="#flow-control" title="Permalink to this headline">¶</a></h4>
+<p>The UART module supports rts/cts hardware flow control. Rts is an output of the receiver called ready to send which is connected to the cts input of the transmitter called clear to send (and vice versa). Set to high, rts signals the transmitter, that its rx stack is not full and new data can be received. As soon as the rx stack is full, rts is set to low, signaling the transmitter that it has to stop transmission. To prevent data loss, rts is already set to low, when there is only space for 4 more frames in the rx stack.</p>
+<p>The rts and cts pins are currently not connected in our FPGA designs!</p>
+</section>
+</section>
+<section id="gpio">
+<h3>GPIO<a class="headerlink" href="#gpio" title="Permalink to this headline">¶</a></h3>
+<p>The GPIO module has a configurable width with a default value of 8 bit. Separate signals are available for data output, data input and activation of the pad driver to support the integration into ASIC designs. Tab. 6 shows a list of registers available through the GPIO module. Read- and write access is done through through GPIODATA. The byte value is put on the processor bus when a read access is issued in the topmodule <code class="docutils literal notranslate"><span class="pre">iGPIO_I</span></code>. When a write access is issued, the corresponding value is read from the processor bus and written to <code class="docutils literal notranslate"><span class="pre">oGPIO_D</span></code> of the top module. Write access to GPIOEN do only have an effect on the output <code class="docutils literal notranslate"><span class="pre">oGPIO_EN</span></code>. The bi-directionality of an IO pin can be realized this way within the higher-ranking hierarchy (e.g. inside an FPGA by connection of an <code class="docutils literal notranslate"><span class="pre">inout</span></code> or inside an ASIC by routing to a appropriate IO pad).</p>
+<p>Tab. 6: Register of the  GPIO module.
++—————-+——————+——–+———+————————————–+
+| Adresse        | Name             | Width  | Zugriff | Beschreibung                         |
++================+==================+========+=========+======================================+
+| <code class="docutils literal notranslate"><span class="pre">0xC0000400</span></code> | DATA             | 32(8)* |   R/W   | GPIO Data I/O                        |
++—————-+——————+——–+———+————————————–+
+| <code class="docutils literal notranslate"><span class="pre">0xC0000404</span></code> | EN               | 32(8)* |   R/W   | GPIO Output Enable                   |
++—————-+——————+——–+———+————————————–+</p>
+</section>
+<section id="icap">
+<h3>ICAP<a class="headerlink" href="#icap" title="Permalink to this headline">¶</a></h3>
+<p>The ICAP peripheral offers a method to encapsule the configuration interface for FPGAs which allow the dynamic partial reconfiguration during operation (e.g. Xilinx Dynamic Function Exchange). Partial bitstreams can be written to the address of the ICAP peripheral by the AIRISC processor to perform a partial reconfiguration of an FPGA. The ICAP module is currently an experimental feature and will probably undergo significant changes in future developments.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 20%" />
+<col style="width: 9%" />
+<col style="width: 10%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Adresse</p></th>
+<th class="head"><p>Name</p></th>
+<th class="head"><p>Width</p></th>
+<th class="head"><p>Zugriff</p></th>
+<th class="head"><p>Beschreibung</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000500</span></code></p></td>
+<td><p>CTRL</p></td>
+<td><p>32</p></td>
+<td><p>R/W</p></td>
+<td><p>ICAP Status and control</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000504</span></code></p></td>
+<td><p>DATAIN</p></td>
+<td><p>32</p></td>
+<td><p>W</p></td>
+<td><p>ICAP Bitstream input</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">0xC0000508</span></code></p></td>
+<td><p>DATAOUT</p></td>
+<td><p>32</p></td>
+<td><p>R</p></td>
+<td><p>ICAP Read configuration output</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 60%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head" colspan="2"><p>CTRL (Adresse: 0xC0000500)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31:1</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p>–</p></td>
+<td><p>R/W</p></td>
+</tr>
+<tr class="row-even"><td><p>reserved</p></td>
+<td><p>ICAP_LOCK</p></td>
+</tr>
+</tbody>
+</table>
+<p>If the <code class="docutils literal notranslate"><span class="pre">ICAP_LOCK</span></code> bit is set (1), the access to the PCPI interface within the pipeline is locked.
+This prevents unknown states to occur when reconfiguring a partition connected to the PCPI interface
+during runtime.</p>
+</section>
+<section id="spi">
+<h3>SPI<a class="headerlink" href="#spi" title="Permalink to this headline">¶</a></h3>
+<p>The SPI Peripheral offers operation as SPI master or slave with variable transaction length (1 to 64 bit) and clock rate as well as configurable SPI mode. It can be used especially in FPGA configurations as an easy to use interface to memory devices on the board. Tab. 7 and 8 explain the structure and function of the configuration register. Tab. 9 and 10 illustrate the data registers. With a write access to SPIDATAL, the values of both data registers are taken over into the internal shift register. Depending on DATLEN, the contents of the registers are shifted to the left so that no undefined bits are transferred from SPIDATAH for transfers smaller than 64 bits. Only then the SPI transfer is started.</p>
+<p>Tab. 7: Division of the SPI configuration register.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 9%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head" colspan="10"><p>SPICTRL (Address: SPI_BASE_ADDR + 0)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31</p></td>
+<td><p>30:28</p></td>
+<td><p>27:20</p></td>
+<td><p>19</p></td>
+<td><p>18:12</p></td>
+<td><p>11:10</p></td>
+<td><p>9:8</p></td>
+<td><p>7:4</p></td>
+<td><p>3</p></td>
+<td><p>2:0</p></td>
+</tr>
+<tr class="row-odd"><td><p>R</p></td>
+<td><p>—</p></td>
+<td><p>R/W</p></td>
+<td><p>—</p></td>
+<td><p>R/W</p></td>
+<td><p>—</p></td>
+<td><p>R/W</p></td>
+<td><p>—</p></td>
+<td><p>R/W</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p>SPIRDY</p></td>
+<td><p>rsv.</p></td>
+<td><p>CLKDIV</p></td>
+<td><p>rsv.</p></td>
+<td><p>DATLEN</p></td>
+<td><p>rsv.</p></td>
+<td><p>SPIMOD</p></td>
+<td><p>rsv.</p></td>
+<td><p>SPIMS</p></td>
+<td><p>rsv.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Tab. 8: Description of SPI_CTRL</p>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 65%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>bitfield</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SPIRDY</p></td>
+<td><p>SPI ready (slave mode: byte in RX Buffer; master mode: ready to send)</p></td>
+<td><p>b0</p></td>
+</tr>
+<tr class="row-odd"><td><p>CLKDIV</p></td>
+<td><p>Clock divider for SCLK: <span class="math notranslate nohighlight">\(f(SCLK) = f(clk) &gt;&gt; CLKDIV\)</span></p></td>
+<td><p>h07 (<span class="math notranslate nohighlight">\(f(clk)/128\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>DATLEN</p></td>
+<td><p>Data length of the sent and received symbols. The currently permissible value range is 0-64 bits.</p></td>
+<td><p>b0001000 = 8 Bit</p></td>
+</tr>
+<tr class="row-odd"><td><p>SPIMOD</p></td>
+<td><p>SPI mode. The least significant bit represents the polarity of the SCLK, the most significant the phase.</p></td>
+<td><p>b00</p></td>
+</tr>
+<tr class="row-even"><td><p>SPIMS</p></td>
+<td><p>SPI master/slave select. (slave mode: 0; master mode: 1)</p></td>
+<td><p>b0</p></td>
+</tr>
+</tbody>
+</table>
+<p>Tab. 9: Division of the low-order SPI data register.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SPIDATAL (address: SPI_BASE_ADDR + 4)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31:0</p></td>
+</tr>
+<tr class="row-odd"><td><p>R/W</p></td>
+</tr>
+<tr class="row-even"><td><p>DATA</p></td>
+</tr>
+</tbody>
+</table>
+<p>Tab. 10: Division of the higher-order SPI data register.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>SPIDATAH (address: SPI_BASE_ADDR + 8)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>31:0</p></td>
+</tr>
+<tr class="row-odd"><td><p>R/W</p></td>
+</tr>
+<tr class="row-even"><td><p>DATA</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="jtag-debug-transport-module-dtm">
+<h3>JTAG Debug Transport Module (DTM)<a class="headerlink" href="#jtag-debug-transport-module-dtm" title="Permalink to this headline">¶</a></h3>
+<p>The RISC-V External Debug Support Standard defines a transport layer (DTM) between the debug module and the external debugger, which converts any protocol to the internal debug module interface. The only DTM currently supported by the GNU toolchain is a JTAG TAP. This is included in the AIRISC code tree, but is strictly speaking not part of the AIRISC Core Complex, but is typically instantiated at the top level of the FPGA or ASIC design and can here, in addition to communication with the Core Complex, also take over other functions of a JTAG-TAP, e.g. for the scan test.</p>
+</section>
+</section>
+<section id="system-bus">
+<h2><a class="toc-backref" href="#id32">System-Bus</a><a class="headerlink" href="#system-bus" title="Permalink to this headline">¶</a></h2>
+<section id="ahb-lite">
+<h3>AHB-Lite<a class="headerlink" href="#ahb-lite" title="Permalink to this headline">¶</a></h3>
+<p>The standard bus for accessing memory and peripheral elements is AHB-Lite. The processor works as the only master in the system. Table 11 lists the typical signals and names their respective functions. For detailed descriptions of the signals, please refer to the <a class="reference external" href="https://developer.arm.com/documentation/ihi0033/a">AMBA 3 AHB-Lite Protocol Specification</a>.</p>
+<p>Tab. 11: Signals within the AIRISC AHB-Lite Interface</p>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 80%" />
+<col style="width: 10%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>bit width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">haddr</span></code></p></td>
+<td><p>Address requested in memory</p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hwrite</span></code></p></td>
+<td><p>Write enable bit (write = b1, read = b0)</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hsize</span></code></p></td>
+<td><p>Size of the data to be transferred (supported: byte (h0), halfword (h1), word (h2))</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hburst</span></code></p></td>
+<td><p>reserved</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hmastlock</span></code></p></td>
+<td><p>reserved</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hprot</span></code></p></td>
+<td><p>reserved</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">htrans</span></code></p></td>
+<td><p>Transaction type (supported: idle (h0) nonsequential (h2))</p></td>
+<td><p>2</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hwdata</span></code></p></td>
+<td><p>write data CPU –&gt; memory element</p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hrdata</span></code></p></td>
+<td><p>read data memory element –&gt; CPU</p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hready</span></code></p></td>
+<td><p>memory element ready for data</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hresp</span></code></p></td>
+<td><p>Response bit for signaling errors</p></td>
+<td><p>1</p></td>
+</tr>
+</tbody>
+</table>
+<p>Fig. 3 shows the signal characteristics of the AHB-Lite bus during read and write accesses to a memory. The memory assumed here has a latency of one clock cycle and therefore requires no further waiting cycles for a read access. In the case of a write access, the value to be written is not available until one clock cycle after the address has been applied, which is why the memory requests a wait cycle of one clock cycle (highlighted on the corresponding edges a and b). The processor’s read data (hrdata) is not written with a new value until a new transaction occurs. This can be seen at the edges c and d.</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="_images/AHBLite_RW_wavedrom.png"><img alt="_images/AHBLite_RW_wavedrom.png" src="_images/AHBLite_RW_wavedrom.png" style="width: 640px;" /></a>
+</figure>
+<p>Fig.3: Signal characteristics at the AHB-Lite bus.</p>
+</section>
+<section id="axi4">
+<h3>AXI4<a class="headerlink" href="#axi4" title="Permalink to this headline">¶</a></h3>
+<p>For the connection of arbitrary memory units to the processor a translation from AHB-Lite to AXI4 can be done with the help of the module <code class="docutils literal notranslate"><span class="pre">airi5c_axi_if.v</span></code>. For detailed descriptions of the signals, please refer to the <a class="reference external" href="https://developer.arm.com/documentation/ihi0022/latest">AMBA AXI and ACE Protocol Specification</a>. The AXI4 interface is currently an experimental feature and may be subject to significant changes in the future.</p>
+</section>
+</section>
+</section>
+<section id="airisc-architecture-in-detail">
+<h1><a class="toc-backref" href="#id33">AIRISC architecture in detail</a><a class="headerlink" href="#airisc-architecture-in-detail" title="Permalink to this headline">¶</a></h1>
+<section id="pipeline">
+<h2><a class="toc-backref" href="#id34">Pipeline</a><a class="headerlink" href="#pipeline" title="Permalink to this headline">¶</a></h2>
+<p>Fig. 4 illustrates the various pipeline stages of the processor, which are discussed below.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id6">
+<a class="reference internal image-reference" href="_images/airisc_pipeline.jpg"><img alt="_images/airisc_pipeline.jpg" src="_images/airisc_pipeline.jpg" style="width: 900px;" /></a>
+<figcaption>
+<p><span class="caption-text">Abb. 4: Pipeline overview</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="instruction-prefetch-and-decompression-if">
+<h3>Instruction Prefetch and Decompression (IF)<a class="headerlink" href="#instruction-prefetch-and-decompression-if" title="Permalink to this headline">¶</a></h3>
+<p>The IF stage fetches the next instruction from the memory and handles wait cycles of the memory or those due to pipeline stalls. The purpose of a separate IF stage is to allow the memory a full clock cycle access time. As long as no redirect is reported by the EX stage, the IF stage calculates the next address itself.</p>
+</section>
+<section id="fetch-and-decode-unit-de">
+<h3>Fetch and Decode Unit (DE)<a class="headerlink" href="#fetch-and-decode-unit-de" title="Permalink to this headline">¶</a></h3>
+<p>The DE unit decodes the instructions and generates the control signals for the EX unit or ALU. These are then stored in the DE-EX pipeline registers, so that the EX stage/ALU has a full clock cycle available for the calculation.</p>
+</section>
+<section id="execute-unit-ex">
+<h3>Execute Unit (EX)<a class="headerlink" href="#execute-unit-ex" title="Permalink to this headline">¶</a></h3>
+<p>The EX unit includes the ALU and the generation of synchronous exceptions when interrupts, breakpoints (EBREAK) and system calls (ECALL) occur. It can be extended by additional instructions and accelerators via the PCPI interface.</p>
+</section>
+<section id="writeback-wb">
+<h3>Writeback (WB)<a class="headerlink" href="#writeback-wb" title="Permalink to this headline">¶</a></h3>
+<p>The WB stage writes results to GPR/CSR registers and - in case of load/store instructions - also from/to the data bus. It generates breakpoint exceptions in case of single step execution and counts the completely executed instructions.</p>
+</section>
+<section id="control-unit-ctrl">
+<h3>Control Unit (CTRL)<a class="headerlink" href="#control-unit-ctrl" title="Permalink to this headline">¶</a></h3>
+<p>The CTRL unit is a cross-stage module in which the basic control of the pipeline is performed. The main tasks of the module are the detection and interception of hazards, the stopping of the pipeline in case of arbitrarily long latencies by a connected memory as well as the aborting of instructions in case of exceptions, interrupts or branches. For this purpose, individual kill and stall signals are available for the pipeline stages, with which the pipeline can be stopped or emptied at any point.</p>
+</section>
+</section>
+<section id="pcpi-interface">
+<h2><a class="toc-backref" href="#id35">PCPI-Interface</a><a class="headerlink" href="#pcpi-interface" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference external" href="https://github.com/cliffordwolf/picorv32#pico-co-processor-interface-pcpi">PCPI-Interface</a> provides a simple interface for extensions of the ALU/EX-Stage. This concerns in particular specialized arithmetic functions. Fig. 5 illustrates an example of the timing for an interaction with a coprocessor.</p>
+<figure class="align-default" id="id7">
+<a class="reference internal image-reference" href="_images/pcpi_waveform.jpg"><img alt="_images/pcpi_waveform.jpg" src="_images/pcpi_waveform.jpg" style="width: 512px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 5: Timing diagram of the PCPI interface</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The interface consists of the following signals:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output</span>        <span class="n">pcpi_valid</span>    <span class="o">//</span> <span class="n">pcpi_insn</span><span class="p">,</span> <span class="n">pcpi_rs1</span> <span class="ow">and</span> <span class="n">pcpi_rs2</span> <span class="n">valid</span>
+<span class="n">output</span> <span class="p">[</span><span class="mi">31</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">pcpi_insn</span>     <span class="o">//</span> <span class="n">requested</span> <span class="n">instruktion</span>
+<span class="n">output</span> <span class="p">[</span><span class="mi">31</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">pcpi_rs1</span>      <span class="o">//</span> <span class="n">register</span> <span class="n">contents</span> <span class="n">RS1</span>
+<span class="n">output</span> <span class="p">[</span><span class="mi">31</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">pcpi_rs2</span>      <span class="o">//</span> <span class="n">register</span> <span class="n">contents</span> <span class="n">RS2</span>
+<span class="nb">input</span>         <span class="n">pcpi_wr</span>       <span class="o">//</span> <span class="n">Operation</span> <span class="n">writes</span> <span class="n">data</span> <span class="n">to</span> <span class="n">destination</span> <span class="n">register</span>
+<span class="nb">input</span>  <span class="p">[</span><span class="mi">31</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="n">pcpi_rd</span>       <span class="o">//</span> <span class="n">Data</span> <span class="k">for</span> <span class="n">target</span> <span class="n">register</span>
+<span class="nb">input</span>         <span class="n">pcpi_wait</span>     <span class="o">//</span> <span class="n">Coprocessor</span> <span class="n">processes</span> <span class="n">instruction</span>
+<span class="nb">input</span>         <span class="n">pcpi_ready</span>    <span class="o">//</span> <span class="n">pcpi_rd</span> <span class="ow">and</span> <span class="n">pcpi_wr</span> <span class="n">valid</span>
+</pre></div>
+</div>
+<p>The input signals are shared with other modules, the output signals are linked by a wired-or. Its timing is a possible limit to the number of instruction set extensions.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">pcpi_valid</span></code> signal indicates to the instruction set extension that the <code class="docutils literal notranslate"><span class="pre">pcpi_insn,</span> <span class="pre">pcpi_rs1</span> <span class="pre">and</span> <span class="pre">pcpi_rs2</span></code> registers are valid. These are passed to the instruction set extension. This in turn sets the <code class="docutils literal notranslate"><span class="pre">pcpi_wait</span></code> signal high, signaling that the instruction is being processed (this must happen on the same clock as the <code class="docutils literal notranslate"><span class="pre">pcpi_valid</span></code>). If the <code class="docutils literal notranslate"><span class="pre">pcpi_wait</span></code> signal is not set to <code class="docutils literal notranslate"><span class="pre">HIGH</span></code> after 16 clock cycles, an <code class="docutils literal notranslate"><span class="pre">illegal_instruction</span></code> exception is thrown. If the instruction is successfully processed, the <code class="docutils literal notranslate"><span class="pre">pcpi_ready</span></code> signal is set to <code class="docutils literal notranslate"><span class="pre">HIGH</span></code> and the pipeline can continue.</p>
+<p>Instruction set extensions cannot raise exceptions and only general purpose registers can serve as source and destination registers.</p>
+<p>In software, instruction set extensions can be accessed by inline assembly. The following listing represents an example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">__inline__</span>
+<span class="n">uint32_t</span> <span class="n">__rv__bitrev_emu</span><span class="p">(</span><span class="n">uint32_t</span> <span class="n">a</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">uint32_t</span> <span class="n">result</span><span class="p">;</span>
+    <span class="n">asm</span><span class="p">(</span><span class="s2">&quot;.insn i 0x77, 0, %0, %1, 0x0&quot;</span>
+        <span class="p">:</span> <span class="s2">&quot;=r&quot;</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="p">:</span> <span class="s2">&quot;r&quot;</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="p">:);</span>
+<span class="k">return</span><span class="p">(</span><span class="n">result</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="privilege-mode">
+<h2><a class="toc-backref" href="#id36">Privilege Mode</a><a class="headerlink" href="#privilege-mode" title="Permalink to this headline">¶</a></h2>
+<p>Three privilege modes are supported: Debug mode, machine mode and user mode. The core starts after a reset in machine mode. In the startup-file (crt0.S) the main routine “main” is started by a preload of the EPC register with the target address and a subsequent MRET and at the same time changed into the user mode.</p>
+<p>A change into the machine mode is then executed by interrupts and exceptions or explicitly by an ECALL command.</p>
+<p>The debug mode is activated after a software breakpoint (EBREAK), after a program step in the single-step mode which is created by the debug module on stop request. In this mode the core is usually in the park loop stored in the debug ROM and waits for commands from the debug module. However, the debug mode can also be specifically activated (but not exited) from the running program by jumping into the debug ROM.</p>
+</section>
+<section id="id2">
+<h2><a class="toc-backref" href="#id37">Interrupts</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>There are internal interrupts, which are generated in the AIRISC core complex e.g. by the timer or the UART peripheral, as well as external ones, which are set via the EXT_INT lines of the core complex.</p>
+<p>All interrupts - if they are not masked in the respective privilege level - are recognized in the DX stage and converted into a synchronous exception, which leads to a jump to the MTVEC address with a clock delay in the WB stage. The interrupt type is stored in the MCAUSE register.</p>
+</section>
+<section id="exceptions">
+<h2><a class="toc-backref" href="#id38">Exceptions</a><a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
+<p>Exceptions occur either as a result of errors (e.g. invalid OpCodes, memory access errors), due to EBREAK/ECALL/ERET instructions or Halt requests by the debug module.</p>
+<p>The RISC-V specification does not allow arithmetic exceptions. Exceptions due to errors in the ALU therefore <em>do not</em> occur. Arithmetic exceptions such as division by zero are instead encoded using error values.</p>
+<p>All exceptions are generated in the EX stage, with the exception of the exception after the complete processing of an instruction in single-step mode. This is generated in the WB stage.</p>
+</section>
+<section id="debug-support">
+<h2><a class="toc-backref" href="#id39">Debug Support</a><a class="headerlink" href="#debug-support" title="Permalink to this headline">¶</a></h2>
+<p>The core complex includes a debug module and debug transfer module for communication via JTAG. Register accesses via the debug module are implemented as abstract instructions for both GPR and CSR. They can be performed while the core is running and have priority over concurrent write accesses of the core itself. Memory accesses to the system memory are implemented program buffer-based. The debug module can write to a two-line program buffer (with implicit EBREAK after the second instruction) and execute it with limited privileges. The second line in the program buffer also allows bulk read/write with automatic increment of the target address.</p>
+</section>
+</section>
+<section id="resource-requirements-and-benchmark">
+<h1><a class="toc-backref" href="#id40">Resource requirements and benchmark</a><a class="headerlink" href="#resource-requirements-and-benchmark" title="Permalink to this headline">¶</a></h1>
+<p>Tab. 12: Resource usage on the Xilinx XC7A32 FPGA &#64; 32 MHz</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 73%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Resource designation</p></th>
+<th class="head"><p>Number</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Slice LUTs</p></td>
+<td><p>6177</p></td>
+</tr>
+<tr class="row-odd"><td><p>Slice Regsiters</p></td>
+<td><p>3762</p></td>
+</tr>
+<tr class="row-even"><td><p>F7 Muxes</p></td>
+<td><p>515</p></td>
+</tr>
+<tr class="row-odd"><td><p>F8 Muxes</p></td>
+<td><p>131</p></td>
+</tr>
+<tr class="row-even"><td><p>Slices</p></td>
+<td><p>2247</p></td>
+</tr>
+<tr class="row-odd"><td><p>Logic LUTs</p></td>
+<td><p>6177</p></td>
+</tr>
+<tr class="row-even"><td><p>BRAM Tile</p></td>
+<td><p>32</p></td>
+</tr>
+<tr class="row-odd"><td><p>DSP</p></td>
+<td><p>4</p></td>
+</tr>
+<tr class="row-even"><td><p>Bonded IOB</p></td>
+<td><p>30</p></td>
+</tr>
+<tr class="row-odd"><td><p>BUFGCTRL</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-even"><td><p>MMCME2_ADV</p></td>
+<td><p>1</p></td>
+</tr>
+</tbody>
+</table>
+<p>Coremark result &#64;32 MHz on the NexysVideo FPGA Dev Board with local BlockRAM as instruction memory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2</span><span class="n">K</span> <span class="n">performance</span> <span class="n">run</span> <span class="n">parameters</span> <span class="k">for</span> <span class="n">coremark</span><span class="o">.</span>
+  <span class="n">CoreMark</span> <span class="n">Size</span>    <span class="p">:</span> <span class="mi">666</span>
+  <span class="n">Total</span> <span class="n">ticks</span>      <span class="p">:</span> <span class="mi">7794</span>
+  <span class="n">Total</span> <span class="n">time</span> <span class="p">(</span><span class="n">secs</span><span class="p">):</span> <span class="mi">15</span>
+  <span class="n">Iterations</span><span class="o">/</span><span class="n">Sec</span>   <span class="p">:</span> <span class="mi">80</span>
+  <span class="n">Iterations</span>       <span class="p">:</span> <span class="mi">1200</span>
+  <span class="n">Compiler</span> <span class="n">version</span> <span class="p">:</span> <span class="n">GCC10</span><span class="mf">.1.0</span>
+  <span class="n">Compiler</span> <span class="n">flags</span>   <span class="p">:</span> <span class="o">-</span><span class="n">o3</span>
+  <span class="n">Memory</span> <span class="n">location</span>  <span class="p">:</span> <span class="n">STACK</span>
+  <span class="n">seedcrc</span>          <span class="p">:</span> <span class="mh">0xe9f5</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="n">crclist</span>       <span class="p">:</span> <span class="mh">0xe714</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="n">crcmatrix</span>     <span class="p">:</span> <span class="mh">0x1fd7</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="n">crcstate</span>      <span class="p">:</span> <span class="mh">0x8e3a</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="n">crcfinal</span>      <span class="p">:</span> <span class="mh">0x988c</span>
+  <span class="n">Correct</span> <span class="n">operation</span> <span class="n">validated</span><span class="o">.</span> <span class="n">See</span> <span class="n">README</span><span class="o">.</span><span class="n">md</span> <span class="k">for</span> <span class="n">run</span> <span class="ow">and</span> <span class="n">reporting</span> <span class="n">rules</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+<section id="first-steps-with-the-virtual-prototype">
+<h1><a class="toc-backref" href="#id41">First steps with the virtual prototype</a><a class="headerlink" href="#first-steps-with-the-virtual-prototype" title="Permalink to this headline">¶</a></h1>
+<section id="prerequisite-for-the-commissioning-of-the-virtual-prototype">
+<h2><a class="toc-backref" href="#id42">Prerequisite for the commissioning of the virtual prototype</a><a class="headerlink" href="#prerequisite-for-the-commissioning-of-the-virtual-prototype" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Cadence Incisive (ver. 15.20)</p></li>
+<li><p>OpenOCD (ver. 0.10.0+dev-01259)</p></li>
+<li><p>GDB (ver. 9.10)</p></li>
+</ul>
+</section>
+<section id="commissioning-of-the-virtual-prototype">
+<h2><a class="toc-backref" href="#id43">Commissioning of the virtual prototype</a><a class="headerlink" href="#commissioning-of-the-virtual-prototype" title="Permalink to this headline">¶</a></h2>
+<p>Mithilfe von Cadence Incisive und OpenOCD kann ein Virtueller Prototyp in Betrieb genommen werden. Dazu reicht es aus folgede Schritte durchzuführen:</p>
+<ol class="arabic simple">
+<li><p>start the simulation without a stop condition with <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">sim_vpi</span></code>, check if signal probing is disabled in the simIUS/simsetup.tcl file.</p></li>
+<li><p>in a second terminal start OpenOCD from the tb directory with <code class="docutils literal notranslate"><span class="pre">../tools/openocd</span> <span class="pre">-f./vpi.cfg&quot;</span></code> (with the -d flag you can output more debugging messages).</p></li>
+<li><p>in a third terminal, start <code class="docutils literal notranslate"><span class="pre">gdb</span></code> from the tools/tb directory, connect <code class="docutils literal notranslate"><span class="pre">gdb</span></code> to the virtual prototype with <code class="docutils literal notranslate"><span class="pre">target</span> <span class="pre">remote</span> <span class="pre">localhost:3333</span></code>, set the target architecture and timeout with <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">arch</span> <span class="pre">riscv:rv32</span></code> and <code class="docutils literal notranslate"><span class="pre">set</span> <span class="pre">remotetimeout</span> <span class="pre">3000</span></code>.</p></li>
+<li><p>load an elf file into the virtual prototype from the <code class="docutils literal notranslate"><span class="pre">gdb</span></code> terminal with <code class="docutils literal notranslate"><span class="pre">file</span> <span class="pre">&lt;path_to_simIUS_folder&gt;/elffiles/coremark.elf</span></code> and <code class="docutils literal notranslate"><span class="pre">load</span></code>.</p></li>
+<li><p>start the program with <code class="docutils literal notranslate"><span class="pre">continue</span></code>.</p></li>
+<li><p>the <code class="docutils literal notranslate"><span class="pre">gdb</span></code> console can be used for live-debugging. Useful commands are for example: <code class="docutils literal notranslate"><span class="pre">break</span> <span class="pre">*0x80000010</span></code>, <code class="docutils literal notranslate"><span class="pre">delete</span> <span class="pre">breakpoints</span></code>, <code class="docutils literal notranslate"><span class="pre">view/i</span> <span class="pre">$pc</span></code>, <code class="docutils literal notranslate"><span class="pre">stepi</span></code>.</p></li>
+</ol>
+<p>Tip: To increase speed, the debugger can be detached with Ctrl+C in the OpenOCD terminal, but be aware that a later connection to this session is no longer possible.</p>
+</section>
+</section>
+<section id="airisc-on-an-fpga-quickstart">
+<h1><a class="toc-backref" href="#id44">AIRISC on an FPGA - Quickstart</a><a class="headerlink" href="#airisc-on-an-fpga-quickstart" title="Permalink to this headline">¶</a></h1>
+<section id="prerequisite-for-bitstream-generation-and-fpga-deployment">
+<h2><a class="toc-backref" href="#id45">Prerequisite for bitstream generation and FPGA deployment</a><a class="headerlink" href="#prerequisite-for-bitstream-generation-and-fpga-deployment" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Xilinx Vivado 2019.2.1</p></li>
+<li><p>Paths set-up to include the Vivado executables</p></li>
+</ul>
+</section>
+<section id="commissioning-on-the-digilent-nexys-video-fpga-board">
+<h2><a class="toc-backref" href="#id46">Commissioning on the Digilent Nexys Video FPGA Board</a><a class="headerlink" href="#commissioning-on-the-digilent-nexys-video-fpga-board" title="Permalink to this headline">¶</a></h2>
+<p>For deployment on the Nexys Video FPGA board there are basically two possibilities. The first (simpler) one runs via the Makefile in the <code class="docutils literal notranslate"><span class="pre">fpga</span></code> directory.
+The second option is to crate the Vivado project manually, import the RTL sources, generate the required IP blocks and run the synthesis, P&amp;R and programming from the Vivado IDE.</p>
+<section id="create-vivado-project-and-fpga-bitstream-automatically-using-the-makefile">
+<h3>Create Vivado project and FPGA Bitstream automatically using the makefile<a class="headerlink" href="#create-vivado-project-and-fpga-bitstream-automatically-using-the-makefile" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>To create the Vivado project, generate the bitstream and upload it to the FPGA, first enter the <code class="docutils literal notranslate"><span class="pre">fpga</span></code> subdirectory and run</dt><dd><p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">all-fpga</span></code></p>
+</dd>
+</dl>
+<p>The bitstream is created and the FPGA is loaded with it. There are also other make target defined, which execute partial steps of the workflow.</p>
+</section>
+<section id="create-vivado-project-manually-and-generate-bitstream">
+<h3>Create Vivado project manually and generate bitstream<a class="headerlink" href="#create-vivado-project-manually-and-generate-bitstream" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p>check out current master branch via git to <code class="docutils literal notranslate"><span class="pre">$TOPDIR</span></code>.</p></li>
+<li><p>create new Vivado project (RTL based), FPGA type: XC7A200T-1SBG484C</p></li>
+<li><p>import standard constraints file from <code class="docutils literal notranslate"><span class="pre">$TOPDIR/fpga/src_NexysVideo/constraints/constraints.xdc</span></code></p></li>
+<li><p>import standard FPGA toplevel from <code class="docutils literal notranslate"><span class="pre">$TOPDIR/fpga/src_NexysVideo/verilog/FPGA_Top.v</span></code></p></li>
+<li><dl class="simple">
+<dt>import AIRISC sources: ::</dt><dd><p>$TOPDIR/src/airi5c_alu.v
+$TOPDIR/src/airi5c_csr_file.v
+$TOPDIR/src/airi5c_ctrl.v
+$TOPDIR/src/airi5c_decode.v
+$TOPDIR/src/airi5c_hasti_bridge.v
+$TOPDIR/src/airi5c_imm_gen.v
+$TOPDIR/src/airi5c_PC_mux.v
+$TOPDIR/src/airi5c_pipeline.v
+$TOPDIR/src/airi5c_EX_pregs.v
+$TOPDIR/src/airi5c_WB_pregs.v
+$TOPDIR/src/airi5c_dmem_latch.v
+$TOPDIR/src/airi5c_regfile.v
+$TOPDIR/src/airi5c_src_a_mux.v
+$TOPDIR/src/airi5c_src_b_mux.v
+$TOPDIR/src/airi5c_core.v
+$TOPDIR/src/airi5c_debug_rom.v
+$TOPDIR/src/airi5c_debug_module.v
+$TOPDIR/src/airi5c_fetch.v
+$TOPDIR/src/modules/airi5c_alu_simd/src/airi5c_alu_simd.v
+$TOPDIR/src/modules/airi5c_mul_div_simd/src/airi5c_mul_div_simd.v
+$TOPDIR/src/modules/airi5c_dtm/src/airi5c_dtm.v
+$TOPDIR/src/modules/airi5c_gpio/src/airi5c_gpio.v
+$TOPDIR/src/modules/airi5c_timer/src/airi5c_timer.v
+$TOPDIR/src/modules/airi5c_uart/src/airi5c_uart_fifo.v
+$TOPDIR/src/modules/airi5c_uart/src/airi5c_uart.v
+$TOPDIR/src/modules/airi5c_uart/src/airi5c_uart_rx.v
+$TOPDIR/src/modules/airi5c_uart/src/airi5c_uart_tx.v
+$TOPDIR/src/modules/airi5c_spi/src/airi5c_spi.v
+$TOPDIR/src/modules/airi5c_custom/src/airi5c_custom.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_adder.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_arithmetic.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_divider.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_multiplier.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_post_processing.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_sign_logic.v
+$TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_sqrt.v
+$TOPDIR/src/modules/airi5c_fpu/comparison/airi5c_fpu_classifier.v
+$TOPDIR/src/modules/airi5c_fpu/comparison/airi5c_fpu_comparator.v
+$TOPDIR/src/modules/airi5c_fpu/comparison/airi5c_fpu_comparator_out.v
+$TOPDIR/src/modules/airi5c_fpu/conversion/airi5c_fpu_floatToInt.v
+$TOPDIR/src/modules/airi5c_fpu/conversion/airi5c_fpu_intToFloat.v
+$TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_core.v
+$TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_pre_normalizer.v
+$TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_selector.v
+$TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_sign_modifier.v
+$TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_splitter.v
+$TOPDIR/src/modules/airi5c_fpu/rounding/airi5c_fpu_rounding_logic_float.v
+$TOPDIR/src/modules/airi5c_fpu/rounding/airi5c_fpu_rounding_logic_int.v
+$TOPDIR/src/modules/airi5c_fpu/universal/LZC_4.v
+$TOPDIR/src/modules/airi5c_fpu/universal/LZC_24.v
+$TOPDIR/src/modules/airi5c_fpu/universal/LZC_32.v
+$TOPDIR/src/modules/airi5c_fpu/universal/rshifter.v
+$TOPDIR/src/modules/airi5c_fpu/universal/rshifter_static.v
+$TOPDIR/src/modules/airi5c_fpu/airi5c_fpu.v
+$TOPDIR/src/modules/airi5c_icap/src/airi5c_icap.v
+$TOPDIR/src/modules/airi5c_sigmoid/src/airi5c_sigmoid.v</p>
+</dd>
+</dl>
+</li>
+<li><p>create the already instantiated BlockRAM:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Interface</span> <span class="n">Type</span>                          <span class="p">:</span> <span class="n">Native</span>
+<span class="n">Memory</span> <span class="n">Type</span>                             <span class="p">:</span> <span class="kc">True</span> <span class="n">Dual</span> <span class="n">Port</span> <span class="n">RAM</span>
+<span class="n">Generate</span> <span class="n">address</span> <span class="n">interface</span> <span class="k">with</span> <span class="mi">32</span> <span class="n">bits</span> <span class="p">:</span> <span class="n">yes</span>
+<span class="n">Common</span> <span class="n">Clock</span>                            <span class="p">:</span> <span class="n">no</span>
+<span class="n">ECC</span>                                     <span class="p">:</span> <span class="n">no</span> <span class="n">ECC</span>
+<span class="n">Byte</span> <span class="n">Size</span>                               <span class="p">:</span> <span class="mi">8</span>
+<span class="n">Port</span> <span class="n">A</span><span class="o">/</span><span class="n">B</span>
+<span class="n">Write</span> <span class="n">Width</span>                             <span class="p">:</span> <span class="mi">32</span>
+<span class="n">Read</span> <span class="n">Width</span>                              <span class="p">:</span> <span class="mi">32</span>
+<span class="n">Write</span> <span class="n">Depth</span>                             <span class="p">:</span> <span class="mi">65536</span>
+<span class="n">Read</span> <span class="n">Depth</span>                              <span class="p">:</span> <span class="mi">65536</span>
+<span class="n">Operating</span> <span class="n">Mode</span>                          <span class="p">:</span> <span class="n">Write</span> <span class="n">first</span>
+<span class="n">Enable</span> <span class="n">Port</span> <span class="n">Type</span>                        <span class="p">:</span> <span class="n">Always</span> <span class="n">enabled</span>
+<span class="n">Primitives</span> <span class="n">Output</span> <span class="n">Register</span>              <span class="p">:</span> <span class="n">no</span>
+<span class="n">Core</span> <span class="n">Output</span> <span class="n">Register</span>                    <span class="p">:</span> <span class="n">no</span>
+<span class="n">RSTA</span><span class="o">/</span><span class="n">B</span> <span class="n">Pin</span>                              <span class="p">:</span> <span class="n">no</span>
+<span class="n">Other</span> <span class="n">Options</span>
+<span class="n">Pipeline</span> <span class="n">Stages</span> <span class="n">within</span> <span class="n">Mux</span>              <span class="p">:</span> <span class="mi">0</span>
+<span class="n">Load</span> <span class="n">Init</span> <span class="n">File</span>                          <span class="p">:</span> <span class="n">optional</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create the already instantiated clock generator:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Enable</span> <span class="n">Clock</span> <span class="n">monitoring</span>                 <span class="p">:</span> <span class="n">no</span>
+<span class="n">Primitive</span>                               <span class="p">:</span> <span class="n">MMCM</span>
+<span class="n">Clocking</span> <span class="n">Features</span>                       <span class="p">:</span> <span class="n">Frequency</span> <span class="n">Synthesis</span><span class="p">,</span> <span class="n">Phase</span> <span class="n">Alignment</span>
+<span class="n">Jitter</span> <span class="n">Optimization</span>                     <span class="p">:</span> <span class="n">Balanced</span>
+<span class="n">Input</span> <span class="n">Clock</span> <span class="n">Information</span>
+ <span class="n">Port</span> <span class="n">Name</span>                              <span class="p">:</span> <span class="n">clk_in1</span>
+ <span class="n">Input</span> <span class="n">Frequency</span>                        <span class="p">:</span> <span class="mi">100</span> <span class="n">MHz</span>
+<span class="n">Output</span> <span class="n">Clocks</span>
+ <span class="n">Output</span> <span class="n">Clock</span>                           <span class="p">:</span> <span class="n">clk_out1</span>
+ <span class="n">Port</span> <span class="n">Name</span>                              <span class="p">:</span> <span class="n">clk_out1</span>
+ <span class="n">Output</span> <span class="n">Frequency</span>                       <span class="p">:</span> <span class="mi">32</span> <span class="n">MHz</span>
+</pre></div>
+</div>
+</li>
+<li><p>start synthesis / implementation, generate bitstream and program FPGA.</p></li>
+</ol>
+</section>
+</section>
+<section id="commissioning-on-the-digilent-arty-a7-fpga-board">
+<h2><a class="toc-backref" href="#id47">Commissioning on the Digilent Arty-A7 FPGA Board</a><a class="headerlink" href="#commissioning-on-the-digilent-arty-a7-fpga-board" title="Permalink to this headline">¶</a></h2>
+<p>The automatic commissioning on the Digilent Arty-A7 FPGA board runs analog to the Nexys board:
+In the <code class="docutils literal notranslate"><span class="pre">fpga</span></code> subdirectory, in <code class="docutils literal notranslate"><span class="pre">Makefile</span></code> change the variables <code class="docutils literal notranslate"><span class="pre">BOARD</span></code> and <code class="docutils literal notranslate"><span class="pre">PROJ_NAME</span></code> to one of the values mentioned in the comments. Afterwards, the deployment can be started by running <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">all-fpga</span></code>.
+Alternatively the Vivado GUI can be used as described above with two modifications: use the constraints file and <code class="docutils literal notranslate"><span class="pre">FPGA_Top.v``from</span> <span class="pre">the</span> <span class="pre">``src_ArtyA7</span></code> subdirectory.</p>
+</section>
+</section>
+<section id="software-development-on-the-airisc">
+<h1><a class="toc-backref" href="#id48">Software development on the AIRISC</a><a class="headerlink" href="#software-development-on-the-airisc" title="Permalink to this headline">¶</a></h1>
+<section id="software-prerequisite-for-software-development-for-airisc">
+<h2><a class="toc-backref" href="#id49">Software prerequisite for software development for AIRISC</a><a class="headerlink" href="#software-prerequisite-for-software-development-for-airisc" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>OpenOCD (ver. 0.10.0+dev-01259) with the suitable configuration file (in /bsp) (for OpenOCD usage in the Eclipse IDE see <a class="reference internal" href="#eclipse">Eclipse</a>)</p></li>
+<li><p>GDB (ver. 9.10) (Or GDB integrated into <a class="reference internal" href="#eclipse">Eclipse</a> ver. 2020-12 4.18.0)</p></li>
+<li><p>RISC-V C/C++ compiler toolchain (see <a href="#id62"><span class="problematic" id="id63">`IDE and install the toolchain`_</span></a> )</p></li>
+<li><p>RISC-V build tools</p></li>
+<li><p>Highly recommended: Eclipse IDE</p></li>
+</ul>
+</section>
+<section id="other-prerequisite-for-software-development">
+<h2><a class="toc-backref" href="#id50">Other Prerequisite for software development</a><a class="headerlink" href="#other-prerequisite-for-software-development" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>FPGA is configured with a suitable bitstream</p></li>
+<li><p>A JTAG connection is set up using either a virtual USB-to-Serial Port provided by the FPGA board (on NexysVideo and CMOD-A7) or an external JTAG dongle (for Arty-A7 and others, see <a class="reference internal" href="#connection-of-the-olimex-jtag-adapter-arty-a7-only">Connection of the Olimex JTAG Adapter (Arty-A7 only)</a> )</p></li>
+</ol>
+</section>
+<section id="components-of-the-software-development-and-debugging-setup">
+<h2><a class="toc-backref" href="#id51">Components of the software development and debugging setup</a><a class="headerlink" href="#components-of-the-software-development-and-debugging-setup" title="Permalink to this headline">¶</a></h2>
+<figure class="align-default" id="id8">
+<a class="reference internal image-reference" href="_images/debug_arch.png"><img alt="_images/debug_arch.png" src="_images/debug_arch.png" style="width: 300px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 6: Overview of the software development and debugging setup (for Arty-A7)</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id9">
+<a class="reference internal image-reference" href="_images/debug_arch_nexysvideo.png"><img alt="_images/debug_arch_nexysvideo.png" src="_images/debug_arch_nexysvideo.png" style="width: 500px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 6: Overview of the software development and debugging setup (for NexysVideo)</span><a class="headerlink" href="#id9" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The dashed connection takes place virtually in the software.</p>
+</section>
+<section id="install-ide-and-the-toolchain">
+<h2><a class="toc-backref" href="#id52">Install IDE and the toolchain</a><a class="headerlink" href="#install-ide-and-the-toolchain" title="Permalink to this headline">¶</a></h2>
+<p>The firmware installation / debugging is done using GNU Debugger (GDB), OpenOCD and a USB&lt;-&gt;JTAG interface. Normally this is done during software development using the Eclipse MCU IDE, but before that the communication with the debug module should be checked to verify the hardware setup.</p>
+<p>By default, the Nexys Video Board uses the second channel of the built-in USB&lt;-&gt;JTAG converter to access the debug module. I.e. debugging is done over the same cable as programming the FPGA. On the PC side OpenOCD is used to generate JTAG signals. OpenOCD requires a WinUSB compatible driver for the USB-JTAG interface. This must first be installed under Windows using <a class="reference external" href="https://zadig.akeo.ie/">Zadig</a>.</p>
+<p>We then recommend installing the <a class="reference external" href="https://eclipse-embed-cdt.github.io/plugins/install/">Eclipse MCU</a> environment, as well as the RISC-V toolchain and Windows Build Tools linked there. (Alternatively, the <a class="reference external" href="https://github.com/riscv/riscv-gnu-toolchain">RISC-V GNU Toolchain</a> and <a class="reference external" href="https://github.com/riscv/riscv-openocd">OpenOCD</a> can be installed manually).</p>
+</section>
+<section id="board-support-package-bsp">
+<h2><a class="toc-backref" href="#id53">Board Support Package (BSP)</a><a class="headerlink" href="#board-support-package-bsp" title="Permalink to this headline">¶</a></h2>
+<p>The Board Support Package includes examples of linker scripts, syscall implementations, and configuration scripts for OpenOCD, GDB, and other tools.</p>
+</section>
+<section id="connection-of-the-olimex-jtag-adapter-arty-a7-only">
+<h2><a class="toc-backref" href="#id54">Connection of the Olimex JTAG Adapter (Arty-A7 only)</a><a class="headerlink" href="#connection-of-the-olimex-jtag-adapter-arty-a7-only" title="Permalink to this headline">¶</a></h2>
+<p>The Arty-A7 FPGA board does not have an integrated JTAG interface. Instead the PMOD header <code class="docutils literal notranslate"><span class="pre">JA</span></code> serves as such. For this an external USB to JTAG interface is connected. Here the connection of an Olimex ARM-JTAG-TINY-H is demonstrated. Similarly, with an adapted OpenOCD configuration file, another adapter should also work. The layout of the JTAG adapter is shown in Fig. 7. For the Nexys video board, a USB connector serves as the JTAG interface and the subsequent connection at the PMOD header is not necessary.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id10">
+<a class="reference internal image-reference" href="_images/openocd-jtag-layout.png"><img alt="_images/openocd-jtag-layout.png" src="_images/openocd-jtag-layout.png" style="width: 512px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 7: Pinout of the Olimex ARM-JTAG-TINY-H</span><a class="headerlink" href="#id10" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>The header PMOD JA on the board has a pinout according to Fig. 8, its first pin is marked with a square. Tab. 13 shows a schematic assignment of the corresponding PMOD pins to the Olimex.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id11">
+<a class="reference internal image-reference" href="_images/pmod-ja.jpg"><img alt="_images/pmod-ja.jpg" src="_images/pmod-ja.jpg" style="width: 512px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 8: Pinout of the FPGA header (PMOD JA)</span><a class="headerlink" href="#id11" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Tab. 13: Connection scheme for the Olimex debugger</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 64%" />
+<col style="width: 36%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>FPGA PMOD (JA)</p></th>
+<th class="head"><p>Olimex</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>TTCK</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>TTDI</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>TTDO</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>TTMS</p></td>
+</tr>
+<tr class="row-even"><td><p>GND</p></td>
+<td><p>GND</p></td>
+</tr>
+<tr class="row-odd"><td><p>VCC3V3</p></td>
+<td><p>VREF</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id3">
+<h2><a class="toc-backref" href="#id55">OpenOCD</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>OpenOCD provides an interface for GDB to communicate with AIRISC. This is configured by <code class="docutils literal notranslate"><span class="pre">.cfg</span></code> files. For the Olimex there is one already in the <code class="docutils literal notranslate"><span class="pre">/usr/local/share/openocd/scripts/interface/ftdi/</span></code> directory, which is created during installation. There are also configurations for different interfaces. A second configuration file is located in <code class="docutils literal notranslate"><span class="pre">/bsp/airi5c.cfg</span></code> and contains specific settings for the AIRISC like its ID. In case of a connection via USB (like with the Nexsy Video) it is sufficient to use only the <code class="docutils literal notranslate"><span class="pre">/bsp/airi5c_usb.cfg</span></code> file with the <code class="docutils literal notranslate"><span class="pre">-f</span></code> flag. A complete call for the Arty-A7 would be for example: <code class="docutils literal notranslate"><span class="pre">airi5c-base-core/bsp$</span> <span class="pre">openocd</span> <span class="pre">-f</span> <span class="pre">/usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg</span> <span class="pre">-f</span> <span class="pre">airi5c.cfg</span></code>. Analogously for the connection via USB: <code class="docutils literal notranslate"><span class="pre">airi5c-base-core/bsp$</span> <span class="pre">openocd</span> <span class="pre">-f</span> <span class="pre">airi5c_usb.cfg</span></code>.</p>
+<p>Its output is the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Open On-Chip Debugger 0.10.0+dev-01259-gfb477376d (2020-10-13-09:29)
+Licensed under GNU GPL v2
+For bug reports, read
+    http://openocd.org/doc/doxygen/bugs.html
+DEPRECATED! use &#39;adapter speed&#39; not &#39;adapter_khz&#39;
+Info : auto-selecting first available session transport &quot;jtag&quot;. To override use &#39;transport select &lt;transport&gt;&#39;.
+airi5c.tap
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : clock speed 1000 kHz
+Info : JTAG tap: airi5c.tap tap/device found: 0x10001001 (mfg: 0x000 (&lt;invalid&gt;), part: 0x0001, ver: 0x1)
+Info : datacount=1 progbufsize=2
+Info : Examined RISC-V core; found 1 harts
+Info :  hart 0: XLEN=32, misa=0x101124
+Info : starting gdb server for airi5ctarget on 3333
+Info : Listening on port 3333 for gdb connections
+</pre></div>
+</div>
+<p>Critical here is that the RISC-V core is found. This can be seen from the following lines:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Info</span> <span class="p">:</span> <span class="n">Examined</span> <span class="n">RISC</span><span class="o">-</span><span class="n">V</span> <span class="n">core</span><span class="p">;</span> <span class="n">found</span> <span class="mi">1</span> <span class="n">harts</span>
+<span class="n">Info</span> <span class="p">:</span>  <span class="n">hart</span> <span class="mi">0</span><span class="p">:</span> <span class="n">XLEN</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">misa</span><span class="o">=</span><span class="mh">0x101124</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">airi5c_usb.cfg</span></code> must be located in the directory and can be found in the repository under <code class="docutils literal notranslate"><span class="pre">./bsp/airi5c_usb.cfg</span></code>. In this configuration file the interface to be used as well as the expected JEDEC IDs of the AIRISC soft core are specified.</p>
+<p>Upon successful communication and FPGA configuration, OpenOCD displays the connection to the AIRISC debug module and waits for a connection using either telnet or GDB.</p>
+<p>Further hints:</p>
+<ul class="simple">
+<li><p>To connect to the AIRISC via OpenOCD, an alternative driver has to be installed for the corresponding USB device. Use the zadig tool and install the WinUSB driver. This applies as well for the connection with or without the Olimex debugging interface. Example: Connection via OpenOCD using bsp/airi5c_usb.cfg, no Olimex debugger. Install the WinUSB driver using zadig on Digilent USB device (Interface 0).</p></li>
+</ul>
+</section>
+<section id="gdb">
+<h2><a class="toc-backref" href="#id56">GDB</a><a class="headerlink" href="#gdb" title="Permalink to this headline">¶</a></h2>
+<p>The GNU Debugging Bridge is used for debugging software on the AIRISC. The version used is 9.1. This communicates with OpenOCD and can stop the processor at a defined point and e.g. display register contents. This makes finding bugs much easier. To start this powerful tool you should first make sure to start the GDB of the RISC-V toolchain and not the one of the host system architecture. The correct call is therefore as follows:
+<code class="docutils literal notranslate"><span class="pre">:~$</span> <span class="pre">riscv32-unknown-elf-gdb</span></code></p>
+<p>After that, the architecture must be specified and a connection to OpenOCD must be established. This is done as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">arch</span> <span class="n">riscv</span><span class="p">:</span><span class="n">rv32</span>
+<span class="n">target</span> <span class="n">extended</span><span class="o">-</span><span class="n">remote</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">3333</span>
+<span class="n">monitor</span> <span class="n">reset</span> <span class="n">halt</span>
+</pre></div>
+</div>
+<p>To avoid having to type this manually every time GDB is started, a <code class="docutils literal notranslate"><span class="pre">.gdbinit</span></code> file can be created in the home directory. Content of this file are the three lines mentioned above.</p>
+<p>In the OpenOCD console the following entry should appear:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Info</span> <span class="p">:</span> <span class="n">accepting</span> <span class="s1">&#39;gdb&#39;</span> <span class="n">connection</span> <span class="n">on</span> <span class="n">tcp</span><span class="o">/</span><span class="mi">3333</span>
+<span class="n">Info</span> <span class="p">:</span> <span class="n">JTAG</span> <span class="n">tap</span><span class="p">:</span> <span class="n">airi5c</span><span class="o">.</span><span class="n">tap</span> <span class="n">tap</span><span class="o">/</span><span class="n">device</span> <span class="n">found</span><span class="p">:</span> <span class="mh">0x10001001</span> <span class="p">(</span><span class="n">mfg</span><span class="p">:</span> <span class="mh">0x000</span> <span class="p">(</span><span class="o">&lt;</span><span class="n">invalid</span><span class="o">&gt;</span><span class="p">),</span> <span class="n">part</span><span class="p">:</span> <span class="mh">0x0001</span><span class="p">,</span> <span class="n">ver</span><span class="p">:</span> <span class="mh">0x1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the GDB console the .elf file must be loaded into memory. This is done by <code class="docutils literal notranslate"><span class="pre">file</span> <span class="pre">test.elf</span></code> and <code class="docutils literal notranslate"><span class="pre">load</span></code>. After a successful load, the console should show which segments were loaded:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">gdb</span><span class="p">)</span> <span class="n">load</span>
+<span class="n">Loading</span> <span class="n">section</span> <span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">size</span> <span class="mh">0x1f4</span> <span class="n">lma</span> <span class="mh">0x80000000</span>
+<span class="n">Loading</span> <span class="n">section</span> <span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">size</span> <span class="mh">0x2d28</span> <span class="n">lma</span> <span class="mh">0x800001f4</span>
+<span class="n">Loading</span> <span class="n">section</span> <span class="o">.</span><span class="n">rodata</span><span class="p">,</span> <span class="n">size</span> <span class="mh">0x81c</span> <span class="n">lma</span> <span class="mh">0x80002f1c</span>
+<span class="n">Loading</span> <span class="n">section</span> <span class="o">.</span><span class="n">eh_frame</span><span class="p">,</span> <span class="n">size</span> <span class="mh">0x2c</span> <span class="n">lma</span> <span class="mh">0x80003738</span>
+<span class="n">Loading</span> <span class="n">section</span> <span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">size</span> <span class="mh">0xc</span> <span class="n">lma</span> <span class="mh">0x80003764</span>
+<span class="n">Loading</span> <span class="n">section</span> <span class="o">.</span><span class="n">sdata</span><span class="p">,</span> <span class="n">size</span> <span class="mh">0x8</span> <span class="n">lma</span> <span class="mh">0x80003770</span>
+<span class="n">Start</span> <span class="n">address</span> <span class="mh">0x80000000</span><span class="p">,</span> <span class="n">load</span> <span class="n">size</span> <span class="mi">14200</span>
+<span class="n">Transfer</span> <span class="n">rate</span><span class="p">:</span> <span class="mi">55</span> <span class="n">KB</span><span class="o">/</span><span class="n">sec</span><span class="p">,</span> <span class="mi">2366</span> <span class="nb">bytes</span><span class="o">/</span><span class="n">write</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>The loaded program is started by <code class="docutils literal notranslate"><span class="pre">monitor</span> <span class="pre">resume</span></code>. Some useful commands to test the AIRISC are the following:</p>
+<p>Reset and stop core:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">monitor</span> <span class="n">reset</span> <span class="n">halt</span>
+</pre></div>
+</div>
+<p>Read out the first 10 instructions of the debug ROMS:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">monitor</span> <span class="n">mdw</span> <span class="mh">0x00000000</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>Write and read SRAM address with data/instructions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">monitor</span> <span class="n">mww</span> <span class="mh">0x80000000</span> <span class="mh">0x00000013</span>
+<span class="n">monitor</span> <span class="n">mdw</span> <span class="mh">0x80000000</span>
+</pre></div>
+</div>
+<p>Readout timer value (MTIMEL):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">monitor</span> <span class="n">mdw</span> <span class="mh">0xc0000010</span>
+</pre></div>
+</div>
+<p>Set GPIO outputs (control LEDs):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">monitor</span> <span class="n">mww</span> <span class="mh">0xc0000008</span> <span class="mh">0xaaaaaaaa</span>
+<span class="n">monitor</span> <span class="n">mww</span> <span class="mh">0xc0000008</span> <span class="mh">0x55555555</span>
+</pre></div>
+</div>
+<p>Output characters to the UART console:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">monitor</span> <span class="n">mww</span> <span class="mh">0xC0000024</span> <span class="mh">0x00000069</span>
+</pre></div>
+</div>
+</section>
+<section id="eclipse">
+<h2><a class="toc-backref" href="#id57">Eclipse</a><a class="headerlink" href="#eclipse" title="Permalink to this headline">¶</a></h2>
+<p>A good option for developing software is the Eclipse IDE. For this, neither OpenOCD nor GDB has to be operated manually. Eclipse uses these tools in the background and offers a comfortable interface. The connection with the JTAG interface must exist for this (<a class="reference internal" href="#connection-of-the-olimex-jtag-adapter-arty-a7-only">Connection of the Olimex JTAG Adapter (Arty-A7 only)</a> or via USB ). For the RISC-V the <em>Eclipse IDE for Embedded C/C++ Developers</em> should be installed in the current version. At the time of publishing this documentation we use version 2020-12 (4.18.0) Build id: 20201210-1552. Here as an example the project from the <code class="docutils literal notranslate"><span class="pre">\sw</span></code> folder should be imported and configured. Software development with Eclipse is not mandatory, it is also possible to work with a Makefile and the RISC-V toolchain manually via the console. However, Eclipse makes the workflow more comfortable.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id12">
+<a class="reference internal image-reference" href="_images/eclipse_debug.png"><img alt="_images/eclipse_debug.png" src="_images/eclipse_debug.png" style="width: 1024px;" /></a>
+<figcaption>
+<p><span class="caption-text">Abb. 9: Eclipse Debugging View</span><a class="headerlink" href="#id12" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="import-of-the-software-project-into-eclipse">
+<h3>Import of the software project into Eclipse<a class="headerlink" href="#import-of-the-software-project-into-eclipse" title="Permalink to this headline">¶</a></h3>
+<p>The software is located in the subfolder <code class="docutils literal notranslate"><span class="pre">sw</span></code> and can be loaded into Eclipse using the Eclipse Import Wizard. To do this, select <code class="docutils literal notranslate"><span class="pre">Import</span></code> from the <code class="docutils literal notranslate"><span class="pre">File</span></code> menu. In the opening wizard <code class="docutils literal notranslate"><span class="pre">General</span></code> - <code class="docutils literal notranslate"><span class="pre">Existing</span> <span class="pre">Projects</span> <span class="pre">into</span> <span class="pre">Workspace</span></code> is selected and the file location is specified by <code class="docutils literal notranslate"><span class="pre">Next</span></code>. There the folder is selected and by clicking <code class="docutils literal notranslate"><span class="pre">Finish</span></code> the project ends up in the workspace.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id13">
+<a class="reference internal image-reference" href="_images/import1.png"><img alt="_images/import1.png" src="_images/import1.png" style="width: 512px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 10: Eclipse import dialog. Selection of the project type</span><a class="headerlink" href="#id13" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id14">
+<a class="reference internal image-reference" href="_images/import2.png"><img alt="_images/import2.png" src="_images/import2.png" style="width: 512px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 11: Eclipse Import dialog. Selection of the archive to be imported</span><a class="headerlink" href="#id14" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Alternatively, the Git repository can be imported instead of the Zip archive. In this case, it must be ensured that the Git project is imported as a general project. (cf. Fig. 12)</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id15">
+<a class="reference internal image-reference" href="_images/import3.png"><img alt="_images/import3.png" src="_images/import3.png" style="width: 512px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 12: Eclipse import dialog for a Git repository</span><a class="headerlink" href="#id15" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="eclipse-configuration">
+<h3>Eclipse configuration<a class="headerlink" href="#eclipse-configuration" title="Permalink to this headline">¶</a></h3>
+<p>After the import process, Eclipse should be configured. To do this, first specify the correct toolchain path in the <code class="docutils literal notranslate"><span class="pre">Preferences</span></code> menu under <code class="docutils literal notranslate"><span class="pre">Windows</span></code>. Similarly, the path to OpenOCD must also be specified.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id16">
+<a class="reference internal image-reference" href="_images/toolchain-path.png"><img alt="_images/toolchain-path.png" src="_images/toolchain-path.png" style="width: 1024px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 13: Eclipse: Selection of the toolchain directory</span><a class="headerlink" href="#id16" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id17">
+<a class="reference internal image-reference" href="_images/openocd-path.png"><img alt="_images/openocd-path.png" src="_images/openocd-path.png" style="width: 1024px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 14: Eclipse: Selection of the OpenOCD directory</span><a class="headerlink" href="#id17" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Depending on the installed toolchain, its name must be adjusted in Eclipse. This is done in the project settings. A right click on the project name - <code class="docutils literal notranslate"><span class="pre">Properties</span></code> opens the corresponding dialog. There you can specify under <code class="docutils literal notranslate"><span class="pre">C/C++</span> <span class="pre">Build</span></code> - <code class="docutils literal notranslate"><span class="pre">Settings</span></code> - <code class="docutils literal notranslate"><span class="pre">Toolchains</span></code> how the prefix is.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id18">
+<a class="reference internal image-reference" href="_images/toolchain-settings.png"><img alt="_images/toolchain-settings.png" src="_images/toolchain-settings.png" style="width: 1024px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 15: Eclipse: Selecting the correct toolchain. The prefix must be adapted</span><a class="headerlink" href="#id18" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>After that a Debug Configuration should be created. This is done by right clicking on the project name - <code class="docutils literal notranslate"><span class="pre">Debug</span> <span class="pre">As</span></code> - <code class="docutils literal notranslate"><span class="pre">Debug</span> <span class="pre">Configuration</span></code>. There you select GDB OpenOCD Debugging and create a new config by clicking the small icons in the upper left corner. In the new dialog you have to make the changes according to Fig. 17.</p>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id19">
+<a class="reference internal image-reference" href="_images/debug-config-app.png"><img alt="_images/debug-config-app.png" src="_images/debug-config-app.png" style="width: 1024px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 16: Eclipse: Configuration of the debug target</span><a class="headerlink" href="#id19" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<figure class="align-default" id="id20">
+<a class="reference internal image-reference" href="_images/debug-config-openocd.png"><img alt="_images/debug-config-openocd.png" src="_images/debug-config-openocd.png" style="width: 1024px;" /></a>
+<figcaption>
+<p><span class="caption-text">Fig. 17: Eclipse: Configuration of the OpenOCD debug targets</span><a class="headerlink" href="#id20" title="Permalink to this image">¶</a></p>
+</figcaption>
+</figure>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>Further hints:</p>
+<ul class="simple">
+<li><p>At the time of this commit, the C-Extension cannot be activated for software which is targetted to an FPGA-platform due to memory-access issues with the block RAM (<code class="docutils literal notranslate"><span class="pre">Project</span> <span class="pre">Preferences</span></code> - <code class="docutils literal notranslate"><span class="pre">C/C++</span> <span class="pre">Build-&gt;Settings</span></code> - <code class="docutils literal notranslate"><span class="pre">Tool</span> <span class="pre">Settings</span></code>).</p></li>
+<li><p>The Commands-String under <code class="docutils literal notranslate"><span class="pre">GDB</span> <span class="pre">Client</span> <span class="pre">Setup</span></code> shown in Fig. 17 may result in errors during startup in certain configurations. Try using only “set arch riscv:rv32” and remove the remaining commands in that case.</p></li>
+<li><p>Under <code class="docutils literal notranslate"><span class="pre">Debug-Configuration</span></code> - <code class="docutils literal notranslate"><span class="pre">Startup</span></code> uncheck “Enable Arm semihosting”.</p></li>
+</ul>
+<p>Clicking on <code class="docutils literal notranslate"><span class="pre">Build</span> <span class="pre">Project</span></code> should now output the following to the console:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">15</span><span class="p">:</span><span class="mi">42</span><span class="p">:</span><span class="mi">45</span> <span class="o">****</span> <span class="n">Incremental</span> <span class="n">Build</span> <span class="n">of</span> <span class="n">configuration</span> <span class="n">Debug</span> <span class="k">for</span> <span class="n">project</span> <span class="n">Hello_World</span> <span class="o">****</span>
+<span class="n">make</span> <span class="nb">all</span>
+<span class="n">Invoking</span><span class="p">:</span> <span class="n">GNU</span> <span class="n">RISC</span><span class="o">-</span><span class="n">V</span> <span class="n">Cross</span> <span class="n">Print</span> <span class="n">Size</span>
+<span class="n">riscv32</span><span class="o">-</span><span class="n">unknown</span><span class="o">-</span><span class="n">elf</span><span class="o">-</span><span class="n">size</span> <span class="o">--</span><span class="nb">format</span><span class="o">=</span><span class="n">berkeley</span> <span class="s2">&quot;Hello_World.elf&quot;</span>
+    <span class="n">text</span>           <span class="n">data</span>     <span class="n">bss</span>     <span class="n">dec</span>     <span class="nb">hex</span> <span class="n">filename</span>
+        <span class="mi">14834</span>      <span class="mi">2108</span>      <span class="mi">60</span>   <span class="mi">17002</span>    <span class="mi">426</span><span class="n">a</span> <span class="n">Hello_World</span><span class="o">.</span><span class="n">elf</span>
+<span class="n">Finished</span> <span class="n">building</span><span class="p">:</span> <span class="n">Hello_World</span><span class="o">.</span><span class="n">siz</span>
+<span class="mi">15</span><span class="p">:</span><span class="mi">42</span><span class="p">:</span><span class="mi">45</span> <span class="n">Build</span> <span class="n">Finished</span><span class="o">.</span> <span class="mi">0</span> <span class="n">errors</span><span class="p">,</span> <span class="mi">0</span> <span class="n">warnings</span><span class="o">.</span> <span class="p">(</span><span class="n">took</span> <span class="mi">169</span><span class="n">ms</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With a right click on the project -&gt; <code class="docutils literal notranslate"><span class="pre">Debug</span> <span class="pre">as</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Debug</span> <span class="pre">Configurations</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Debug</span></code> the debugging view is started.</p>
+</section>
+</section>
+<section id="test-and-validation">
+<h2><a class="toc-backref" href="#id58">Test and validation</a><a class="headerlink" href="#test-and-validation" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="hello-world">
+<h2><a class="toc-backref" href="#id59">Hello World</a><a class="headerlink" href="#hello-world" title="Permalink to this headline">¶</a></h2>
+<p>In the “Hello World” Eclipse project, the basic functionality is demonstrated. The following components of the core are used for this purpose:</p>
+<ul class="simple">
+<li><p>UART Interface</p></li>
+<li><p>TIMER</p></li>
+<li><p>GPIO</p></li>
+<li><p>Custom Instructions</p></li>
+</ul>
+<p>After a start the program displays a menu on the serial console, there the options are described. On the one hand the state of the GPIOs can be toggled, these are connected to the on-board LEDs on the FPGA. On the other hand a timer can be started, this gives a message on the serial console every second. Additionally a custom instruction can be executed, this demonstrates the possibility to extend the core with the PCPI interface to implement special hardware acceleration.</p>
+</section>
+<section id="benchmarking">
+<h2><a class="toc-backref" href="#id60">Benchmarking</a><a class="headerlink" href="#benchmarking" title="Permalink to this headline">¶</a></h2>
+<section id="coremark">
+<h3>CoreMark<a class="headerlink" href="#coremark" title="Permalink to this headline">¶</a></h3>
+<p>CoreMark is the de facto standard to compare the performance of processors in the embedded area. The implementation for AIRISC is located in the <code class="docutils literal notranslate"><span class="pre">airi5c</span></code> folder in the <code class="docutils literal notranslate"><span class="pre">coremark</span></code> directory. To compile this, the riscv-toolchain must have been fully installed, then it is sufficient to run make with a reference to the appropriate port. This is done from the <code class="docutils literal notranslate"><span class="pre">coremark</span></code> directory as follows: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">PORT_DIR=airi5c</span></code>. The binary is named <code class="docutils literal notranslate"><span class="pre">coremark.elf</span></code> and is located in the same directory.</p>
+<p>The results of the core are listed in the chapter <a href="#id64"><span class="problematic" id="id65">`Benchmarks`_</span></a> for an FPGA implementation.</p>
+</section>
+</section>
+<section id="reference-portings">
+<h2><a class="toc-backref" href="#id61">Reference portings</a><a class="headerlink" href="#reference-portings" title="Permalink to this headline">¶</a></h2>
+<section id="freertos">
+<h3>FreeRTOS<a class="headerlink" href="#freertos" title="Permalink to this headline">¶</a></h3>
+<p>A FreeRTOS demo application is located as an Eclipse project in the subdirectory <code class="docutils literal notranslate"><span class="pre">\sw\AIRI5C_FreeRTOS</span></code>. This is a port of the official FreeRTOS blinky demo. Two processes are created which communicate with each other. The first process sends a message to the second one, which prints the message over the serial console. In the background a scheduler ensures that both processes get the necessary execution time on the processor. The functionality of the two privilege levels U/M and the system timer is shown.</p>
+<p>The output of the serial console can be displayed e.g. with Cutecom or Putty. The baud rate is 76800, the parity even. The following output should appear in the console:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Starting</span><span class="o">...</span><span class="n">Blink</span>
+<span class="n">Blink</span>
+<span class="n">Blink</span>
+<span class="n">Blink</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to AIRI5C Base Core’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2022, Fraunhofer IMS.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

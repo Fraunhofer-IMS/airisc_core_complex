@@ -19,8 +19,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'AIRI5C Base Core'
-copyright = u'2020, Fraunhofer IMS'
+project = u'AIRISC Core Complex'
+copyright = u'2022, Fraunhofer IMS'
 author = u'Fraunhofer IMS'
 
 # The short X.Y version
@@ -109,7 +109,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'AIRI5CBaseCoredoc'
+htmlhelp_basename = 'AIRISCBaseCoredoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -136,7 +136,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'AIRI5CBaseCore.tex', u'AIRI5C Base Core Documentation',
+    (master_doc, 'AIRI5CBaseCore.tex', u'AIRISC Base Core Documentation',
      u'Fraunhofer IMS', 'manual'),
 ]
 
@@ -146,7 +146,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'airi5cbasecore', u'AIRI5C Base Core Documentation',
+    (master_doc, 'airi5cbasecore', u'AIRISC Base Core Documentation',
      [author], 1)
 ]
 
@@ -157,8 +157,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'AIRI5CBaseCore', u'AIRI5C Base Core Documentation',
-     author, 'AIRI5CBaseCore', 'One line description of project.',
+    (master_doc, 'AIRI5CBaseCore', u'AIRISC Base Core Documentation',
+     author, 'AIRISCBaseCore', 'One line description of project.',
      'Miscellaneous'),
 ]
 
