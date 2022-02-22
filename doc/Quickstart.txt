@@ -61,9 +61,9 @@ INFO: [Labtools 27-1434] Device xc7a35t (JTAG device index = 0) is programmed wi
 INFO: [Common 17-206] Exiting Vivado at Thu Jul 29 12:36:32 2021...
 
 #############################################
-2. Start openocd
+2. Start openocd and connect to Nexys Video JTAG
 
-:~/airisc_core_complex/$ openocd -f /usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg -f sw/tools/gdb/airisc.cfg
+:~/airisc_core_complex/$ openocd -f sw/tools/gdb/airisc_usb.cfg
 Open On-Chip Debugger 0.10.0+dev-01259-gfb477376d (2020-10-13-09:29)
 Licensed under GNU GPL v2
 For bug reports, read
@@ -104,45 +104,45 @@ Es wird angenommen, dass die Ziel-Architektur riscv:rv32 ist
 Warnung: No executable has been specified and target does not support
 determining executable automatically.  Try using the "file" command.
 0x80000000 in ?? ()
-JTAG tap: airi5c.tap tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
+JTAG tap: riscv.cpu tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
 Toogle LEDs
 Done.
 Load Hello_World.elf
 
 Loading section .init, size 0x234 lma 0x80000000
 Loading section .text, size 0x76fc lma 0x80000234
-Loading section .rodata, size 0x738 lma 0x80007930
-Loading section .srodata.gpio1, size 0x4 lma 0x80008068
-Loading section .srodata.uart1, size 0x4 lma 0x8000806c
-Loading section .srodata.cst4, size 0x4 lma 0x80008070
-Loading section .srodata._global_impure_ptr, size 0x4 lma 0x80008074
-Loading section .srodata.cst8, size 0x50 lma 0x80008078
-Loading section .data, size 0x1cc lma 0x800080c8
-Loading section .sdata._impure_ptr, size 0x4 lma 0x80008294
-Start address 0x80000000, load size 33432
-Transfer rate: 57 KB/sec, 3039 bytes/write.
+Loading section .rodata, size 0x740 lma 0x80007930
+Loading section .srodata.gpio1, size 0x4 lma 0x80008070
+Loading section .srodata.uart1, size 0x4 lma 0x80008074
+Loading section .srodata.cst4, size 0x4 lma 0x80008078
+Loading section .srodata._global_impure_ptr, size 0x4 lma 0x8000807c
+Loading section .srodata.cst8, size 0x50 lma 0x80008080
+Loading section .data, size 0x1cc lma 0x800080d0
+Loading section .sdata._impure_ptr, size 0x4 lma 0x8000829c
+Start address 0x80000000, load size 33440
+Transfer rate: 58 KB/sec, 3040 bytes/write.
 
-Done. Connect to UART 76800 8E1
+Done. Connect to UART 9600 8N1
 (gdb)
 
 #############################################
 4. Display UART output with picocom
 
-:~/airisc_core_complex$ picocom -b 76800 -p e /dev/ttyUSB2
+:~/airisc_core_complex$ picocom -b 9600 /dev/ttyUSB2
 picocom v3.2a
 
-port is        : /dev/ttyUSB2
+port is        : /dev/UART-NexysVideo
 flowcontrol    : none
-baudrate is    : 76800
-parity is      : even
+baudrate is    : 115200
+parity is      : none
 databits are   : 8
 stopbits are   : 1
 escape is      : C-a
 local echo is  : no
 noinit is      : no
-noreset is     : no
+noreset is     : yes
 hangup is      : no
-nolock is      : no
+nolock is      : yes
 send_cmd is    : sz -vv
 receive_cmd is : rz -vv -E
 imap is        :
@@ -155,5 +155,6 @@ exit is        : no
 
 Type [C-a] [C-h] to see available commands
 Terminal ready
-Hello World!
-Program executed in 2562 clock cycles (0.000080 s at 32 MHz)
+
+Hello World AIRISC!
+Program executed in 666527 clock cycles (0.020829 s at 32 MHz)

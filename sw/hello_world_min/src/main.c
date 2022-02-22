@@ -13,7 +13,7 @@ int main()
 
 	gpio1->EN	= 0xffffffff;
 	gpio1->DATA = 0x000000aa;
-	printf("Hello World!\n");
+	printf("Hello World AIRISC!\n\r");
 	fflush(stdout);
 
 	stopCounter = readCounter();
