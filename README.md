@@ -1,4 +1,4 @@
-# AIRISC Base Core
+# AIRISC
 Fraunhofer IMS processor core. RISC-V ISA (RV32IM) with additional periperals. FPGA implementation for [Digilent Nexys Video](https://digilent.com/reference/programmable-logic/nexys-video/start).
 
 ## Table of Contents
