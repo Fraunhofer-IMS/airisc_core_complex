@@ -1,0 +1,5 @@
+# workflow artifacts
+.github/sim_log
+
+# simulator artifacts
+.ci/airi5c-sim
