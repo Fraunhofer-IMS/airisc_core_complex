@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+authors:
+- name: Fraunhofer Institute for Microelectronic Circuits and Systems
+  city: Duisburg
+  post-code: 47057
+  region: NRW
+  country: DE
+  website: https://www.ims.fraunhofer.de/en.html
+title: "The Fraunhofer IMS AIRISC RISC-V Processor"
+version: 1.0.0
+date-released: 2022-02-18
+url: https://github.com/Fraunhofer-IMS/airisc_core_complex
