@@ -2,15 +2,24 @@ name: 'airisc-sim'
 
 on:
   push:
+    branches:
+    - main
+    paths:
+    - 'src/**'
+    - 'tb/**'
   pull_request:
-  schedule:
-    - cron: '0 0 * * 5'
+    branches:
+    - main
+    paths:
+    - 'src/**'
+    - 'tb/**'
   workflow_dispatch:
 
 jobs:
 
   Check:
     runs-on: ubuntu-latest
+    name: 'AIRISC Simulation/Verification Script'
 
     steps:
 
@@ -26,9 +35,15 @@ jobs:
         mkdir $GITHUB_WORKSPACE/iverilog-27082022.tmp
         tar -xzf iverilog-27082022.tar.gz -C $GITHUB_WORKSPACE/iverilog-27082022.tmp/
 
-    - name: '⚙️ Update PATH variable'
+    - name: '⚙️ Update PATH Variable'
       run: echo "$GITHUB_WORKSPACE/iverilog-27082022.tmp/bin" >> $GITHUB_PATH
 
-    - name: '🚀 Run verification script'
+    - name: '🚀 Run Verification Script'
       run: /bin/bash -c "chmod u+x $GITHUB_WORKSPACE/.github/check.sh && $GITHUB_WORKSPACE/.github/check.sh"
+
+    - name: '📤 Archive Simulation Log File'
+      uses: actions/upload-artifact@v3
+      with:
+        name: sim_log
+        path: .github/sim_log
 
