@@ -58,7 +58,7 @@ All releases include a pre-compiled FPGA [bitstream](https://github.com/Fraunhof
 as well as a pre-compiled _"hello world!"_ [application program](https://github.com/Fraunhofer-IMS/airisc_core_complex/tree/main/sw)
 to get started immediately.
 
-:loudspeaker: Feedback from the community is always highly appreciated! Feel free top open a new
+:loudspeaker: **Feedback from the community is always highly appreciated!** Feel free to open a new
 [issue](https://github.com/Fraunhofer-IMS/airisc_core_complex/issues)
 or get in [contact](#Contact) directly if you have questions, requests, ideas or any kind of problems with the provided project.
 
