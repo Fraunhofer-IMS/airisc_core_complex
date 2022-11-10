@@ -192,7 +192,9 @@ module airi5c_csr_file
   // ----------------------------------------------------------
 
   wire    [`XPR_LEN-1:0] mvendorid = `VENDOR_ID;
-  wire    [`XPR_LEN-1:0] marchid   = `ARCH_ID;
+  // official RISC-V architecture ID for AIRISC
+  // see https://github.com/riscv/riscv-isa-manual/blob/master/marchid.md
+  wire    [`XPR_LEN-1:0] marchid   = `XPR_LEN'd31;
   wire    [`XPR_LEN-1:0] mimpid    = `IMPL_ID;
   wire    [`XPR_LEN-1:0] mhartid   = `HART_ID;
 

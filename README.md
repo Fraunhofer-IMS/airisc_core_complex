@@ -23,6 +23,8 @@ a customizable yet powerful system on chip (SoC).
 
 [![RISC-V](https://raw.githubusercontent.com/Fraunhofer-IMS/airisc_core_complex/main/doc/gfx/riscv_logo_small.png)](https://riscv.org/)
 
+[![MARCHID](https://img.shields.io/badge/RISC--V%20Architecture%20ID-31-000000.svg?longCache=true&style=flat-square&colorA=273274&colorB=fbb517)](https://github.com/riscv/riscv-isa-manual/blob/master/marchid.md)
+
 The AIRISC Core Complex is based on a 32-bit RISC-V CPU compatible to the
 [RISC-V unprivileged and privileged specifications](https://riscv.org/technical/specifications/) also supporting
 the [RISC-V External Debug specification](https://riscv.org/wp-content/uploads/2019/03/riscv-debug-release.pdf).

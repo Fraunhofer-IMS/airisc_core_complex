@@ -32,14 +32,6 @@
 
 `define VENDOR_ID 32'h00000000
 
-// Architecture ID
-// MSB *must* be 1 for commercial implementations, 
-// 0 for open source implementations. Open source 
-// IDs are registered by the RISC-V foundation. 
-// Commercial IDs can be chosen freely.
-
-`define ARCH_ID   32'h80000000
-
 // Implementation ID
 // differentiates between versions of the same 
 // architecture.
