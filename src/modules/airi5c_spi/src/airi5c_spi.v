@@ -10,323 +10,515 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
-//
-// File              : airi5c_spi.v
-// Author            : A. Stanitzki    
-// Creation Date     : 11.11.20
-// Last Modified     : 15.02.21
-// Version           : 1.0         
-// Abstract          : SPI Master/Slave module with AHB-Lite interface
 
 `include "airi5c_hasti_constants.vh"
-//`include "rv32_opcodes.vh"
 
 module airi5c_spi
-  #(
-  parameter BASE_ADDR   = 32'hC0000030, 
-  parameter CLK_FREQ_HZ = 16000000,
-  parameter DEFAULT_SD  = 1'b0,
-  parameter DEFAULT_MASTER = 1'b1)
-  (
-  // system clk and reset
-  input                              n_reset,  // active low async reset
-  input                              clk,    // clock
-  // Toggle Pad Drivers
-  output                             enable_master,  // 1 = drive enable for mosi, sclk and nss
-                                                     //     drive disable for miso
-                                                     // 0 = vice versa.
-  // SPI Master Port
-  input                              master_miso,  
-  output  reg                        master_mosi,
-//  output  reg                        master_sclk,
-  output                             master_sclk,
-  output  reg                        master_nss,
+#(
+    parameter   BASE_ADDR       = 'h00000000,
+    parameter   MASTER_ON_RESET = 1'b1,
+    parameter   ADDR_WIDTH      = 3,
+    parameter   DATA_WIDTH      = 8
+)
+(
+    input                                   n_reset,
+    input                                   clk,
 
-  // SPI Slave Port
-  output  reg                        slave_miso,
-  input                              slave_mosi,
-  input                              slave_sclk,
-  input                              slave_nss,
+    output                                  mosi_out,
+    input                                   mosi_in,
+    output                                  mosi_oe,
 
-  // AHB-Lite interface
-  input   [`HASTI_ADDR_WIDTH-1:0]    haddr,    
-  input                              hwrite,   
-  input   [`HASTI_SIZE_WIDTH-1:0]    hsize,
-  input   [`HASTI_BURST_WIDTH-1:0]   hburst,
-  input                              hmastlock,
-  input   [`HASTI_PROT_WIDTH-1:0]    hprot,
-  input   [`HASTI_TRANS_WIDTH-1:0]   htrans,
-  input   [`HASTI_BUS_WIDTH-1:0]     hwdata,
-  output  reg [`HASTI_BUS_WIDTH-1:0] hrdata,
-  output                             hready,
-  output    [`HASTI_RESP_WIDTH-1:0]  hresp
+    output                                  miso_out,
+    input                                   miso_in,
+    output                                  miso_oe,
+
+    output                                  sclk_out,
+    input                                   sclk_in,
+    output                                  sclk_oe,
+
+    output      [3:0]                       ss_out,
+    input                                   ss_in,
+    output                                  ss_oe,
+
+    output                                  int_any,
+    output                                  int_tx_empty,
+    output                                  int_tx_watermark_reached,
+    output                                  int_tx_overflow_error,
+    output                                  int_tx_ready,
+    output                                  int_rx_full,
+    output                                  int_rx_watermark_reached,
+    output                                  int_rx_overflow_error,
+    output                                  int_rx_underflow_error,
+
+    // AHB-Lite interface
+    input       [`HASTI_ADDR_WIDTH-1:0]     haddr,      // address
+    input                                   hwrite,     // write enable
+//  input       [`HASTI_SIZE_WIDTH-1:0]     hsize,      // unused
+//  input       [`HASTI_BURST_WIDTH-1:0]    hburst,     // unused
+//  input                                   hmastlock,  // unused
+//  input       [`HASTI_PROT_WIDTH-1:0]     hprot,      // unused
+    input       [`HASTI_TRANS_WIDTH-1:0]    htrans,     // transfer type (IDLE or NONSEQUENTIAL)
+    input       [`HASTI_BUS_WIDTH-1:0]      hwdata,     // data in
+    output  reg [`HASTI_BUS_WIDTH-1:0]      hrdata,     // data out
+    output                                  hready,     // transfer finished
+    output      [`HASTI_RESP_WIDTH-1:0]     hresp       // transfer status (OKAY or ERROR)
 );
 
-assign hready = 1'b1;
+    `define     DATA_ADDR                   BASE_ADDR + 0
+    `define     CTRL_REG_ADDR               BASE_ADDR + 4
+    `define     CTRL_SET_ADDR               BASE_ADDR + 8
+    `define     CTRL_CLR_ADDR               BASE_ADDR + 12
+    `define     TX_STAT_REG_ADDR            BASE_ADDR + 16
+    `define     TX_STAT_SET_ADDR            BASE_ADDR + 20
+    `define     TX_STAT_CLR_ADDR            BASE_ADDR + 24
+    `define     RX_STAT_REG_ADDR            BASE_ADDR + 28
+    `define     RX_STAT_SET_ADDR            BASE_ADDR + 32
+    `define     RX_STAT_CLR_ADDR            BASE_ADDR + 36
 
-`define SPI_MAX_LEN 64
-`define SPI_REG_ADDR_CTRL BASE_ADDR + 32'h0
-`define SPI_REG_ADDR_DIO  BASE_ADDR + 32'h4
-`define SPI_REG_ADDR_DIO_H  BASE_ADDR + 32'h8
+    reg         [`HASTI_ADDR_WIDTH-1:0]     haddr_reg;
+    reg                                     hwrite_reg;
+    reg         [`HASTI_TRANS_WIDTH-1:0]    htrans_reg;
 
-// default: slave, 100kHz from 32MHz, 8 bit, no int, SD mode.
-`define SPI_REG_DEFAULT_CTRL_SLAVE  32'h00708000
-`define SPI_REG_DEFAULT_CTRL_MASTER 32'h00708008
-`define SPI_REG_DEFAULT_CTRL_SD_SLAVE 32'h00730000
-`define SPI_REG_DEFAULT_CTRL_SD_MASTER  32'h00730008
+    assign                                  hready                  = 1'b1;
+    assign                                  hresp                   = `HASTI_RESP_OKAY;
 
-reg [`HASTI_ADDR_WIDTH-1:0] haddr_r;
-reg                         hwrite_r;
+    // control signals
+    reg         [3:0]                       clk_divider;  // = 2^(x+1)  // 2, 4, ..., 65.536
+    reg                                     clk_phase;                  // no delay, delay    
+    reg                                     clk_polarity;               // non inverted, inverted
+    reg                                     master;                     // master, slave    
+    reg         [1:0]                       active_ss;                  // select slsave 0, 1, 2, or 3
+    reg                                     manual_ss;
+    reg                                     manual_ss_ena;              // ss is driven by 0: master 1: manual_ss
+    
+    wire        [31:0]                      ctrl_reg                =
+                                            {   // signal               // bit  // access
+                                                // byte 3
+                                                8'b00000000,
+                                                // byte 2
+                                                7'b0000000,
+                                                master,                 // 16   // rw
+                                                // byte 1
+                                                2'b00,
+                                                manual_ss_ena,          // 13   // rw
+                                                manual_ss,              // 12   // rw
+                                                2'b00,
+                                                active_ss,              // 9-8  // rw
+                                                // byte 0
+                                                2'b00,
+                                                clk_polarity,           // 5    // rw
+                                                clk_phase,              // 4    // rw
+                                                clk_divider             // 3-0  // rw
+                                            };
+                                            
+    // tx status signals
+    wire        [ADDR_WIDTH:0]              tx_size;
+    reg         [ADDR_WIDTH:0]              tx_watermark;
+    wire                                    tx_full;
+    wire                                    tx_empty;
+    wire                                    tx_watermark_reached    = tx_size <= tx_watermark;
+    reg                                     tx_overflow_error;
+    wire                                    tx_ready;
+    reg                                     tx_empty_IE;
+    reg                                     tx_watermark_reached_IE;
+    reg                                     tx_overflow_error_IE;
+    reg                                     tx_ready_IE;
 
-reg [`XPR_LEN-1:0]          spi_ctrl_r;
-reg [`XPR_LEN-1:0]          spi_dio_r;
-reg [`XPR_LEN-1:0]          spi_dio_h_r;
+    wire        [31:0]                      tx_stat_reg             =
+                                            {   // signal               // bit  // access
+                                                // byte 3
+                                                4'b0000,
+                                                tx_ready_IE,            // 27   // rw
+                                                tx_overflow_error_IE,   // 26   // rw
+                                                tx_watermark_reached_IE,// 25   // rw
+                                                tx_empty_IE,            // 24   // rw
+                                                // byte 2
+                                                3'b000,
+                                                tx_ready,               // 20   // r
+                                                tx_overflow_error,      // 19   // rw
+                                                tx_watermark_reached,   // 18   // r
+                                                tx_empty,               // 17   // r
+                                                tx_full,                // 16   // r
+                                                // byte 1
+                                                {(7-ADDR_WIDTH){1'b0}},
+                                                tx_watermark,           // 15-8 // rw
+                                                // byte 0
+                                                {(7-ADDR_WIDTH){1'b0}},
+                                                tx_size                 // 7-0  // r
+                                            };
+    
+    // rx status signals
+    wire        [ADDR_WIDTH:0]              rx_size;
+    reg         [ADDR_WIDTH:0]              rx_watermark;
+    wire                                    rx_full;
+    wire                                    rx_empty;
+    wire                                    rx_watermark_reached    = rx_size >= rx_watermark;
+    reg                                     rx_overflow_error;
+    reg                                     rx_underflow_error;
+    reg                                     rx_full_IE;
+    reg                                     rx_watermark_reached_IE;
+    reg                                     rx_overflow_error_IE;
+    reg                                     rx_underflow_error_IE;
+    reg                                     rx_ignore;
+
+    wire        [31:0]                      rx_stat_reg             =
+                                            {   // signal               // bit  // access
+                                                // byte 3
+                                                rx_ignore,              // 31   // rw
+                                                3'b000,
+                                                rx_underflow_error_IE,  // 27   // rw
+                                                rx_overflow_error_IE,   // 26   // rw
+                                                rx_watermark_reached_IE,// 25   // rw
+                                                rx_full_IE,             // 24   // rw
+                                                // byte 2
+                                                3'b000,
+                                                rx_underflow_error,     // 20   // rw
+                                                rx_overflow_error,      // 19   // rw
+                                                rx_watermark_reached,   // 18   // r
+                                                rx_empty,               // 17   // r
+                                                rx_full,                // 16   // r
+                                                // byte 1
+                                                {(7-ADDR_WIDTH){1'b0}},
+                                                rx_watermark,           // 15-8 // rw
+                                                // byte 0
+                                                {(7-ADDR_WIDTH){1'b0}},
+                                                rx_size                 // 7-0  // r
+                                            };
+
+    wire                                    m_push;
+    wire        [DATA_WIDTH-1:0]            m_dout;
+    wire                                    m_pop;
+    wire                                    m_ss;
+    wire                                    m_busy;
+
+    wire                                    s_push;
+    wire        [DATA_WIDTH-1:0]            s_dout;
+    wire                                    s_pop;
+    wire                                    s_tx_rclk;
+    wire                                    s_rx_wclk;
+    wire                                    s_busy;
+                                                                    // (htrans_reg[1]) is equal to (htrans_reg != `HASTI_TRANS_IDLE && htrans_reg != `HASTI_TRANS_BUSY)
+    wire                                    tx_push                 = hwrite_reg && haddr_reg == `DATA_ADDR && htrans_reg[1];
+    wire        [DATA_WIDTH-1:0]            tx_din                  = hwdata[DATA_WIDTH-1:0];
+    wire                                    tx_pop                  = master ? m_pop : s_pop;
+    wire        [DATA_WIDTH-1:0]            tx_dout;
+    wire                                    tx_rempty;    
+    
+    wire                                    rx_push                 = (master ? m_push : s_push) && !rx_ignore;
+    wire        [DATA_WIDTH-1:0]            rx_din                  = master ? m_dout : s_dout;
+    wire                                    rx_pop                  = !hwrite_reg && haddr_reg == `DATA_ADDR && htrans_reg[1];
+    wire        [DATA_WIDTH-1:0]            rx_dout;                // read value in first clock cycle, pop vaue in second clock cycle
+    wire                                    rx_wfull;
+    
+    wire                                    m_rx_ov_err             = (rx_push && rx_wfull);
+    
+    // in slave mode the rx overflow signal needs to be crossed from sclk into clk domain
+    // when the signal is set in clk domain, an acknowledgment signal is crossed back into
+    // sclk domain, where the flag resets
+    reg         [1:0]                       s_rx_ov_err; 
+    reg                                     s_rx_ov_err_sclk;
+    wire                                    s_rx_ov_err_ack         = rx_overflow_error;
+    reg         [1:0]                       s_rx_ov_err_ack_sclk;
+    
+    wire                                    ss                      = manual_ss_ena ? manual_ss : m_ss;
+    
+    assign                                  tx_ready                = master ? !m_busy : (!s_busy && tx_empty);
+
+    assign                                  mosi_oe                 = master;
+    assign                                  miso_oe                 = !master;
+    assign                                  sclk_oe                 = master;
+    assign                                  ss_oe                   = master;
+
+    assign                                  ss_out                  = ss_oe ? ~(!ss << active_ss) : 4'b1111;
+
+    assign                                  int_tx_empty                = tx_empty              && tx_empty_IE;
+    assign                                  int_tx_watermark_reached    = tx_watermark_reached  && tx_watermark_reached_IE;
+    assign                                  int_tx_overflow_error       = tx_overflow_error     && tx_overflow_error_IE;
+    assign                                  int_tx_ready                = tx_ready              && tx_ready_IE;
+    assign                                  int_rx_full                 = rx_full               && rx_full_IE;
+    assign                                  int_rx_watermark_reached    = rx_watermark_reached  && rx_watermark_reached_IE;
+    assign                                  int_rx_overflow_error       = rx_overflow_error     && rx_overflow_error_IE;
+    assign                                  int_rx_underflow_error      = rx_underflow_error    && rx_underflow_error_IE;
+
+    assign                                  int_any                 =
+                                                int_tx_empty            || int_tx_watermark_reached || int_tx_overflow_error    ||
+                                                int_tx_ready            || int_rx_full              || int_rx_watermark_reached ||
+                                                int_rx_overflow_error   || int_rx_underflow_error;
 
 
-wire        spi_ready;   //= spi_ctrl_r[31];  // byte in rx buffer (slave mode) or ready to send (master mode)
-// 30:28 unused
-wire  [7:0] spi_clkdiv  = spi_ctrl_r[27:20];  // f_sclk = (fclk >> spi_clkdiv[7:0])
-// 19 unused
-wire  [6:0] spi_datalen = spi_ctrl_r[18:12];  // 0 - 64 bit transactions
-// 11:10 unused
-wire  [1:0] spi_mode    = spi_ctrl_r[9:8];
-// 7:5 unused
-wire        spi_rxint   = spi_ctrl_r[4];    // generate an interrupt if a byte has been received (slave mode)
-wire        spi_master  = spi_ctrl_r[3];    // 0 - slave, 1 - master
-wire        spi_sdmode  = spi_ctrl_r[2];    // spi master in SD card mode (sends CMD0 after reset)
-wire        spi_testgen = spi_ctrl_r[1];    // continuously send test byte A5..
-wire        spi_forcess = spi_ctrl_r[0];    // 1 - force nss LOW, 0 - nss set by transaction
+    always @(posedge clk, negedge n_reset) begin
+        if (!n_reset) begin
+            haddr_reg   <= `HASTI_ADDR_WIDTH'h0;
+            hwrite_reg  <= 1'b0;
+            htrans_reg  <= `HASTI_TRANS_WIDTH'h0;
+        end
 
-
-reg         tx_start_r;
-wire        running;
-reg         master_running, slave_running;
-assign      running = spi_master ? master_running : slave_running;
-assign      enable_master = master_running;
-
-reg         master_ready, slave_ready;
-assign      spi_ready = spi_master ? master_ready : slave_ready;
-
-reg [31:0]  clkdiv_r, next_clkdiv;
-reg         bit_done;
-
-reg [`SPI_MAX_LEN-1:0]  shiftreg_r, next_master_shiftreg, next_slave_shiftreg;
-
-
-always @(posedge clk or negedge n_reset) begin
-  if(~n_reset) begin
-    haddr_r  <= `HASTI_ADDR_WIDTH'h0;
-    hwrite_r <= 1'b0;
-  end else begin 
-    haddr_r  <= haddr;
-    hwrite_r <= hwrite;
-  end
-end
-
-always @(posedge clk or negedge n_reset) begin
-  if(~n_reset) begin
-    hrdata      <= `HASTI_BUS_WIDTH'h0;
-    if((DEFAULT_SD == 1) && (DEFAULT_MASTER == 1)) 
-      spi_ctrl_r <= `SPI_REG_DEFAULT_CTRL_SD_MASTER;
-    else if(DEFAULT_SD) 
-      spi_ctrl_r  <= `SPI_REG_DEFAULT_CTRL_SD_SLAVE;
-    else if(DEFAULT_MASTER)
-      spi_ctrl_r  <= `SPI_REG_DEFAULT_CTRL_MASTER;
-    else
-      spi_ctrl_r <= `SPI_REG_DEFAULT_CTRL_SLAVE;
-    spi_dio_r <= 32'h0;
-    spi_dio_h_r <= 32'h0;
-    tx_start_r  <= 1'b0;
-  end else begin
-    if(hwrite_r) begin
-      if(haddr_r == `SPI_REG_ADDR_CTRL) begin 
-        spi_ctrl_r[23:0] <= hwdata[23:0];
-      end
-
-      if(haddr_r == `SPI_REG_ADDR_DIO) begin 
-        spi_dio_r <= hwdata[31:0];               
-        tx_start_r <= 1'b1;
-      end
-
-      if(haddr_r == `SPI_REG_ADDR_DIO_H) begin
-        spi_dio_h_r <= hwdata[31:0];
-      end
-    end else tx_start_r <= 1'b0;
-
-    if(|htrans) begin
-      case(haddr)
-        (`SPI_REG_ADDR_CTRL) :  begin hrdata <= {spi_ready,spi_ctrl_r[30:0]}; end
-        (`SPI_REG_ADDR_DIO)  :  begin 
-          if(spi_ready)  
-            hrdata <= shiftreg_r[`XPR_LEN-1:0]; 
-          else 
-            hrdata <= `XPR_LEN'hdeadbee1;       
-          end
-        (`SPI_REG_ADDR_DIO_H) : begin 
-          if(spi_ready)  
-            hrdata <= shiftreg_r[`SPI_MAX_LEN-1:`XPR_LEN]; 
-          else 
-            hrdata <= `XPR_LEN'hdeadbee2;       
-          end
-        default: ;
-      endcase
+        else begin
+            haddr_reg   <= haddr;
+            hwrite_reg  <= hwrite;
+            htrans_reg  <= htrans;
+        end
     end
-  end
-end
 
-assign hresp = `HASTI_RESP_OKAY;
+    always @(posedge clk, negedge n_reset) begin
+        if (!n_reset) begin
+            hrdata                  <= `HASTI_BUS_WIDTH'h0;
+            // default SPI settings
+            master                  <= MASTER_ON_RESET;
+            manual_ss_ena           <= 1'b0;
+            manual_ss               <= 1'b1;
+            active_ss               <= 2'd0;
+            clk_polarity            <= 1'b0;
+            clk_phase               <= 1'b0;
+            clk_divider             <= 4'd1;  // 2^(x+1) = 4
 
-// SPI clock generation
+            // default status and interrupt settings
+            tx_watermark            <= 0;
+            rx_watermark            <= 1;
+            
+            tx_ready_IE             <= 1'b0;
+            tx_overflow_error_IE    <= 1'b0;
+            tx_watermark_reached_IE <= 1'b0;
+            tx_empty_IE             <= 1'b0;
 
-wire  [31:0]  cycles_per_symbol; assign cycles_per_symbol = (1 << spi_clkdiv[7:0]);
+            rx_ignore               <= 1'b0;
+            rx_underflow_error_IE   <= 1'b0;
+            rx_overflow_error_IE    <= 1'b0;
+            rx_watermark_reached_IE <= 1'b0;
+            rx_full_IE              <= 1'b0;
 
-always @(posedge clk or negedge n_reset) begin
-  if(~n_reset) begin
-    clkdiv_r <= 32'h0;
-  end else begin
-    if(running) 
-      clkdiv_r <= next_clkdiv;
-    else
-      clkdiv_r <= 0;
-  end
-end
+            // error signals
+            tx_overflow_error       <= 1'b0;
+            rx_underflow_error      <= 1'b0;
+            rx_overflow_error       <= 1'b0;
+        end
 
-
-
-always @* begin
-  if(running) begin
-    next_clkdiv = (clkdiv_r == cycles_per_symbol) ? 32'h0 : (clkdiv_r + 32'h1);
-  end else
-    next_clkdiv = 0;
-
-  bit_done = (clkdiv_r == cycles_per_symbol) ? 1'b1 : 1'b0;  //always counts up to one clk cycle
-end
-
-// Master FSM
-`define MASTER_FSM_IDLE     3'h0
-`define MASTER_FSM_GETDATA  3'h1
-`define MASTER_FSM_SEND     3'h2
-`define MASTER_FSM_STORE    3'h3
-
-reg [2:0] master_state_r, next_master_state;
-reg [6:0] master_bitcnt_r, next_master_bitcnt;
-
-reg master_sclk_pa0;
-reg master_sclk_pa1;
-wire master_sclk_l;
-assign master_sclk_l = (spi_mode[1] == 0)? master_sclk_pa0 : master_sclk_pa1;
-assign master_sclk = (spi_mode[0] == 0)? master_sclk_l : ~master_sclk_l;
-
-always @(posedge clk or negedge n_reset) begin
-  if(~n_reset) begin
-    master_state_r <= `MASTER_FSM_IDLE;
-    shiftreg_r <= `SPI_MAX_LEN'h0;
-    master_bitcnt_r <= 7'h8;
-  end else begin 
-    master_state_r <= next_master_state;
-    shiftreg_r <= spi_master ? next_master_shiftreg : next_slave_shiftreg;
-    master_bitcnt_r <= next_master_bitcnt;
-  end
-end
-
-always @* begin
-  next_master_state = `MASTER_FSM_IDLE;
-  master_running    = 1'b0;
-  next_master_bitcnt= spi_datalen;
-  master_ready    = 1'b0;
-  master_mosi   = 1'b0;
-  master_nss    = 1'b1;
-  master_sclk_pa0   = 1'b0;
-  master_sclk_pa1   = 1'b0;
-  next_master_shiftreg  = shiftreg_r;
-
-  case(master_state_r) 
-    `MASTER_FSM_IDLE   : begin 
-      next_master_state = (spi_master & tx_start_r) ? `MASTER_FSM_GETDATA : `MASTER_FSM_IDLE;
-      master_ready = 1'b1 & ~tx_start_r;
-     end
-    `MASTER_FSM_GETDATA : begin         
-      master_running = 1'b1;
-      master_nss = 1'b0;
-      next_master_shiftreg = ({spi_dio_h_r,spi_dio_r} << (`SPI_MAX_LEN-spi_datalen)); // load data to MSB of shift reg.
-      next_master_state = bit_done ? `MASTER_FSM_SEND : `MASTER_FSM_GETDATA;
+        else begin
+            // cross overflow error from sclk into clk domain (only used in slave mode)
+            s_rx_ov_err             <= {s_rx_ov_err[0], s_rx_ov_err_sclk};
+            // refresh status signals
+            tx_overflow_error       <= tx_overflow_error || (tx_push && tx_full);
+            rx_overflow_error       <= rx_overflow_error || (master ? m_rx_ov_err : s_rx_ov_err[1]);
+            // write access
+            if (hwrite_reg) begin
+                case (haddr_reg)
+                `CTRL_REG_ADDR:     begin
+                                        master                  <= hwdata[16];
+                                        manual_ss_ena           <= hwdata[13];
+                                        manual_ss               <= hwdata[12];
+                                        active_ss               <= hwdata[9:8];
+                                        clk_polarity            <= hwdata[5];
+                                        clk_phase               <= hwdata[4];
+                                        clk_divider             <= hwdata[3:0];
+                                    end
+                `CTRL_SET_ADDR:     begin
+                                        master                  <= hwdata[16]  || master;
+                                        manual_ss_ena           <= hwdata[13]  || manual_ss_ena;
+                                        manual_ss               <= hwdata[12]  || manual_ss;
+                                        active_ss               <= hwdata[9:8] |  active_ss;
+                                        clk_polarity            <= hwdata[5]   || clk_polarity;
+                                        clk_phase               <= hwdata[4]   || clk_phase;
+                                        clk_divider             <= hwdata[3:0] |  clk_divider;
+                                    end
+                `CTRL_CLR_ADDR:     begin
+                                        master                  <= !hwdata[16]  && master;
+                                        manual_ss_ena           <= !hwdata[13]  && manual_ss_ena;
+                                        manual_ss               <= !hwdata[12]  && manual_ss;
+                                        active_ss               <= ~hwdata[9:8] &  active_ss;
+                                        clk_polarity            <= !hwdata[5]   && clk_polarity;
+                                        clk_phase               <= !hwdata[4]   && clk_phase;
+                                        clk_divider             <= ~hwdata[3:0] &  clk_divider;
+                                    end
+                `TX_STAT_REG_ADDR:  begin
+                                        tx_ready_IE             <= hwdata[27];
+                                        tx_overflow_error_IE    <= hwdata[26];
+                                        tx_watermark_reached_IE <= hwdata[25];
+                                        tx_empty_IE             <= hwdata[24];
+                                        tx_overflow_error       <= hwdata[19];
+                                        tx_watermark            <= hwdata[15:8];
+                                    end
+                `TX_STAT_SET_ADDR:  begin
+                                        tx_ready_IE             <= hwdata[27]   || tx_ready_IE;
+                                        tx_overflow_error_IE    <= hwdata[26]   || tx_overflow_error_IE;
+                                        tx_watermark_reached_IE <= hwdata[25]   || tx_watermark_reached_IE;
+                                        tx_empty_IE             <= hwdata[24]   || tx_empty_IE;
+                                        tx_overflow_error       <= hwdata[19]   || tx_overflow_error;
+                                        tx_watermark            <= hwdata[15:8] |  tx_watermark;
+                                    end
+                `TX_STAT_CLR_ADDR:  begin
+                                        tx_ready_IE             <= !hwdata[27]   && tx_ready_IE;
+                                        tx_overflow_error_IE    <= !hwdata[26]   && tx_overflow_error_IE;
+                                        tx_watermark_reached_IE <= !hwdata[25]   && tx_watermark_reached_IE;
+                                        tx_empty_IE             <= !hwdata[24]   && tx_empty_IE;
+                                        tx_overflow_error       <= !hwdata[19]   && tx_overflow_error;
+                                        tx_watermark            <= ~hwdata[15:8] &  tx_watermark;
+                                    end
+                `RX_STAT_REG_ADDR:  begin
+                                        rx_ignore               <= hwdata[31];
+                                        rx_underflow_error_IE   <= hwdata[27];
+                                        rx_overflow_error_IE    <= hwdata[26];
+                                        rx_watermark_reached_IE <= hwdata[25];
+                                        rx_full_IE              <= hwdata[24];
+                                        rx_underflow_error      <= hwdata[20];
+                                        rx_overflow_error       <= hwdata[19];
+                                        rx_watermark            <= hwdata[15:8];
+                                    end
+                `RX_STAT_SET_ADDR:  begin
+                                        rx_ignore               <= hwdata[31]   || rx_ignore;
+                                        rx_underflow_error_IE   <= hwdata[27]   || rx_underflow_error_IE;
+                                        rx_overflow_error_IE    <= hwdata[26]   || rx_overflow_error_IE;
+                                        rx_watermark_reached_IE <= hwdata[25]   || rx_watermark_reached_IE;
+                                        rx_full_IE              <= hwdata[24]   || rx_full_IE;
+                                        rx_underflow_error      <= hwdata[20]   || rx_underflow_error;
+                                        rx_overflow_error       <= hwdata[19]   || rx_overflow_error;
+                                        rx_watermark            <= hwdata[15:8] |  rx_watermark;
+                                    end
+                `RX_STAT_CLR_ADDR:  begin
+                                        rx_ignore               <= !hwdata[31]   && rx_ignore;
+                                        rx_underflow_error_IE   <= !hwdata[27]   && rx_underflow_error_IE;
+                                        rx_overflow_error_IE    <= !hwdata[26]   && rx_overflow_error_IE;
+                                        rx_watermark_reached_IE <= !hwdata[25]   && rx_watermark_reached_IE;
+                                        rx_full_IE              <= !hwdata[24]   && rx_full_IE;
+                                        rx_underflow_error      <= !hwdata[20]   && rx_underflow_error;
+                                        rx_overflow_error       <= !hwdata[19]   && rx_overflow_error;
+                                        rx_watermark            <= ~hwdata[15:8] &  rx_watermark;
+                                    end
+                endcase
+            end
+            // read access
+            if (|htrans && !hwrite) begin
+                case (haddr)
+                `DATA_ADDR:         begin
+                                        rx_underflow_error  <= rx_underflow_error || rx_empty;
+                                        hrdata              <= {{(32-DATA_WIDTH){1'b0}}, rx_dout};
+                                    end
+                `CTRL_REG_ADDR:     hrdata <= ctrl_reg;
+                `TX_STAT_REG_ADDR:  hrdata <= tx_stat_reg;
+                `RX_STAT_REG_ADDR:  hrdata <= rx_stat_reg;
+                default:            hrdata <= 32'h00000000;
+                endcase
+            end
+        end
     end
-    `MASTER_FSM_SEND : begin
-      master_running = 1'b1;
-      master_nss = 1'b0;
-      master_mosi = shiftreg_r[`SPI_MAX_LEN-1];
-	  if(master_bitcnt_r == 0) next_master_state = `MASTER_FSM_STORE;
-	  else begin 
-      master_sclk_pa0 = (clkdiv_r > (cycles_per_symbol >> 1)) ? 1'b1 : 1'b0;
-      master_sclk_pa1 = (clkdiv_r > (cycles_per_symbol >> 1)) ? 1'b0 : 1'b1;
-      next_master_shiftreg = bit_done ? {shiftreg_r[`SPI_MAX_LEN-2:0],master_miso} : shiftreg_r;          
-      next_master_bitcnt = bit_done ? (master_bitcnt_r - 4'h1) : master_bitcnt_r;
-	  next_master_state = `MASTER_FSM_SEND;
-	  end
-//      master_sclk_r = (clkdiv_r > (cycles_per_symbol >> 1)) ? 1'b1 : 1'b0;
-//      next_master_shiftreg = bit_done ? {shiftreg_r[`SPI_MAX_LEN-2:0],master_miso} : shiftreg_r;          
-//      next_master_bitcnt = bit_done ? (master_bitcnt_r - 4'h1) : master_bitcnt_r;
-//      next_master_state = (master_bitcnt_r == 0) ? `MASTER_FSM_STORE : `MASTER_FSM_SEND;   //put this in a if clause 
+    
+    always @(posedge s_rx_wclk, negedge n_reset) begin
+        if (!n_reset) begin
+            s_rx_ov_err_sclk        <= 1'b0;
+            s_rx_ov_err_ack_sclk    <= 2'b00;
+        end
+        
+        else begin
+            // cross rx overflow error set signal from clk into sclk domain
+            s_rx_ov_err_ack_sclk    <= {s_rx_ov_err_ack_sclk[0], s_rx_ov_err_ack};
+            // reset flag in sclk domain, when flag in clk domain is set
+            if (s_rx_ov_err_ack_sclk[1])
+                s_rx_ov_err_sclk    <= 1'b0;
+            else
+                s_rx_ov_err_sclk    <= s_rx_ov_err_sclk || (rx_push && rx_wfull);
+        end
     end
-    `MASTER_FSM_STORE : begin
-      master_running = 1'b1;
-      master_nss = 1'b0;
-      next_master_state = bit_done ? `MASTER_FSM_IDLE : `MASTER_FSM_STORE;
-    end
-  endcase
-end
 
-// Slave FSM
+    airi5c_spi_master #(DATA_WIDTH) spi_master_inst
+    (
+        .clk(clk),
+        .n_reset(n_reset),
+        .enable(master),
 
-`define SLAVE_FSM_IDLE     3'h0
-`define SLAVE_FSM_GETDATA  3'h1
-`define SLAVE_FSM_SEND     3'h2
-`define SLAVE_FSM_STORE    3'h3
+        .mosi(mosi_out),
+        .miso(miso_in),
+        .sclk(sclk_out),
+        .ss(m_ss),
 
-reg [2:0] slave_state_r, next_slave_state;
-reg [6:0] slave_bitcnt_r, next_slave_bitcnt;
-reg   slave_sclk_r;
+        .clk_divider(clk_divider),
+        .clk_polarity(clk_polarity),
+        .clk_phase(clk_phase),
 
-always @(posedge clk or negedge n_reset) begin
-  if(~n_reset) begin
-    slave_state_r <= `SLAVE_FSM_IDLE;
-    slave_bitcnt_r <= 7'h8;
-    slave_sclk_r <= 1'b0;
-  end else begin 
-    slave_state_r <= next_slave_state;
-    slave_bitcnt_r <= next_slave_bitcnt;
-    slave_sclk_r <= slave_sclk;
-  end
-end
+        .tx_empty(tx_rempty),
 
+        .pop(m_pop),
+        .data_in(tx_dout),
 
-wire  slave_sclk_posedge; assign slave_sclk_posedge = slave_sclk & ~slave_sclk_r;
+        .push(m_push),
+        .data_out(m_dout),
+        
+        .busy(m_busy)
+    );
 
-always @* begin
-  next_slave_state= `SLAVE_FSM_IDLE;
-  slave_running   = 1'b0;
-  next_slave_bitcnt = spi_datalen;
-  slave_ready   = 1'b0;
-  slave_miso    = 1'b0;
-  next_slave_shiftreg   = shiftreg_r;
+    airi5c_spi_slave #(DATA_WIDTH) spi_slave_inst
+    (
+        .clk(clk),
+        .n_reset(n_reset),
+        .enable(!master),
 
-  case(slave_state_r) 
-    `SLAVE_FSM_IDLE   : begin 
-      next_slave_state = (~spi_master & ~slave_nss) ? `SLAVE_FSM_SEND : `SLAVE_FSM_IDLE;
-      next_slave_shiftreg = (spi_dio_r << (`SPI_MAX_LEN-spi_datalen));
-      slave_miso = shiftreg_r[`SPI_MAX_LEN-1];
-    end
-    `SLAVE_FSM_SEND : begin
-      slave_running = 1'b1;
-      slave_miso = shiftreg_r[`SPI_MAX_LEN-1];
-      next_slave_shiftreg = slave_sclk_posedge ? {shiftreg_r[`SPI_MAX_LEN-2:0],slave_mosi} : shiftreg_r;          
-      next_slave_bitcnt = slave_sclk_posedge ? (slave_bitcnt_r - 4'h1) : slave_bitcnt_r;
-      next_slave_state = (slave_bitcnt_r == 0) ? `SLAVE_FSM_STORE : `SLAVE_FSM_SEND;
-    end
-    `SLAVE_FSM_STORE : begin
-      slave_ready = 1'b1;
-      next_slave_state = `SLAVE_FSM_IDLE;
-    end
-  endcase
-end
+        .mosi(mosi_in),
+        .miso(miso_out),
+        .sclk(sclk_in),
+        .ss(ss_in),
+
+        .clk_polarity(clk_polarity),
+        .clk_phase(clk_phase),
+
+        .tx_empty(tx_rempty),
+
+        .tx_rclk(s_tx_rclk),
+        .pop(s_pop),
+        .data_in(tx_dout),
+
+        .rx_wclk(s_rx_wclk),
+        .push(s_push),
+        .data_out(s_dout),
+        
+        .busy(s_busy)
+    );
+
+    airi5c_spi_async_fifo
+    #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) tx_fifo
+    (
+        .n_reset(n_reset),
+        
+        // write clock domain
+        .wclk(clk),
+        .push(tx_push),
+        .data_in(tx_din),
+        .wfull(tx_full),
+        .wempty(tx_empty),
+        .wsize(tx_size),
+
+        // read clock domain
+        .rclk(master ? clk : s_tx_rclk),
+        .pop(tx_pop),
+        .data_out(tx_dout),
+        .rfull(),
+        .rempty(tx_rempty),
+        .rsize()
+    );
+
+    airi5c_spi_async_fifo
+    #(
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .DATA_WIDTH(DATA_WIDTH)
+    ) rx_fifo
+    (
+        .n_reset(n_reset),
+        
+        // write clock domain
+        .wclk(master ? clk : s_rx_wclk),
+        .push(rx_push),
+        .data_in(rx_din),
+        .wfull(rx_wfull),
+        .wempty(),
+        .wsize(),
+
+        // read clock domain
+        .rclk(clk),
+        .pop(rx_pop),
+        .data_out(rx_dout),
+        .rfull(rx_full),
+        .rempty(rx_empty),
+        .rsize(rx_size)
+    );
+
 endmodule

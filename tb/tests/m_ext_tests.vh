@@ -84,7 +84,7 @@ if(result != 0) errorcount = errorcount + 1;
 // ==========================
 // == 7 - M-ISA test - REMU  =
 // ==========================
-$write("REMU    : ");
+$write("REMU   : ");
 testtotal = testtotal + 1;
 run_test_program_bulk(7,"./memfiles/rv32um/rv32um-p-remu.mem",1010,result);
 if(result != 0) errorcount = errorcount + 1;

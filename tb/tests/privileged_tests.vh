@@ -38,7 +38,7 @@ if(result != 0) errorcount = errorcount + 1;
 
 $write("CSR     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(2,"./memfiles/rv32mi/rv32mi-p-csr.mem",500,result);
+run_test_program_bulk(2,"./memfiles/rv32mi/rv32mi-p-csr.mem",2054,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // ========================================

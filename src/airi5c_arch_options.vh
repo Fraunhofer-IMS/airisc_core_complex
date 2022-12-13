@@ -12,7 +12,7 @@
 //
 //
 // File             : airi5c_arch_options.vh
-// Author           : A. Stanitzki
+// Author           : A. Stanitzki, I. Hoyer 
 // Creation Date    : 09.10.20
 // Last Modified    : 15.02.21
 // Version          : 1.0
@@ -23,10 +23,21 @@
 //                    target scripts have to match these ID codes.
 //
 
+//Supress dolphin warnings 
+// Standard is defined, to avoid unneccessary warnings between ISA Tests. 
+`ifdef CONFIG_DOLPHIN_SRAM
+`define   SUPR_DOLPHIN
+//`undef    SUPR_DOLPHIN
+`endif
 
 // System clock speed (in MHz)    - used to derive some timings, e.g. for UART
 
 `define SYS_CLK_HZ 32'd32000000
+
+
+// =======================
+// = Core Identification =
+// =======================
 
 // official JEDEC vendor ID (if obtained)
 
@@ -45,6 +56,7 @@
 // for each HART/Core.
 
 `define HART_ID   32'h00000000
+
 
 // ===================================
 // = Select supported ISA Extensions =
@@ -70,8 +82,8 @@
 
 // Default = undefined (no hardware floats)
 
-`undef ISA_EXT_F
-//`define ISA_EXT_F
+//`undef ISA_EXT_F
+`define ISA_EXT_F
 
 // ISA Extension "C" - compressed instructions
 // ===========================================
@@ -83,8 +95,8 @@
 
 // Default = defined (compressed instructions supported)
 
-//`undef ISA_EXT_C
-`define ISA_EXT_C
+`undef ISA_EXT_C
+//`define ISA_EXT_C
 
 // ISA Extension "M" - hardware MUL/DIV/REM
 // ========================================
@@ -130,6 +142,15 @@
 // `undef ISA_EXT_CUSTOM
 `define ISA_EXT_CUSTOM
 
+// Custom AI Functions 
+// Sigmoid, Tanh, e-Function 
+// ========================================
+//
+// Default = undefined
+`undef ISA_EXT_AIACC
+//`define ISA_EXT_AIACC
+
+
 
 // EFPGA for CUSTOM ISA extensions
 // ========================================
@@ -145,8 +166,23 @@
 // = Architectural options / peripherals =
 // =======================================
 
+// enable safety options
+// ====================
+`undef WITH_SAFETY_FEATURES
+//`define WITH_SAFETY_FEATURES
+
 // Core / Debug options
 // ====================
+
+// Prefetch Buffer constants
+`define PREFETCH_DEPTH 1
+`define PREFETCH_INDEX_WIDTH 3
+`define PREFETCH_WIDTH 32
+`define PREFETCH_INPUTWIDTH_MULTIPLIER 1
+`define PREFETCH_INPUTWIDTH `PREFETCH_INPUTWIDTH_MULTIPLIER*`PREFETCH_WIDTH
+
+// Prefetch Buffer ShortCut for Debugging
+//`define prebuf_shortcut
 
 // Entry point after reset
 `define START_HANDLER `XPR_LEN'h80000000
@@ -173,8 +209,8 @@
 // Define base addresses and address space of 
 // memories and peripherals. 
 
-`define MEMORY_BASE_ADDR  32'h80000000
-`define MEMORY_ADDR_WIDTH 32'd30 
+`define MEMORY_BASE_ADDR        32'h80000000
+`define MEMORY_ADDR_WIDTH       32'd30
 
 // Memory mapped Peripherals
 // =========================
@@ -182,14 +218,35 @@
 `define SYSTEM_TIMER_BASE_ADDR  32'hC0000100
 `define SYSTEM_TIMER_ADDR_WIDTH 32'd8
 
-`define UART1_BASE_ADDR        32'hC0000200
-`define UART1_ADDR_WIDTH       32'd8
+`define UART0_BASE_ADDR         32'hC0000200
+`define UART0_ADDR_WIDTH        32'd8
 
-`define SPI1_BASE_ADDR         32'hC0000300 
-`define SPI1_ADDR_WIDTH        32'd8
+`define UART1_BASE_ADDR         32'hC0000300
+`define UART1_ADDR_WIDTH        32'd8
 
-`define GPIO1_BASE_ADDR        32'hC0000400
-`define GPIO1_ADDR_WIDTH       32'd8
+`define SPI0_BASE_ADDR          32'hC0000400
+`define SPI0_ADDR_WIDTH         32'd8
 
-`define ICAP_BASE_ADDR         32'hC0000500
-`define ICAP_ADDR_WIDTH        32'd8 
+`define SPI1_BASE_ADDR          32'hC0000500
+`define SPI1_ADDR_WIDTH         32'd8
+
+`define GPIO0_BASE_ADDR         32'hC0000600
+`define GPIO0_ADDR_WIDTH        32'd8
+
+`define ICAP_BASE_ADDR          32'hC0000700
+`define ICAP_ADDR_WIDTH         32'd8
+
+
+// ==============================================
+// = Performance tweaks / architectural choices =
+// ==============================================
+
+// Enable hardware reset for internal memories (register
+// file, FIFOs, ...); default = ENABLED
+// FPGA-only: disabling this feature allows to auto-map
+// certain memories to block/distributed RAM (leading to
+// less logic & routing utilization)
+// ====================
+
+`define WITH_MEM_HW_RESET
+//`undef WITH_MEM_HW_RESET

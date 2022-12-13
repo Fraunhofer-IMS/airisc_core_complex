@@ -111,11 +111,11 @@ $write("done stepping. should be in debug mode now..\n");
 
 $write("Info: test read/write of peripheral memory regions.. \n");
 $write("Info: JTAG TAP: write data to TIMECMPL register..\n");
-jtag_write_mem(32'hC0000018,32'h0000CEFF,result);
+jtag_write_mem(32'hC0000108,32'h0000CEFF,result);
 jtag_wait8;
 $write("Info: read value of TIMEL register.. ");
-jtag_read_mem(32'hC0000010,result);
-$write("read %x from memory 0xc0000010\n",result);
+jtag_read_mem(32'hC0000100,result);
+$write("read %x from memory 0xc0000100\n",result);
 jtag_wait8;
 $write("Info: read first instruction from IMEM.. ");
 jtag_read_mem(32'h80000000,result);

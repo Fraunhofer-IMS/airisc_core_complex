@@ -10,14 +10,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
-
-//`include "rv32_opcodes.vh"
+`timescale 1ns/1ns
+`include "rv32_opcodes.vh"
 `include "airi5c_csr_addr_map.vh"
 `include "airi5c_ctrl_constants.vh"
 `include "airi5c_arch_options.vh"
 
 `ifdef ISA_EXT_F
-  `include "modules/airi5c_fpu/airi5c_fpu_constants.vh"
+  `include "modules/airi5c_fpu/airi5c_FPU_constants.vh"
 `endif
 
 module airi5c_csr_file
@@ -45,7 +45,7 @@ module airi5c_csr_file
   output                            illegal_access_debug, // in debug mode only undefined CSR registers or write attempts to read-only regs are reported
 
   output      [`PRV_WIDTH-1:0]      prv,                  // privilege level, see airi5c_csr_addr_map.vh, e.g. MACHINE / USER / SUPERVISORill 
- 
+
   input                             retire,               // an instruction will retire this cycle
   input                             exception,            // Exception received
   input       [`MCAUSE_WIDTH-1:0]   exception_code,       // the part of MCAUSE describing the exception
@@ -53,7 +53,6 @@ module airi5c_csr_file
   input                             eret,                 // MRET/URET or SRET in EXEC stage. We only implement MRET for M->U returns
   input                             dret,
   input                             redirect,             // 06.08.19, ASt - added to determine new dpc value (jmp or no jmp?)      
-  input       [`XPR_LEN-1:0]        branch_target,
   input       [`XPR_LEN-1:0]        exception_load_addr,  // Memory access address in case of exception
   input       [`XPR_LEN-1:0]        exception_PC,         // PC of the instruction causing the exception (NOT the instruction after!)
 
@@ -64,68 +63,66 @@ module airi5c_csr_file
   output                            interrupt_taken,      // at least unmasked interrupt is pending and will be serviced now.
   output      [`MCAUSE_WIDTH-1:0]   interrupt_code_EX,
   
-  output                            stepmode,   
+  output                            stepmode,
   output                            dmode_WB,
 
   input                             stall_WB,             // get info on stalled WB to hold pending interrupts until they can be handled. ASt 08/20
-  input                             bubble_in_WB,
-  input       [`XPR_LEN-1:0]        inst_WB 
-  
+  input       [`XPR_LEN-1:0]        inst_WB
+
 `ifdef ISA_EXT_F
   ,
   // FPU
   input       [`FPU_OP_WIDTH-1:0]   fpu_op,
-  input							                fpu_busy,
-  input							                fpu_ready,
+  input                             fpu_ready,
   input                             NX,
   input                             UF,
   input                             OF,
   input                             DZ,
   input                             NV,
   output      [2:0]                 rounding_mode,
-  input                             fpu_reg_dirty, 
-  output                            fpu_ena  
+  input                             fpu_reg_dirty,
+  output                            fpu_ena
 `endif
 );
 
    // User Counter/Timer
 `ifndef ISA_EXT_E
-  reg     [`CSR_COUNTER_WIDTH-1:0]  cycle_full;          // Cycle counter, counts cycles since reset
+  reg     [`CSR_COUNTER_WIDTH-1:0]  cycle_full;         // Cycle counter, counts cycles since reset
   reg     [`CSR_COUNTER_WIDTH-1:0]  instret_full; 
 `endif
 
   reg     [1:0]                     prv_r;              assign prv      = prv_r;  
 
-  //reg     [`XPR_LEN-1:0]            mie;
+  //reg     [`XPR_LEN-1:0]            mie_reg;
   reg     [`XPR_LEN-1:0]            mip;
   wire    [`XPR_LEN-1:0]            mstatus;
 
-  reg                           dmode;               // debug mode is handled with separate bit
-  reg                           dmode_WB_r;   
+  reg                               dmode;              // debug mode is handled with separate bit
+  reg                               dmode_WB_r;   
   assign dmode_WB = dmode_WB_r;
 
 
   reg     [`XPR_LEN-1:0]            mtvec;              // Machine Trap Vector, sets jump target for traps in Machine privilege mode
-  
+
   reg     [`XPR_LEN-1:0]            mscratch;
   reg     [`XPR_LEN-1:0]            mepc_r;             assign mepc     = mepc_r;
   reg     [`XPR_LEN-1:0]            dpc_r;              assign dpc      = dpc_r;
   // ASt, 06.06.19, bit 2 of dcsr is "step"
   reg     [`XPR_LEN-1:0]            dcsr;               assign stepmode = dcsr[2] & ~dmode;
-                     
+
   wire                              ebreakm             = dcsr[15];
   wire                              ebreaks             = dcsr[13];
   wire                              ebreaku             = dcsr[12];
   wire                              stepie              = dcsr[11];
   wire                              stopcount           = dcsr[10];
   wire                              stoptime            = dcsr[9];
-  wire                              dcause              = dcsr[8:6];
+  wire    [2:0]                     dcause              = dcsr[8:6];
   wire                              mprven              = dcsr[4];
 
   reg     [`XPR_LEN-1:0]            dscratch0; 
   reg     [`XPR_LEN-1:0]            mcause;  
   reg     [`XPR_LEN-1:0]            mbadaddr; 
-  
+
   wire                              system_en;
   wire                              debug_en;
   wire                              system_wen;
@@ -148,6 +145,7 @@ module airi5c_csr_file
   wire                              illegal_inst_fault;
   wire                              inst_addr_fault;
   wire                              loadstore_fault;
+  wire                              page_fault;
 
 
   // ===========================================================
@@ -178,7 +176,7 @@ module airi5c_csr_file
   `ifdef ISA_EXT_M 
     | `MISA_ENC_M
   `endif;
-  
+
   // FPU
 `ifdef ISA_EXT_F
   reg     [`XPR_LEN-1:0]  fcsr;  
@@ -201,8 +199,8 @@ module airi5c_csr_file
   // Trap handler vector calculation
   // -------------------------------
 
-  assign  handler_PC = (exception_code == `MCAUSE_BREAKPOINT) ? debug_handler_addr : {mtvec[31:2],2'b00};                        
-                    
+  assign  handler_PC = (exception_code == `MCAUSE_BREAKPOINT) ? debug_handler_addr : {mtvec[31:2],2'b00};
+
   // =========================
   // = CSR file access ports =
   // =========================
@@ -210,16 +208,16 @@ module airi5c_csr_file
   // CSR CMD decoding
   // ----------------
   assign  system_en             = cmd[2];
-  assign  debug_en              = dm_csr_cmd[2];         
+  assign  debug_en              = dm_csr_cmd[2];
 
   assign  system_wen            = cmd[1] || cmd[0];
-  assign  debug_wen             = dm_csr_cmd[1] || dm_csr_cmd[0]; 
+  assign  debug_wen             = dm_csr_cmd[1] || dm_csr_cmd[0];
 
-  assign  illegal_region        = ~dmode && ((system_wen && (addr[11:10] == 2'b11))    
+  assign  illegal_region        = ~dmode && ((system_wen && (addr[11:10] == 2'b11))
                                 || (system_en && addr[9:8] > prv));
 
-  assign  illegal_region_debug  = (debug_wen && (dm_csr_addr[11:10] == 2'b11));    
-  assign  illegal_access        = illegal_region || (system_en && !defined);             
+  assign  illegal_region_debug  = (debug_wen && (dm_csr_addr[11:10] == 2'b11));
+  assign  illegal_access        = illegal_region || (system_en && !defined);
   assign  illegal_access_debug  = illegal_region_debug || (debug_en && !defined_debug);
 
   assign  wen_internal_or_debug = system_wen | debug_wen;
@@ -240,8 +238,8 @@ module airi5c_csr_file
         `CSR_CLEAR : wdata_internal = (rdata & ~wdata);              // CLEAR
       endcase // case (cmd)
     end
-  end  
-  
+  end
+
   wire          SD          = (mstatus[16] && mstatus[15]) || (mstatus[14] && mstatus[13]);
   // 8'b0 (WPRI)
   wire          TSR         = 1'b0;
@@ -250,11 +248,12 @@ module airi5c_csr_file
   wire          MXR         = 1'b0;
   wire          SUM         = 1'b0;
   wire          MPRV        = 1'b0;
-  reg     [1:0] XS          = 2'b00;
-`ifdef ISA_EXT_F 
+//reg     [1:0] XS;//       = 2'b00;
+  wire    [1:0] XS          = 2'b00;
+`ifdef ISA_EXT_F
   reg     [1:0] FS;
 `else
-  wire    [1:0] FS          = 2'b00;
+  wire    [1:0] FS;//       = 2'b00;
 `endif
   reg     [1:0] MPP;
   // 2'b0 (WPRI)
@@ -267,7 +266,7 @@ module airi5c_csr_file
   // 1'b0 (WPRI)
   wire          SIE         = 1'b0;
   wire          UIE         = 1'b0;
-    
+
   wire          mstatus_wen = wen_internal_or_debug && (addr_muxed == `CSR_ADDR_MSTATUS);
 `ifdef ISA_EXT_F
   wire          FS_dirty    =
@@ -276,23 +275,23 @@ module airi5c_csr_file
     addr_muxed == `CSR_ADDR_FRM ||
     addr_muxed == `CSR_ADDR_FCSR));
 `endif
-    
+
   assign        mstatus     =
   {
     SD,   8'h0, TSR,  TW,   TVM,  MXR,  SUM,  MPRV, XS,   FS,
     MPP,  2'h0, SPP,  MPIE, 1'b0, SPIE, UPIE, MIE,  1'b0, SIE, UIE
-  };   
+  };
 
 `ifdef ISA_EXT_F
   // FS bypass
   always @(*) begin
-    fpu_ena_r = |FS;        
-  
+    fpu_ena_r = |FS;
+
     if (mstatus_wen)
-      fpu_ena_r = |wdata_internal[14:13];           
+      fpu_ena_r = |wdata_internal[14:13];
   end 
 `endif
-    
+
   always @(posedge clk or negedge nreset) begin
     if (~nreset) begin
       dmode <= 1'b0;
@@ -301,17 +300,17 @@ module airi5c_csr_file
       FS    <= 2'b01;
   `endif        
       MPP   <= 2'h`PRV_U;
-      MPIE  <= 1'b1;
-      MIE   <= 1'b1;
+      MPIE  <= 1'b0;
+      MIE   <= 1'b0;
     end else if (mstatus_wen) begin
   `ifdef ISA_EXT_F
       FS    <= wdata_internal[14:13];
   `endif
-            
+
       if ((wdata_internal[12:11] == `PRV_U) || (wdata_internal[12:11] == `PRV_M)) begin
         MPP   <= wdata_internal[12:11];
       end
-                
+
       MPIE  <= wdata_internal[7];
       MIE   <= wdata_internal[3];
     end else if (exception) begin
@@ -328,14 +327,14 @@ module airi5c_csr_file
       prv_r <= MPP;
       //FS    <= ;
       MPP   <= 2'h`PRV_M;
-      MPIE  <= 1'b0;
-      MIE   <= 1'b1;
+      MPIE  <= 1'b1;
+      MIE   <= MPIE;
     end else if (dret) begin
       dmode <= 1'b0;
       prv_r <= dcsr[1:0];
     end
-    `ifdef ISA_EXT_F         
-    else if (FS_dirty)   
+    `ifdef ISA_EXT_F
+    else if (FS_dirty)
       FS    <= 2'b11;
     `endif
   end
@@ -344,8 +343,8 @@ module airi5c_csr_file
 // = Interrupt handling                                                =
 // =====================================================================
 
-  assign uinterrupt = 1'b0;              
-  assign minterrupt = interrupt_pending && MIE;        
+  assign uinterrupt = 1'b0;
+  assign minterrupt = interrupt_pending && MIE;
 
   reg haltreq_r;
 
@@ -414,7 +413,7 @@ module airi5c_csr_file
   
   // FPU
 `ifdef ISA_EXT_F
-  assign wr_fpu_flags = fpu_op != `FPU_OP_NOP && !fpu_busy && fpu_ready;
+  assign wr_fpu_flags = fpu_op != `FPU_OP_NOP && fpu_ready;
   
   always @(posedge clk, negedge nreset) begin
     if (!nreset) begin
@@ -424,6 +423,7 @@ module airi5c_csr_file
       `CSR_ADDR_FFLAGS: fcsr <= {24'h000000, fcsr[7:5], wdata_internal[4:0]};
       `CSR_ADDR_FRM:    fcsr <= {24'h000000, wdata_internal[2:0], fcsr[4:0]};
       `CSR_ADDR_FCSR:   fcsr <= {24'h000000, wdata_internal[7:5], wdata_internal[4:0]};
+      default:;
       endcase
     end else if (wr_fpu_flags) begin
       fcsr[0] <= NX;
@@ -450,7 +450,7 @@ module airi5c_csr_file
   // on an exception, the MEPC points to the causing instruction (which might be repeated then..)
   always @(posedge clk or negedge nreset) begin
     if (~nreset) begin
-      mepc_r <= `START_HANDLER;           
+      mepc_r <= `START_HANDLER;
     end else begin
       if (wen_internal_or_debug && (addr_muxed == `CSR_ADDR_MEPC)) begin
         mepc_r <= wdata_internal; 
@@ -484,12 +484,12 @@ module airi5c_csr_file
     end 
   end 
   
-  assign inst_addr_fault    = (exception_code == `MCAUSE_INST_ADDR_MISALIGNED) || 
+  assign inst_addr_fault    = (exception_code == `MCAUSE_INST_ADDR_MISALIGNED) ||
                               (exception_code == `MCAUSE_INST_ACCESS_FAULT);
 
   assign loadstore_fault    = (exception_code == `MCAUSE_LOAD_ACCESS_FAULT) ||
                               (exception_code == `MCAUSE_STORE_AMO_ACCESS_FAULT) ||
-                              (exception_code == `MCAUSE_LOAD_ADDR_MISALIGNED) ||                            
+                              (exception_code == `MCAUSE_LOAD_ADDR_MISALIGNED) ||
                               (exception_code == `MCAUSE_STORE_AMO_ADDR_MISALIGNED);
 
   assign page_fault         = (exception_code == `MCAUSE_INST_PAGE_FAULT) ||
@@ -582,6 +582,7 @@ module airi5c_csr_file
       `CSR_ADDR_MARCHID    : rdata = marchid;
       `CSR_ADDR_MCAUSE     : rdata = mcause;
       `CSR_ADDR_MEPC       : rdata = mepc; 
+      `CSR_ADDR_MIE        : rdata = 0; // no mie reg, only global interrupt control in mstatus.
       `CSR_ADDR_MISA       : rdata = misa;
       `CSR_ADDR_MIMPID     : rdata = mimpid;
       `CSR_ADDR_MHARTID    : rdata = mhartid;
@@ -593,7 +594,7 @@ module airi5c_csr_file
       `CSR_ADDR_MIP        : rdata = mip;
       `CSR_ADDR_TSELECT    : rdata = 32'hdeadbeef; // for debugger auto-detect
 
-      `ifndef ISA_EXT_E        
+      `ifndef ISA_EXT_E
         `CSR_ADDR_CYCLE    : rdata = cycle_full[0+:`XPR_LEN];
         `CSR_ADDR_CYCLEH   : rdata = cycle_full[`XPR_LEN+:`XPR_LEN];
         `CSR_ADDR_INSTRET  : rdata = instret_full[0+:`XPR_LEN];
@@ -623,6 +624,7 @@ module airi5c_csr_file
       `CSR_ADDR_MARCHID     : dm_csr_rdata = marchid;
       `CSR_ADDR_MCAUSE      : dm_csr_rdata = mcause;
       `CSR_ADDR_MEPC        : dm_csr_rdata = mepc;
+      `CSR_ADDR_MIE         : dm_csr_rdata = 0; // no mie reg, only global mie in mstatus
       `CSR_ADDR_MIP         : dm_csr_rdata = mip;
       `CSR_ADDR_MISA        : dm_csr_rdata = misa;
       `CSR_ADDR_MIMPID      : dm_csr_rdata = mimpid;

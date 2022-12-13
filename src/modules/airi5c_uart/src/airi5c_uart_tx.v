@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //
 
-`include "modules/airi5c_uart/src/airi5c_uart_constants.vh"
+`include "airi5c_uart_constants.vh"
 
 module airi5c_uart_tx
 #(
@@ -20,6 +20,7 @@ module airi5c_uart_tx
 (
     input                             clk,
     input                             n_reset,
+    input                             clear,
 
     output  reg                       tx,
     input                             cts,
@@ -161,6 +162,7 @@ module airi5c_uart_tx
     airi5c_uart_fifo #(STACK_ADDR_WIDTH, 9) tx_fifo
     (
         .n_reset(n_reset),
+        .clear(clear),
         .clk(clk),
 
         // write port

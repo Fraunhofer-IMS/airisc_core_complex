@@ -53,7 +53,7 @@
 `define IR_ADDR_RES15    `IR_LEN'h15
 `define IR_ADDR_RES16    `IR_LEN'h16
 `define IR_ADDR_RES17    `IR_LEN'h17
-`define IR_ADDR_BYPASS1f `IR_LEN'h1f
+`define IR_ADDR_BYPASS1F `IR_LEN'h1f
 
 module airi5c_dtm(      
   input                             clk, 
@@ -81,6 +81,7 @@ reg [`IR_LEN-1:0] IR_shift;
 reg [`DR_LEN-1:0] IDCODE;
 reg [`DR_LEN-1:0] DTM;
 reg [40:0]        DMI;    // 7 bit DMI address + 33:0 as stated by spec 0.13
+reg               BYPASS;
 
 reg tck_r, prev_tck_r;
 reg tck_rising, tck_falling;
@@ -234,17 +235,35 @@ always @(posedge clk or negedge nreset) begin
    end
 end
 
+// BYPASS
+always @(posedge clk or negedge nreset) begin
+   if(~nreset) begin 
+      BYPASS <= 0;
+   end else begin
+    if(tck_rising) begin
+        if (state == `SHIFT_DR) begin
+            BYPASS <= ((IR == `IR_ADDR_BYPASS0) || (IR == `IR_ADDR_BYPASS1F)) ? tdi : BYPASS;
+        end else if (state == `CAPTURE_DR) begin
+            BYPASS <= ((IR == `IR_ADDR_BYPASS0) || (IR == `IR_ADDR_BYPASS1F)) ? 1'b1 : BYPASS;
+        end
+    end
+   end
+end
+
+
 // -- Chip specific -- 
 
 // TDO output mux
 reg tdo_from_register;
 
 always @* begin
-  tdo_from_register = tdi;
+  tdo_from_register = BYPASS;
   case(IR)
     `IR_ADDR_IDCODE   : tdo_from_register = IDCODE[0];
     `IR_ADDR_DTM      : tdo_from_register = DTM[0];
     `IR_ADDR_DMI      : tdo_from_register = DMI[0];
+    `IR_ADDR_BYPASS0  : tdo_from_register = BYPASS;
+    `IR_ADDR_BYPASS1F : tdo_from_register = BYPASS;
   endcase
 end
 

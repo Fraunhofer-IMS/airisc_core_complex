@@ -13,7 +13,9 @@
 
 //
 `include "./airi5c_hasti_constants.vh"
+`ifndef XPR_LEN
 `define XPR_LEN 32
+`endif
 
 module airi5c_custom (
   input                       nreset,
@@ -86,7 +88,6 @@ end
 
 /* ================================== */
 
-integer i;
 reg [`XPR_LEN-1:0]  result_r;
 reg  [`XPR_LEN-1:0] reversed;
 wire [`XPR_LEN-1:0] result_custom;
@@ -103,7 +104,7 @@ always @(posedge clk or negedge nreset) begin
 end
 
 always @* begin
-  reversed[0] = rs1_r[31];
+  reversed[0] = rs1_r[31]; //why not reversed[31:0] = rs1_r[0:31]; or does that only work in VHDl? 
   reversed[1] = rs1_r[30];
   reversed[2] = rs1_r[29];
   reversed[3] = rs1_r[28];

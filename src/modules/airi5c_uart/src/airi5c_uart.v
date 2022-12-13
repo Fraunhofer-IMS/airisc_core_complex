@@ -18,9 +18,7 @@ module airi5c_uart
 #(
     parameter   BASE_ADDR     = 'hC0000200,
     parameter   TX_ADDR_WIDTH = 5,
-    parameter   RX_ADDR_WIDTH = 5,
-    parameter   TX_MARK       = 8,
-    parameter   RX_MARK       = 24
+    parameter   RX_ADDR_WIDTH = 5
 )
 (
     input                                   n_reset,
@@ -32,13 +30,11 @@ module airi5c_uart
     output                                  rts,
 
     output                                  int_any,
-    output                                  int_tx_full,
     output                                  int_tx_empty,
-    output                                  int_tx_mark_reached,
+    output                                  int_tx_watermark_reached,
     output                                  int_tx_overflow_error,
     output                                  int_rx_full,
-    output                                  int_rx_empty,
-    output                                  int_rx_mark_reached,
+    output                                  int_rx_watermark_reached,
     output                                  int_rx_overflow_error,
     output                                  int_rx_underflow_error,
     output                                  int_rx_noise_error,
@@ -59,7 +55,7 @@ module airi5c_uart
     output      [`HASTI_RESP_WIDTH-1:0]     hresp       // transfer status (OKAY or ERROR)
 );
 
-    `define     STACK_ADDR                  BASE_ADDR + 0
+    `define     DATA_ADDR                   BASE_ADDR + 0
     `define     CTRL_REG_ADDR               BASE_ADDR + 4
     `define     CTRL_SET_ADDR               BASE_ADDR + 8
     `define     CTRL_CLR_ADDR               BASE_ADDR + 12
@@ -74,12 +70,13 @@ module airi5c_uart
     reg                                     hwrite_reg;
     reg         [`HASTI_TRANS_WIDTH-1:0]    htrans_reg;
 
-    assign                                  hready                  = 1'b1;
-    assign                                  hresp                   = `HASTI_RESP_OKAY;
+    assign                                  hready                      = 1'b1;
+    assign                                  hresp                       = `HASTI_RESP_OKAY;
 
-    wire                                    push                    = hwrite_reg && haddr_reg == `STACK_ADDR;
-    reg         [8:0]                       data_in;                // read value in first clock cycle, pop vaue in second clock cycle
-    wire                                    pop                     = !hwrite_reg && haddr_reg == `STACK_ADDR && |htrans_reg;
+                                                                        // (htrans_reg[1]) is equal to (htrans_reg != `HASTI_TRANS_IDLE && htrans_reg != `HASTI_TRANS_BUSY)
+    wire                                    push                        = hwrite_reg && haddr_reg == `DATA_ADDR && htrans_reg[1];
+    reg         [8:0]                       data_in;                    // read value in first clock cycle, pop vaue in second clock cycle
+    wire                                    pop                         = !hwrite_reg && haddr_reg == `DATA_ADDR && htrans_reg[1];
     wire        [8:0]                       data_out;
 
     // control signals
@@ -89,7 +86,7 @@ module airi5c_uart
     reg                                     flow_ctrl;              // off, on (RTS/CTS)
     reg         [23:0]                      baud_reg;               // = c_bit = clock_freq / baud rate (system clock cycles per bit)
 
-    wire        [31:0]                      ctrl_reg                =
+    wire        [31:0]                      ctrl_reg                    =
                                             {   // signal               // bits   // access
                                                 data_bits,              // 31-29  // rw
                                                 parity,                 // 28-27  // rw
@@ -100,94 +97,105 @@ module airi5c_uart
 
     // tx status signals
     wire        [TX_ADDR_WIDTH:0]           tx_size;
+    reg         [TX_ADDR_WIDTH:0]           tx_watermark;
     wire                                    tx_full;
     wire                                    tx_empty;
-    wire                                    tx_mark_reached;
+    wire                                    tx_watermark_reached;
     reg                                     tx_overflow_error;
-    reg                                     tx_full_IE;
     reg                                     tx_empty_IE;
-    reg                                     tx_mark_reached_IE;
+    reg                                     tx_watermark_reached_IE;
     reg                                     tx_overflow_error_IE;
+    reg                                     tx_clear;
 
-    wire        [31:0]                      tx_stat_reg             =
+    wire        [31:0]                      tx_stat_reg                 =
                                             {   // signal               // bit    // access
-                                                {12'b0000000000000},
-                                                tx_overflow_error_IE,   // 19     // rw
-                                                tx_mark_reached_IE,     // 18     // rw
-                                                tx_empty_IE,            // 17     // rw
-                                                tx_full_IE,             // 16     // rw
-                                                {4'b0000},
-                                                tx_overflow_error,      // 11     // rw
-                                                tx_mark_reached,        // 10     // r
-                                                tx_empty,               // 9      // r
-                                                tx_full,                // 8      // r
+                                                // byte 3
+                                                tx_clear,               // 31     // rw
+                                                4'b0000,
+                                                tx_overflow_error_IE,   // 26     // rw
+                                                tx_watermark_reached_IE,// 25     // rw
+                                                tx_empty_IE,            // 24     // rw
+                                                // byte 2
+                                                4'b0000,
+                                                tx_overflow_error,      // 19     // rw
+                                                tx_watermark_reached,   // 18     // r
+                                                tx_empty,               // 17     // r
+                                                tx_full,                // 16     // r
+                                                // byte 1
+                                                {(7-TX_ADDR_WIDTH){1'b0}},
+                                                tx_watermark,           // 15-8   // rw
+                                                // byte 0
                                                 {(7-TX_ADDR_WIDTH){1'b0}},
                                                 tx_size                 // 7-0    // r
                                             };
 
     // rx status signals
     wire        [RX_ADDR_WIDTH:0]           rx_size;
+    reg         [RX_ADDR_WIDTH:0]           rx_watermark;
     wire                                    rx_full;
     wire                                    rx_empty;
-    wire                                    rx_mark_reached;
+    wire                                    rx_watermark_reached;
     reg                                     rx_overflow_error;          wire overflow_error_w;
     reg                                     rx_underflow_error;
     reg                                     rx_noise_error;             wire noise_error_w;
     reg                                     rx_parity_error;            wire parity_error_w;
     reg                                     rx_frame_error;             wire frame_error_w;
     reg                                     rx_full_IE;
-    reg                                     rx_empty_IE;
-    reg                                     rx_mark_reached_IE;
+    reg                                     rx_watermark_reached_IE;
     reg                                     rx_overflow_error_IE;
     reg                                     rx_underflow_error_IE;
     reg                                     rx_noise_error_IE;
     reg                                     rx_parity_error_IE;
     reg                                     rx_frame_error_IE;
+    reg                                     rx_clear;
 
-    wire        [31:0]                      rx_stat_reg             =
+    wire        [31:0]                      rx_stat_reg                 =
                                             {   // signal               // bit    // access
-                                                {8'b00000000},
-                                                rx_frame_error_IE,      // 23     // rw
-                                                rx_parity_error_IE,     // 22     // rw
-                                                rx_noise_error_IE,      // 21     // rw
-                                                rx_underflow_error_IE,  // 20     // rw
-                                                rx_overflow_error_IE,   // 19     // rw
-                                                rx_mark_reached_IE,     // 18     // rw
-                                                rx_empty_IE,            // 17     // rw
-                                                rx_full_IE,             // 16     // rw
-                                                rx_frame_error,         // 15     // rw
-                                                rx_parity_error,        // 14     // rw
-                                                rx_noise_error,         // 13     // rw
-                                                rx_underflow_error,     // 12     // rw
-                                                rx_overflow_error,      // 11     // rw
-                                                rx_mark_reached,        // 10     // r
-                                                rx_empty,               // 9      // r
-                                                rx_full,                // 8      // r
+                                                // byte 3
+                                                rx_clear,               // 31     // rw
+                                                rx_frame_error_IE,      // 30     // rw
+                                                rx_parity_error_IE,     // 29     // rw
+                                                rx_noise_error_IE,      // 28     // rw
+                                                rx_underflow_error_IE,  // 27     // rw
+                                                rx_overflow_error_IE,   // 26     // rw
+                                                rx_watermark_reached_IE,// 25     // rw
+                                                rx_full_IE,             // 24     // rw
+                                                // byte 2
+                                                rx_frame_error,         // 23     // rw
+                                                rx_parity_error,        // 22     // rw
+                                                rx_noise_error,         // 21     // rw
+                                                rx_underflow_error,     // 20     // rw
+                                                rx_overflow_error,      // 19     // rw
+                                                rx_watermark_reached,   // 18     // r
+                                                rx_empty,               // 17     // r
+                                                rx_full,                // 16     // r
+                                                // byte 1
+                                                {(7-RX_ADDR_WIDTH){1'b0}},
+                                                rx_watermark,           // 15-8   // rw
+                                                // byte 0
                                                 {(7-RX_ADDR_WIDTH){1'b0}},
                                                 rx_size                 // 7-0    // r
                                             };
 
-    assign                                  rx_mark_reached         = rx_size >= RX_MARK;
-    assign                                  tx_mark_reached         = tx_size <= TX_MARK;
+    assign                                  tx_watermark_reached        = tx_size <= tx_watermark;
+    assign                                  rx_watermark_reached        = rx_size >= rx_watermark;
 
-    assign                                  int_tx_full             = tx_full             && tx_full_IE;
-    assign                                  int_tx_empty            = tx_empty            && tx_empty_IE;
-    assign                                  int_tx_mark_reached     = tx_mark_reached     && tx_mark_reached_IE;
-    assign                                  int_tx_overflow_error   = tx_overflow_error   && tx_overflow_error_IE;
-    assign                                  int_rx_full             = rx_full             && rx_full_IE;
-    assign                                  int_rx_empty            = rx_empty            && rx_empty_IE;
-    assign                                  int_rx_mark_reached     = rx_mark_reached     && rx_mark_reached_IE;
-    assign                                  int_rx_overflow_error   = rx_overflow_error   && rx_overflow_error_IE;
-    assign                                  int_rx_underflow_error  = rx_underflow_error  && rx_underflow_error_IE;
-    assign                                  int_rx_noise_error      = rx_noise_error      && rx_noise_error_IE;
-    assign                                  int_rx_parity_error     = rx_parity_error     && rx_parity_error_IE;
-    assign                                  int_rx_frame_error      = rx_frame_error      && rx_frame_error_IE;
+    assign                                  int_tx_empty                = tx_empty              && tx_empty_IE;
+    assign                                  int_tx_watermark_reached    = tx_watermark_reached  && tx_watermark_reached_IE;
+    assign                                  int_tx_overflow_error       = tx_overflow_error     && tx_overflow_error_IE;
+    assign                                  int_rx_full                 = rx_full               && rx_full_IE;
+    assign                                  int_rx_watermark_reached    = rx_watermark_reached  && rx_watermark_reached_IE;
+    assign                                  int_rx_overflow_error       = rx_overflow_error     && rx_overflow_error_IE;
+    assign                                  int_rx_underflow_error      = rx_underflow_error    && rx_underflow_error_IE;
+    assign                                  int_rx_noise_error          = rx_noise_error        && rx_noise_error_IE;
+    assign                                  int_rx_parity_error         = rx_parity_error       && rx_parity_error_IE;
+    assign                                  int_rx_frame_error          = rx_frame_error        && rx_frame_error_IE;
 
-    assign                                  int_any                 =
-                                                int_tx_full           || int_tx_empty           || int_tx_mark_reached    ||
-                                                int_tx_overflow_error || int_rx_full            || int_rx_empty           ||
-                                                int_rx_mark_reached   || int_rx_overflow_error  || int_rx_underflow_error ||
-                                                int_rx_noise_error    || int_rx_parity_error    || int_rx_frame_error;
+    assign                                  int_any                     =
+                                                int_tx_empty           || int_tx_watermark_reached  || int_tx_overflow_error    ||
+                                                int_rx_full            || int_rx_watermark_reached  || int_rx_overflow_error    ||
+                                                int_rx_underflow_error || int_rx_noise_error        || int_rx_parity_error      ||
+                                                int_rx_frame_error;
 
     always @(posedge clk, negedge n_reset) begin
         if (!n_reset) begin
@@ -205,41 +213,48 @@ module airi5c_uart
 
     always @(posedge clk, negedge n_reset) begin
         if (!n_reset) begin
-            hrdata                <= `HASTI_BUS_WIDTH'h0;
+            hrdata                  <= `HASTI_BUS_WIDTH'h0;
             // default UART settings
-            data_bits             <= `UART_DATA_BITS_8;
-            parity                <= `UART_PARITY_NONE;
-            stop_bits             <= `UART_STOP_BITS_1;
-            flow_ctrl             <= `UART_FLOW_CTRL_OFF;
-            baud_reg              <= 24'd3333;  // cycles_per_bit = clock_freq / baud = 9600 / 32 MHz
+            data_bits               <= `UART_DATA_BITS_8;
+            parity                  <= `UART_PARITY_NONE;
+            stop_bits               <= `UART_STOP_BITS_1;
+            flow_ctrl               <= `UART_FLOW_CTRL_OFF;
+            baud_reg                <= 24'd3333;  // cycles_per_bit = clock_freq / baud = 9600 / 32 MHz
             // default status and interrupt settings
-            tx_overflow_error_IE  <= 1'b0;
-            tx_mark_reached_IE    <= 1'b0;
-            tx_empty_IE           <= 1'b0;
-            tx_full_IE            <= 1'b0;
-            rx_frame_error_IE     <= 1'b0;
-            rx_parity_error_IE    <= 1'b0;
-            rx_noise_error_IE     <= 1'b0;
-            rx_underflow_error_IE <= 1'b0;
-            rx_overflow_error_IE  <= 1'b0;
-            rx_mark_reached_IE    <= 1'b0;
-            rx_empty_IE           <= 1'b0;
-            rx_full_IE            <= 1'b0;
-            tx_overflow_error     <= 1'b0;
-            rx_frame_error        <= 1'b0;
-            rx_parity_error       <= 1'b0;
-            rx_noise_error        <= 1'b0;
-            rx_underflow_error    <= 1'b0;
-            rx_overflow_error     <= 1'b0;
+            tx_watermark            <= 0;
+            rx_watermark            <= 1;
+
+            tx_clear                <= 1'b0;
+            tx_overflow_error_IE    <= 1'b0;
+            tx_watermark_reached_IE <= 1'b0;
+            tx_empty_IE             <= 1'b0;
+
+            rx_clear                <= 1'b0;
+            rx_frame_error_IE       <= 1'b0;
+            rx_parity_error_IE      <= 1'b0;
+            rx_noise_error_IE       <= 1'b0;
+            rx_underflow_error_IE   <= 1'b0;
+            rx_overflow_error_IE    <= 1'b0;
+            rx_watermark_reached_IE <= 1'b0;
+            rx_full_IE              <= 1'b0;
+
+            tx_overflow_error       <= 1'b0;
+            rx_frame_error          <= 1'b0;
+            rx_parity_error         <= 1'b0;
+            rx_noise_error          <= 1'b0;
+            rx_underflow_error      <= 1'b0;
+            rx_overflow_error       <= 1'b0;
         end
 
         else begin
             // refresh status signals
-            tx_overflow_error     <= tx_overflow_error  || push && tx_full;
-            rx_frame_error        <= rx_frame_error     || frame_error_w;
-            rx_parity_error       <= rx_parity_error    || parity_error_w;
-            rx_noise_error        <= rx_noise_error     || noise_error_w;
-            rx_overflow_error     <= rx_overflow_error  || overflow_error_w;
+            tx_overflow_error       <= tx_overflow_error  || push && tx_full;
+            rx_frame_error          <= rx_frame_error     || frame_error_w;
+            rx_parity_error         <= rx_parity_error    || parity_error_w;
+            rx_noise_error          <= rx_noise_error     || noise_error_w;
+            rx_overflow_error       <= rx_overflow_error  || overflow_error_w;
+            tx_clear                <= 1'b0;
+            rx_clear                <= 1'b0;
             // write access
             if (hwrite_reg) begin
                 case (haddr_reg)
@@ -291,77 +306,83 @@ module airi5c_uart
                                         baud_reg              <= ~hwdata[23:0]  &  baud_reg;
                                     end
                 `TX_STAT_REG_ADDR:  begin
-                                        tx_overflow_error_IE  <= hwdata[19];
-                                        tx_mark_reached_IE    <= hwdata[18];
-                                        tx_empty_IE           <= hwdata[17];
-                                        tx_full_IE            <= hwdata[16];
-                                        tx_overflow_error     <= hwdata[11];
+                                        tx_clear                <= hwdata[31];
+                                        tx_overflow_error_IE    <= hwdata[26];
+                                        tx_watermark_reached_IE <= hwdata[25];
+                                        tx_empty_IE             <= hwdata[24];
+                                        tx_overflow_error       <= hwdata[19];
+                                        tx_watermark            <= hwdata[15:8];
                                     end
                 `TX_STAT_SET_ADDR:  begin
-                                        tx_overflow_error_IE  <= hwdata[19] || tx_overflow_error_IE;
-                                        tx_mark_reached_IE    <= hwdata[18] || tx_mark_reached_IE ;
-                                        tx_empty_IE           <= hwdata[17] || tx_empty_IE;
-                                        tx_full_IE            <= hwdata[16] || tx_full_IE ;
-                                        tx_overflow_error     <= hwdata[11] || tx_overflow_error;
+                                        tx_clear                <= hwdata[31]   || tx_clear;
+                                        tx_overflow_error_IE    <= hwdata[26]   || tx_overflow_error_IE;
+                                        tx_watermark_reached_IE <= hwdata[25]   || tx_watermark_reached_IE;
+                                        tx_empty_IE             <= hwdata[24]   || tx_empty_IE;
+                                        tx_overflow_error       <= hwdata[19]   || tx_overflow_error;
+                                        tx_watermark            <= hwdata[15:8] |  tx_watermark;
                                     end
                 `TX_STAT_CLR_ADDR:  begin
-                                        tx_overflow_error_IE  <= !hwdata[19] && tx_overflow_error_IE;
-                                        tx_mark_reached_IE    <= !hwdata[18] && tx_mark_reached_IE ;
-                                        tx_empty_IE           <= !hwdata[17] && tx_empty_IE;
-                                        tx_full_IE            <= !hwdata[16] && tx_full_IE ;
-                                        tx_overflow_error     <= !hwdata[11] && tx_overflow_error;
+                                        tx_clear                <= !hwdata[31]   && tx_clear;
+                                        tx_overflow_error_IE    <= !hwdata[26]   && tx_overflow_error_IE;
+                                        tx_watermark_reached_IE <= !hwdata[25]   && tx_watermark_reached_IE;
+                                        tx_empty_IE             <= !hwdata[24]   && tx_empty_IE;
+                                        tx_overflow_error       <= !hwdata[19]   && tx_overflow_error;
+                                        tx_watermark            <= !hwdata[15:8] &  tx_watermark;
                                     end
                 `RX_STAT_REG_ADDR:  begin
-                                        rx_frame_error_IE     <= hwdata[23];
-                                        rx_parity_error_IE    <= hwdata[22];
-                                        rx_noise_error_IE     <= hwdata[21];
-                                        rx_underflow_error_IE <= hwdata[20];
-                                        rx_overflow_error_IE  <= hwdata[19];
-                                        rx_mark_reached_IE    <= hwdata[18];
-                                        rx_empty_IE           <= hwdata[17];
-                                        rx_full_IE            <= hwdata[16];
-                                        rx_frame_error        <= hwdata[15];
-                                        rx_parity_error       <= hwdata[14];
-                                        rx_noise_error        <= hwdata[13];
-                                        rx_underflow_error    <= hwdata[12];
-                                        rx_overflow_error     <= hwdata[11];
+                                        rx_clear                <= hwdata[31];
+                                        rx_frame_error_IE       <= hwdata[30];
+                                        rx_parity_error_IE      <= hwdata[29];
+                                        rx_noise_error_IE       <= hwdata[28];
+                                        rx_underflow_error_IE   <= hwdata[27];
+                                        rx_overflow_error_IE    <= hwdata[26];
+                                        rx_watermark_reached_IE <= hwdata[25];
+                                        rx_full_IE              <= hwdata[24];
+                                        rx_frame_error          <= hwdata[23];
+                                        rx_parity_error         <= hwdata[22];
+                                        rx_noise_error          <= hwdata[21];
+                                        rx_underflow_error      <= hwdata[20];
+                                        rx_overflow_error       <= hwdata[19];
+                                        rx_watermark            <= hwdata[15:8];
                                     end
                 `RX_STAT_SET_ADDR:  begin
-                                        rx_frame_error_IE     <= hwdata[23] || rx_frame_error_IE;
-                                        rx_parity_error_IE    <= hwdata[22] || rx_parity_error_IE;
-                                        rx_noise_error_IE     <= hwdata[21] || rx_noise_error_IE;
-                                        rx_underflow_error_IE <= hwdata[20] || rx_underflow_error_IE;
-                                        rx_overflow_error_IE  <= hwdata[19] || rx_overflow_error_IE;
-                                        rx_mark_reached_IE    <= hwdata[18] || rx_mark_reached_IE;
-                                        rx_empty_IE           <= hwdata[17] || rx_empty_IE;
-                                        rx_full_IE            <= hwdata[16] || rx_full_IE;
-                                        rx_frame_error        <= hwdata[15] || rx_frame_error;
-                                        rx_parity_error       <= hwdata[14] || rx_parity_error;
-                                        rx_noise_error        <= hwdata[13] || rx_noise_error;
-                                        rx_underflow_error    <= hwdata[12] || rx_underflow_error;
-                                        rx_overflow_error     <= hwdata[11] || rx_overflow_error;
+                                        rx_clear                <= hwdata[31]   || rx_clear;
+                                        rx_frame_error_IE       <= hwdata[30]   || rx_parity_error_IE;
+                                        rx_parity_error_IE      <= hwdata[29]   || rx_parity_error_IE;
+                                        rx_noise_error_IE       <= hwdata[28]   || rx_noise_error_IE;
+                                        rx_underflow_error_IE   <= hwdata[27]   || rx_underflow_error_IE;
+                                        rx_overflow_error_IE    <= hwdata[26]   || rx_overflow_error_IE;
+                                        rx_watermark_reached_IE <= hwdata[25]   || rx_watermark_reached_IE;
+                                        rx_full_IE              <= hwdata[24]   || rx_full_IE;
+                                        rx_frame_error          <= hwdata[23]   || rx_frame_error;
+                                        rx_parity_error         <= hwdata[22]   || rx_parity_error;
+                                        rx_noise_error          <= hwdata[21]   || rx_noise_error;
+                                        rx_underflow_error      <= hwdata[20]   || rx_underflow_error;
+                                        rx_overflow_error       <= hwdata[19]   || rx_overflow_error;
+                                        rx_watermark            <= hwdata[15:8] |  rx_watermark;
                                     end
                 `RX_STAT_CLR_ADDR:  begin
-                                        rx_frame_error_IE     <= !hwdata[23] && rx_frame_error_IE;
-                                        rx_parity_error_IE    <= !hwdata[22] && rx_parity_error_IE;
-                                        rx_noise_error_IE     <= !hwdata[21] && rx_noise_error_IE;
-                                        rx_underflow_error_IE <= !hwdata[20] && rx_underflow_error_IE;
-                                        rx_overflow_error_IE  <= !hwdata[19] && rx_overflow_error_IE;
-                                        rx_mark_reached_IE    <= !hwdata[18] && rx_mark_reached_IE;
-                                        rx_empty_IE           <= !hwdata[17] && rx_empty_IE;
-                                        rx_full_IE            <= !hwdata[16] && rx_full_IE;
-                                        rx_frame_error        <= !hwdata[15] && rx_frame_error;
-                                        rx_parity_error       <= !hwdata[14] && rx_parity_error;
-                                        rx_noise_error        <= !hwdata[13] && rx_noise_error;
-                                        rx_underflow_error    <= !hwdata[12] && rx_underflow_error;
-                                        rx_overflow_error     <= !hwdata[11] && rx_overflow_error;
+                                        rx_clear                <= !hwdata[31]   && rx_clear;
+                                        rx_frame_error_IE       <= !hwdata[30]   && rx_parity_error_IE;
+                                        rx_parity_error_IE      <= !hwdata[29]   && rx_parity_error_IE;
+                                        rx_noise_error_IE       <= !hwdata[28]   && rx_noise_error_IE;
+                                        rx_underflow_error_IE   <= !hwdata[27]   && rx_underflow_error_IE;
+                                        rx_overflow_error_IE    <= !hwdata[26]   && rx_overflow_error_IE;
+                                        rx_watermark_reached_IE <= !hwdata[25]   && rx_watermark_reached_IE;
+                                        rx_full_IE              <= !hwdata[24]   && rx_full_IE;
+                                        rx_frame_error          <= !hwdata[23]   && rx_frame_error;
+                                        rx_parity_error         <= !hwdata[22]   && rx_parity_error;
+                                        rx_noise_error          <= !hwdata[21]   && rx_noise_error;
+                                        rx_underflow_error      <= !hwdata[20]   && rx_underflow_error;
+                                        rx_overflow_error       <= !hwdata[19]   && rx_overflow_error;
+                                        rx_watermark            <= !hwdata[15:8] &  rx_watermark;
                                     end
                 endcase
             end
             // read access
-            if (|htrans) begin
+            else if (|htrans && !hwrite) begin
                 case (haddr)
-                `STACK_ADDR:        begin
+                `DATA_ADDR:         begin
                                         rx_underflow_error  <= rx_underflow_error || rx_empty;
                                         hrdata              <= {23'h000000, data_out};
                                     end
@@ -374,14 +395,13 @@ module airi5c_uart
         end
     end
 
-
     always @(*) begin
         case (data_bits)
-        `UART_DATA_BITS_5:  data_in <= hwdata[4:0];
-        `UART_DATA_BITS_6:  data_in <= hwdata[5:0];
-        `UART_DATA_BITS_7:  data_in <= hwdata[6:0];
-        `UART_DATA_BITS_8:  data_in <= hwdata[7:0];
-        default:            data_in <= hwdata[8:0];
+        `UART_DATA_BITS_5:  data_in = {4'b0000,hwdata[4:0]};
+        `UART_DATA_BITS_6:  data_in = {3'b000,hwdata[5:0]};
+        `UART_DATA_BITS_7:  data_in = {2'b00,hwdata[6:0]};
+        `UART_DATA_BITS_8:  data_in = {1'b0,hwdata[7:0]};
+        default:            data_in = hwdata[8:0];
         endcase
     end
 
@@ -389,6 +409,7 @@ module airi5c_uart
     (
         .clk(clk),
         .n_reset(n_reset),
+        .clear(tx_clear),
 
         .tx(tx),
         .cts(cts),
@@ -406,6 +427,7 @@ module airi5c_uart
     (
         .clk(clk),
         .n_reset(n_reset),
+        .clear(rx_clear),
 
         .rx(rx),
         .rts(rts),

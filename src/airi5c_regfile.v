@@ -40,50 +40,52 @@ module airi5c_regfile(
 `ifdef ISA_EXT_F
   input                             sel_fpu_rs1_i,
   input                             sel_fpu_rs2_i,
+  input                             sel_fpu_rs3_i,
   input                             sel_fpu_rd_i,
   input                             dm_sel_fpu_reg_i,
 `endif
 
-  // debug module port      
+  // debug module port
   input       [`REG_ADDR_WIDTH-1:0] dm_wara_i,
-  
   input       [`XPR_LEN-1:0]        dm_wd_i,
   input                             dm_wen_i,
   output reg  [`XPR_LEN-1:0]        dm_rd_o
 );
 
 `ifndef ISA_EXT_E
-  reg     [`XPR_LEN-1:0]  data [31:1];  // full 32 x 32 bit regs
+  reg     [`XPR_LEN-1:0]  data [31:0];  // full 32 x 32 bit regs
 `else
-  reg     [`XPR_LEN-1:0]  data [15:1];  // reduced 16 x 32 bit regs
+  reg     [`XPR_LEN-1:0]  data [15:0];  // reduced 16 x 32 bit regs
 `endif
 
 `ifdef ISA_EXT_F
   reg     [31:0]          data_fpu [31:0];
   assign  rd1_o = sel_fpu_rs1_i ? data_fpu[ra1_i] : (|ra1_i ? data[ra1_i] : 0);
   assign  rd2_o = sel_fpu_rs2_i ? data_fpu[ra2_i] : (|ra2_i ? data[ra2_i] : 0);
-  assign  rd3_o = 0;
+  assign  rd3_o = sel_fpu_rs3_i ? data_fpu[ra3_i] : (|ra3_i ? data[ra3_i] : 0);
 `else
   assign  rd1_o = |ra1_i ? data[ra1_i] : 0;
-  assign  rd2_o = |ra2_i ? data[ra2_i] : 0;           
-  assign  rd3_o = |ra3_i ? data[ra3_i] : 0;           
+  assign  rd2_o = |ra2_i ? data[ra2_i] : 0;
+  assign  rd3_o = |ra3_i ? data[ra3_i] : 0;
 `endif
   integer i;
 
   always @(*) begin
   `ifdef ISA_EXT_F
-    if (dm_sel_fpu_reg_i)
+    if (dm_sel_fpu_reg_i) begin
       dm_rd_o = data_fpu[dm_wara_i];
-    else if (|dm_wara_i)
+    end else if (|dm_wara_i) begin
       dm_rd_o = data[dm_wara_i];
   `else
-    if (|dm_wara_i)
+    if (|dm_wara_i) begin
       dm_rd_o = data[dm_wara_i];
   `endif
-    else
+    end else begin
       dm_rd_o = 0;
+    end
   end
 
+`ifdef WITH_MEM_HW_RESET // use dedicated hardware reset to initialize whole register file
   always @(posedge clk_i or negedge rst_ni) begin
     if(~rst_ni) begin
       for (i = 1; i < 32; i = i + 1)
@@ -93,21 +95,28 @@ module airi5c_regfile(
       for (i = 0; i < 32; i = i + 1)
         data_fpu[i] <= 32'h7fc00000;
   `endif
-    end
-  
-    else begin
-      if (dm_wen_i) begin
+    end else begin
+`else // no reset at all (allows mapping to FPGA memory primitives)
+  always @(posedge clk_i) begin
+    begin
+`endif
+      if (dm_wen_i) begin // register file write access by debug module
       `ifdef ISA_EXT_F
-        if (dm_sel_fpu_reg_i)
+        if (dm_sel_fpu_reg_i) begin
           data_fpu[dm_wara_i] <= dm_wd_i;
-        else
-          data[dm_wara_i]     <= dm_wd_i;
+        end else begin
+        `ifdef ISA_EXT_E
+          data[dm_wara_i[3:0]] <= dm_wd_i;
+        `else
+          data[dm_wara_i] <= dm_wd_i;
+        `endif
+        end
       `else
         data[dm_wara_i] <= dm_wd_i;
       `endif
-      end									
+      end
 
-      else if (wen_i) begin
+      else if (wen_i) begin // register file write access by CPU pipeline
       `ifdef ISA_EXT_F
         if (sel_fpu_rd_i) begin
           data_fpu[wa_i] <= wd_i;
@@ -128,4 +137,5 @@ module airi5c_regfile(
       end
     end
   end
+
 endmodule

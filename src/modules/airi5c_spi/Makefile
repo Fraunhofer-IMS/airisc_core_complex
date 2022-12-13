@@ -10,92 +10,36 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 #
-##
-## File             : Makefile
-## Author           : A. Stanitzki
-## Creation Date    : 09.10.20
-## Last Modified    : 15.02.21
-## Version          : 1.0   
-## Version          : 1.0
-## Abstract         : Makefile for the spi module
-##
-
-# RISC-V core
-
-topmodule = airi5c_spi
-bench = worklib.airi5c_spi_tb:v
+###############################################################################
 
 topdir = .
 simdir = ./simIUS
 srcdir = ./src
 
-# XH018 D_CELLS_HD
-libdir = /sw/lx_sw/lxcad/pdks/XFab/xh18/XKIT/xh018/diglibs/D_CELLS_HD/v3_0/
-
-# Standard Cell Library
-
-## Simulation testbench and files
 TBFILES =\
 ${topdir}/tb/airi5c_spi_tb.v
 
-##
 HDLFILES =\
 ${srcdir}/airi5c_spi.v \
+${srcdir}/airi5c_spi_master.v \
+${srcdir}/airi5c_spi_slave.v \
+${srcdir}/airi5c_spi_async_fifo.v \
 ${TBFILES}
 
-## Simulator command
-HDLCOM = irun
-SDFCOM = ncsdfc
+HDLCOM = xrun
 
-## General Compiler options
 ALLHDLCOMOPTS +=\
 -assert \
-+nctimescale+1ns/1ps \
--incdir ../src/ \
++xtimescale+1ns/1ps \
+-incdir ../../..
 
-# Module HDL compiler options
 MODHDLCOMOPTS =\
 -access +rc \
 -covoverwrite \
 $(ALLHDLCOMOPTS)
- 
+
 sim:
 	cd $(simdir); \
 	$(HDLCOM) $(MODHDLCOMOPTS) \
-    	-linedebug -input simsetup.tcl \
+		-linedebug -input simsetup.tcl \
 	$(foreach hdlfile,$(HDLFILES),../$(hdlfile))
-
-new: compile elaborate
-
-compile:
-	cd $(simdir); \
-	ncvlog -incdir ../src \
-	$(DCLIB) \
-	$(foreach hdlfile,$(HDLFILES),../$(hdlfile))
-
-elaborate:
-	cd $(simdir); \
-	ncelab -work worklib -lib_binding $(bench)
-
-check:
-	cd $(simdir); \
-	$(HDLCOM) $(ALLHDLCOMOPTS) -elaborate \
-	-v $(DCLIB) $(IOLIB) \
-	$(foreach hdlfile,$(HDLFILES),../$(hdlfile))
-
-clean:
-	rm $(topdir)/*.log \
-	rm $(simdir)/*.key \
-	rm $(simdir)/*.log \
-	rm $(simdir)/*.X \
-	rm -rf $(simdir)/*.shm \
-	rm -rf $(simdir)/INCA_libs \
-	rm -rf $(simdir)/cov_work \
-	rm -rf $(simdir)/coverage/* \
-	rm -rf $(simdir)/reports/* \
-	rm -rf $(syndir)/*.cmd* \
-	rm -rf $(syndir)/*.log* \
-	rm -rf $(prdir)/*.cmd* \
-	rm -rf $(prdir)/*.log* \
-	rm -rf $(atpgdir)/*.log* \
-	rm -rf $(atpgdir)/*.cmd*

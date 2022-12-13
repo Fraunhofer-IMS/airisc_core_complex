@@ -19,105 +19,110 @@
 `include "rv32_opcodes.vh"
 
 module airi5c_WB_pregs(
-input                           clk,
-input                           nreset,
+input                           clk_i,
+input                           rst_ni,
 
-input                           stall_WB,
+input                           stall_WB_i,
 
-input                           killed_EX,
-input                           ex_EX,
-//input                           wr_reg_unkilled_EX,
-/*input [`WB_SRC_SEL_WIDTH-1:0]   wb_src_sel_EX,
-input  [`MCAUSE_WIDTH-1:0]      ex_code_EX,
-input                           ex_int_EX,
-input  [`REG_ADDR_WIDTH-1:0]    reg_to_wr_EX,
-input                           dmem_wen_EX,
-input                           dmem_en_EX,
-input                           wfi_EX,
-input                           uses_pcpi_EX,
-input                           killed_EX,
-input                           bubble_in_EX,
-input  [`XPR_LEN-1:0]           branch_target_EX,
-input                           redirect_EX,*/
+input                           killed_EX_i,
+input                           ex_EX_i,
+input [`XPR_LEN-1:0]            PC_EX_i,
+input [`XPR_LEN-1:0]            alu_out_i,
+input [`XPR_LEN-1:0]            csr_rdata_i,
+input [`MEM_TYPE_WIDTH-1:0]     dmem_type_i,
+input [`XPR_LEN-1:0]            store_data_i,
+input [`XPR_LEN-1:0]            pcpi_rd_i,
+input [`XPR_LEN-1:0]            pcpi_rd2_i,
+input                           pcpi_use_rd64_i,
+input [`XPR_LEN-1:0]            inst_ex_i,
+input [`XPR_LEN-1:0]            rs1_data_i,
 
-output                           prev_killed_WB,
-output                           had_ex_WB
-//output                           wr_reg_unkilled_WB,
-/*output  [`WB_SRC_SEL_WIDTH-1:0]  wb_src_sel_WB,
-output  [`MCAUSE_WIDTH-1:0]      prev_ex_code_WB,
-output                           prev_ex_int_WB,
-output  [`REG_ADDR_WIDTH-1:0]    reg_to_wr_WB,
-output                           store_in_WB,
-output                           dmem_en_WB,
-output                           wfi_unkilled_WB,
-output                           uses_pcpi_WB,
-output                           bubble_in_WB,
-output  [`XPR_LEN-1:0]           branch_target_WB,
-output                           redirect_WB*/
+output                           prev_killed_WB_o,
+output                           had_ex_WB_o,
+output [`XPR_LEN-1:0]           PC_WB_o,
+output [`XPR_LEN-1:0]           alu_out_wb_o,
+output [`XPR_LEN-1:0]           csr_rdata_wb_o,
+output [`MEM_TYPE_WIDTH-1:0]    dmem_type_wb_o,
+output [`XPR_LEN-1:0]           store_data_wb_o,
+output [`XPR_LEN-1:0]           pcpi_rd_wb_o,
+output [`XPR_LEN-1:0]           pcpi_rd2_wb_o,
+output                          pcpi_use_rd64_wb_o,
+output [`XPR_LEN-1:0]           inst_wb_o,
+output [`XPR_LEN-1:0]           rs1_data_wb_o
+
+`ifdef ISA_EXT_F
+,
+input  [`XPR_LEN-1:0]           fpu_out_i,
+output [`XPR_LEN-1:0]           fpu_out_wb_o
+`endif
+
 );
 
 reg                              prev_killed_WB_r;
 reg                              had_ex_WB_r;
-//reg                              wr_reg_unkilled_WB_r;
-/*reg  [`WB_SRC_SEL_WIDTH-1:0]     wb_src_sel_WB_r;
-reg  [`MCAUSE_WIDTH-1:0]         prev_ex_code_WB_r;
-reg                              prev_ex_int_WB_r;
-reg  [`REG_ADDR_WIDTH-1:0]       reg_to_wr_WB_r;
-reg                              store_in_WB_r;
-reg                              dmem_en_WB_r;
-reg                              wfi_unkilled_WB_r;
-reg                              uses_pcpi_WB_r;
-reg                              bubble_in_WB_r;
-reg  [`XPR_LEN-1:0]              branch_target_WB_r;
-reg                              redirect_WB_r;*/
+reg [`XPR_LEN-1:0]               PC_WB_r;
+reg [`XPR_LEN-1:0]               alu_out_wb_r;
+reg [`XPR_LEN-1:0]               csr_rdata_wb_r;
+reg [`MEM_TYPE_WIDTH-1:0]        dmem_type_wb_r;
+reg [`XPR_LEN-1:0]               store_data_wb_r;
+reg [`XPR_LEN-1:0]               pcpi_rd_wb_r;
+reg [`XPR_LEN-1:0]               pcpi_rd2_wb_r;
+reg                              pcpi_use_rd64_wb_r;
+reg [`XPR_LEN-1:0]               inst_wb_r;
+reg [`XPR_LEN-1:0]               rs1_data_wb_r;
 
-assign prev_killed_WB      =  prev_killed_WB_r;
-assign had_ex_WB           =  had_ex_WB_r;
-//assign wr_reg_unkilled_WB  =  wr_reg_unkilled_WB_r;
-/*assign wb_src_sel_WB       =  wb_src_sel_WB_r;
-assign prev_ex_code_WB     =  prev_ex_code_WB_r;
-assign prev_ex_int_WB      =  prev_ex_int_WB_r;
-assign reg_to_wr_WB        =  reg_to_wr_WB_r;
-assign store_in_WB         =  store_in_WB_r;
-assign dmem_en_WB          =  dmem_en_WB_r;
-assign wfi_unkilled_WB     =  wfi_unkilled_WB_r;
-assign uses_pcpi_WB        =  uses_pcpi_WB_r;assign 
-assign bubble_in_WB        =  bubble_in_WB_r;
-assign branch_target_WB    =  branch_target_WB_r;
-assign redirect_WB         =  redirect_WB_r;*/
+assign prev_killed_WB_o      =  prev_killed_WB_r;
+assign had_ex_WB_o           =  had_ex_WB_r;
+assign PC_WB_o               =  PC_WB_r;
+assign alu_out_wb_o          =  alu_out_wb_r;
+assign csr_rdata_wb_o        =  csr_rdata_wb_r;
+assign dmem_type_wb_o        =  dmem_type_wb_r;
+assign store_data_wb_o       =  store_data_wb_r;
+assign pcpi_rd_wb_o          =  pcpi_rd_wb_r;
+assign pcpi_rd2_wb_o         =  pcpi_rd2_wb_r;
+assign pcpi_use_rd64_wb_o    =  pcpi_use_rd64_wb_r;
+assign inst_wb_o             =  inst_wb_r;
+assign rs1_data_wb_o         =  rs1_data_wb_r;
 
-always @(posedge clk or negedge nreset) begin
-  if (~nreset) begin
+`ifdef ISA_EXT_F
+reg [`XPR_LEN-1:0]              fpu_out_wb_r;
+assign fpu_out_wb_o          =  fpu_out_wb_r;
+`endif
+
+
+always @(posedge clk_i or negedge rst_ni) begin
+  if (~rst_ni) begin
     prev_killed_WB_r      <= 0;
     had_ex_WB_r           <= 0;
-//    wr_reg_unkilled_WB_r  <= 0;
-/*    wb_src_sel_WB_r       <= 0;
-    prev_ex_code_WB_r     <= 0;
-    reg_to_wr_WB_r        <= 0;
-    store_in_WB_r         <= 0;
-    dmem_en_WB_r          <= 0;
-    wfi_unkilled_WB_r     <= 0;
-    uses_pcpi_WB_r        <= 0;
-    bubble_in_WB_r        <= 1;
-    branch_target_WB_r  <= 0;
-    redirect_WB_r       <= 0;    */
-  end else if (!stall_WB) begin
-    prev_killed_WB_r      <= killed_EX;
-    had_ex_WB_r           <= ex_EX;
-//    wr_reg_unkilled_WB_r  <= wr_reg_EX || (uses_pcpi && pcpi_wr);
-/*    wb_src_sel_WB_r       <= wb_src_sel_EX;
-    prev_ex_code_WB_r     <= ex_code_EX;
-    prev_ex_int_WB_r      <= ex_int_DX;
-    reg_to_wr_WB_r        <= reg_to_wr_EX;
-    store_in_WB_r         <= dmem_wen_EX;
-    dmem_en_WB_r          <= dmem_en_EX;
-    wfi_unkilled_WB_r     <= wfi_EX;
-    uses_pcpi_WB_r        <= uses_pcpi;
-    bubble_in_WB_r        <= killed_EX ? 1'b1 : bubble_in_EX;
-    if(!bubble_in_EX) 
-      branch_target_WB_r   <= branch_target;
-    if(!bubble_in_EX) 
-      redirect_WB_r        <= redirect;*/
+    PC_WB_r               <= 0;
+    alu_out_wb_r          <= 0;
+    csr_rdata_wb_r        <= 0;
+    dmem_type_wb_r        <= 0;
+    store_data_wb_r       <= 0;
+    pcpi_rd_wb_r          <= 0;
+    pcpi_rd2_wb_r         <= 0;
+    pcpi_use_rd64_wb_r    <= 0;
+    inst_wb_r             <= 0;
+    rs1_data_wb_r         <= 0;
+`ifdef ISA_EXT_F
+   fpu_out_wb_r           <= 0;
+`endif
+  end else if (!stall_WB_i) begin
+    prev_killed_WB_r      <= killed_EX_i;
+    had_ex_WB_r           <= ex_EX_i;
+    PC_WB_r               <= PC_EX_i;
+    alu_out_wb_r          <= alu_out_i;
+    csr_rdata_wb_r        <= csr_rdata_i;
+    dmem_type_wb_r        <= dmem_type_i;
+    store_data_wb_r       <= store_data_i;
+    pcpi_rd_wb_r          <= pcpi_rd_i;
+    pcpi_rd2_wb_r         <= pcpi_rd2_i;
+    pcpi_use_rd64_wb_r    <= pcpi_use_rd64_i;
+    inst_wb_r             <= inst_ex_i;
+    rs1_data_wb_r         <= rs1_data_i;
+`ifdef ISA_EXT_F
+    fpu_out_wb_r         <= fpu_out_i;
+`endif 
   end
 end
 endmodule

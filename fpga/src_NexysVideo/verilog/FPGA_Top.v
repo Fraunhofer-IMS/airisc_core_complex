@@ -16,37 +16,31 @@
 `include "airi5c_hasti_constants.vh"
 `include "airi5c_dmi_constants.vh"
 
+`define DUAL_PORT
+//`undef  DUAL_PORT
+
 module FPGA_Top
 (
     input           nRESET,
     input           CLK,
-        
+
     input           EXT_INT,
-        
+
     input           tdi,
     input           tck,
     input           tms,
     output          tdo,
 
-`ifdef SIM
-    inout   [7:0]   gpio,
-`else        
-    input   [7:0]   gpio_i,
-    output  [7:0]   gpio_d,
-//  output  [7:0]   gpio_en,
-`endif
-        
-    output          uart_tx,
-    input           uart_rx,
-  
-//  output          sd_reset,
+    output  [7:0]   gpio0_out,
+    input   [7:0]   gpio0_in,
 
-    output          spi_mosi,
-`ifdef SIM
-    output          spi_sclk,
-`endif
-    output          spi_nss,
-    input           spi_miso
+    output          uart0_tx,
+    input           uart0_rx,
+
+    inout           spi0_mosi,
+    inout           spi0_miso,
+    inout           spi0_sclk,
+    inout   [3:0]   spi0_ss
 );
 
     reg             reset_sync;
@@ -55,116 +49,36 @@ module FPGA_Top
     wire            clkgen_locked;
     wire            clk32;
     wire            clktree_root;
-    
+
     wire    [7:0]   debug_out;
-`ifndef SIM
-    wire            spi_sclk;
-`endif
 
 `ifdef SIM
     BUF     b1(.I(CLK), .O(clk32));
     BUF     b2(.I(1'b1), .O(clkgen_locked));
-
-    wire [7:0] gpio_d, gpio_i, gpio_en;
-    assign gpio_en = 8'hF; // gpio_en is not used by default.
-    assign gpio_i  = gpio;
-    genvar i;
-    generate
-      for (i = 0; i < 8; i = i + 1) begin : U
-        bufif1(gpio[i],gpio_d[i],gpio_en[i]);
-      end
-    endgenerate  
-
 `else
+
     clk_wiz_0 clkgen
     (
         .reset(!nRESET),
         .clk_in1(CLK),
         .clk_out1(clk32),
         .locked(clkgen_locked)
-    );  
-
+    );
 `endif
 
-    // the spi interface in this toplevel 
-    // is connected to the QSPI flash device 
-    // via a STARTUPE2 instance. 
-    // The spi_sclk port needs to be present, 
-    // because the testbench assumes a constant 
-    // toplevel interface to the chip/fpga. 
-    // the easiest solution is to provide the 
-    // toplevel port and have synthesis/p&r 
-    // optimize it away.
-
-    always @(posedge clk32 or negedge nRESET) begin
-        if(!nRESET) begin
+    always @(posedge clk32, negedge nRESET) begin
+        if (!nRESET) begin
             reset_sync      <= 1'b1;
             interrupt_sync  <= 1'b0;
-//          sd_reset_r      <= 1'b1;
         end
-        
+
         else begin
-            if(clkgen_locked) 
+            if (clkgen_locked)
                 reset_sync  <= !nRESET;
-                
+
             interrupt_sync  <= EXT_INT;
-//          sd_reset_r      <= 1'b0;
         end
     end
-    
-    	wire	[3:0]	su_nc;	// Startup primitive, no connect    	
-    
-    STARTUPE2 #(
-		// Leave PROG_USR false to avoid activating the program
-		// event security feature.  Notes state that such a feature
-		// requires encrypted bitstreams.
-		.PROG_USR("FALSE"),
-		// Sets the configuration clock frequency (in ns) for
-		// simulation.
-		.SIM_CCLK_FREQ(0.0)
-	) STARTUPE2_inst (
-	// CFGCLK, 1'b output: Configuration main clock output -- no connect
-	.CFGCLK(su_nc[0]),
-	// CFGMCLK, 1'b output: Configuration internal oscillator clock output
-	.CFGMCLK(su_nc[1]),
-	// EOS, 1'b output: Active high output indicating the End Of Startup.
-	.EOS(su_nc[2]),
-	// PREQ, 1'b output: PROGRAM request to fabric output
-	//	Only enabled if PROG_USR is set.  This lets the fabric know
-	//	that a request has been made (either JTAG or pin pulled low)
-	//	to program the device
-	.PREQ(su_nc[3]),
-	// CLK, 1'b input: User start-up clock input
-	.CLK(1'b0),
-	// GSR, 1'b input: Global Set/Reset input
-	.GSR(1'b0),
-	// GTS, 1'b input: Global 3-state input
-	.GTS(1'b0),
-	// KEYCLEARB, 1'b input: Clear AES Decrypter Key input from BBRAM
-	.KEYCLEARB(1'b0),
-	// PACK, 1-bit input: PROGRAM acknowledge input
-	//	This pin is only enabled if PROG_USR is set.  This allows the
-	//	FPGA to acknowledge a request for reprogram to allow the FPGA
-	//	to get itself into a reprogrammable state first.
-	.PACK(1'b0),
-	// USRCLKO, 1-bit input: User CCLK input -- This is why I am using this
-	// module at all.
-	.USRCCLKO(spi_sclk),
-	// USRCCLKTS, 1'b input: User CCLK 3-state enable input
-	//	An active high here places the clock into a high impedence
-	//	state.  Since we wish to use the clock as an active output
-	//	always, we drive this pin low.
-	.USRCCLKTS(1'b0),
-	// USRDONEO, 1'b input: User DONE pin output control
-	//	Set this to "high" to make sure that the DONE LED pin is
-	//	high.
-	.USRDONEO(1'b1),
-	// USRDONETS, 1'b input: User DONE 3-state enable output
-	//	This enables the FPGA DONE pin to be active.  Setting this
-	//	active high sets the DONE pin to high impedence, setting it
-	//	low allows the output of this pin to be as stated above.
-	.USRDONETS(1'b1)
-	);	
 
     BUFG    buf_clk(.I(clk32), .O(clktree_root));
 
@@ -180,9 +94,6 @@ module FPGA_Top
     wire                                imem_hready;
     wire    [`HASTI_RESP_WIDTH-1:0]     imem_hresp;
 
-    reg     [3:0]                       writeb; 
-    reg     [31:0]                      dmem_haddr_r;
-
     wire    [`HASTI_ADDR_WIDTH-1:0]     dmem_haddr;
     wire                                dmem_hwrite;
     wire    [`HASTI_SIZE_WIDTH-1:0]     dmem_hsize;
@@ -193,7 +104,7 @@ module FPGA_Top
     wire    [`HASTI_BUS_WIDTH-1:0]      dmem_hwdata;
     wire    [`HASTI_BUS_WIDTH-1:0]      dmem_hrdata;
     wire                                dmem_hready;
-    wire    [`HASTI_RESP_WIDTH-1:0]     dmem_hresp; 
+    wire    [`HASTI_RESP_WIDTH-1:0]     dmem_hresp;
 
     wire    [`DMI_ADDR_WIDTH-1:0]       dmi_addr;
     wire    [`DMI_WIDTH-1:0]            dmi_rdata;
@@ -203,24 +114,39 @@ module FPGA_Top
     wire                                dmi_error;
     wire                                dmi_dm_busy;
 
-    wire    [5:0]                       shiftval;   
-    wire    [31:0]                      dmem_hrdata_shifted;    
-    
-    assign  dmem_hready                 = ~|writeb;
-    assign  shiftval                    = dmem_haddr_r[1:0] << 3;
-    assign  dmem_hrdata_shifted         = dmem_hrdata;//  >> shiftval; 
+  // SPI 0
+    wire                                spi0_mosi_out;
+    wire                                spi0_mosi_oe;
+
+    wire                                spi0_miso_out;
+    wire                                spi0_miso_oe;
+
+    wire                                spi0_sclk_out;
+    wire                                spi0_sclk_oe;
+
+    wire    [3:0]                       spi0_ss_out;
+    wire                                spi0_ss_oe;
+
+    assign                              spi0_mosi = spi0_mosi_oe ? spi0_mosi_out : 1'bz;
+    assign                              spi0_miso = spi0_miso_oe ? spi0_miso_out : 1'bz;
+    assign                              spi0_sclk = spi0_sclk_oe ? spi0_sclk_out : 1'bz;
+    assign                              spi0_ss   = spi0_ss_oe   ? spi0_ss_out   : 4'b111z;
 
     airi5c_top_asic DUT
     (
         .clk(clktree_root),
-        .nreset(~reset_sync),
-        .testmode(1'b0),    
-        .ext_interrupt(interrupt_sync),    
-    
+        .nreset(!reset_sync),
+        .ext_interrupt(interrupt_sync),
+
         .tck(tck),
         .tms(tms),
         .tdi(tdi),
         .tdo(tdo),
+
+        .testmode(1'b0),
+        .sdi(),
+        .sdo(),
+        .sen(),
 
         .imem_haddr(imem_haddr),
         .imem_hwrite(imem_hwrite),
@@ -231,9 +157,9 @@ module FPGA_Top
         .imem_htrans(imem_htrans),
         .imem_hwdata(imem_hwdata),
         .imem_hrdata(imem_hrdata),
-        .imem_hready(1'b1),
-        .imem_hresp(`HASTI_RESP_OKAY),
-    
+        .imem_hready(imem_hready),
+        .imem_hresp(imem_hresp),
+
         .dmem_haddr(dmem_haddr),
         .dmem_hwrite(dmem_hwrite),
         .dmem_hsize(dmem_hsize),
@@ -242,56 +168,169 @@ module FPGA_Top
         .dmem_hprot(dmem_hprot),
         .dmem_htrans(dmem_htrans),
         .dmem_hwdata(dmem_hwdata),
-        .dmem_hrdata(dmem_hrdata_shifted),  
+        .dmem_hrdata(dmem_hrdata),
         .dmem_hready(dmem_hready),
-        .dmem_hresp(`HASTI_RESP_OKAY),
-       
-    
-        .oGPIO_D(gpio_d),
-        .oGPIO_EN(),
-        .iGPIO_I(gpio_i),
+        .dmem_hresp(dmem_hresp),
 
-        .oUART_TX(uart_tx),
-        .iUART_RX(uart_rx),
+      // GPIO 0
+        .gpio0_out(gpio0_out),
+        .gpio0_in(gpio0_in),
+        .gpio0_oe(),
 
-        .oSPI1_MOSI(spi_mosi),
-        .oSPI1_SCLK(spi_sclk),
-        .oSPI1_NSS(spi_nss),
-        .iSPI1_MISO(spi_miso),
-     
+      // UART 0
+        .uart0_tx(uart0_tx),
+        .uart0_rx(uart0_rx),
+
+      // SPI 0
+        .spi0_mosi_out(spi0_mosi_out),
+        .spi0_mosi_in(spi0_mosi),
+        .spi0_mosi_oe(spi0_mosi_oe),
+
+        .spi0_miso_out(spi0_miso_out),
+        .spi0_miso_in(spi0_miso),
+        .spi0_miso_oe(spi0_miso_oe),
+
+        .spi0_sclk_out(spi0_sclk_out),
+        .spi0_sclk_in(spi0_sclk),
+        .spi0_sclk_oe(spi0_sclk_oe),
+
+        .spi0_ss_out(spi0_ss_out),
+        .spi0_ss_in(spi0_ss[0]),
+        .spi0_ss_oe(spi0_ss_oe),
+
         .debug_out(debug_out)
     );
 
+`ifdef DUAL_PORT
+    reg     [3:0]                       dmem_we;
+    reg     [31:0]                      dmem_haddr_r;
+    assign                              dmem_hready = ~|dmem_we;
+    assign                              dmem_hresp  = `HASTI_RESP_OKAY;
+    assign                              imem_hready = 1'b1;
+    assign                              imem_hresp  = `HASTI_RESP_OKAY;
+
     always @(posedge clktree_root) begin
-        if(reset_sync) begin
-            writeb          <= 0;       
-            dmem_haddr_r    <= 0;            
+        if (reset_sync) begin
+            dmem_we         <= 0;
+            dmem_haddr_r    <= 0;
         end
-        
-        else begin                        
-            if((dmem_haddr[31:30] == 2'b10) && dmem_hwrite && ~|writeb) begin
+
+        else begin
+            if ((dmem_haddr[31:30] == 2'b10) && dmem_hwrite && ~|dmem_we) begin
                 dmem_haddr_r    <= dmem_haddr;
-                writeb          <= (dmem_hsize == 2)   ? 4'b1111 :
+                dmem_we         <= (dmem_hsize == 2)   ?  4'b1111 :
                                    (dmem_hsize == 1)   ? (4'b0011 << dmem_haddr[1:0]) :
                                    (dmem_hsize == 0)   ? (4'b0001 << dmem_haddr[1:0]) :
                                    4'b0000;
-            end else writeb <= 4'h0;
+            end
+            
+            else
+                dmem_we         <= 4'h0;
         end
     end
 
     blk_mem_gen_0 SRAM
     (
-        .addra({11'h0000, imem_haddr[20:0]}),
+        .addra(imem_haddr[20:2]),
         .clka(clktree_root),
         .dina(imem_hwdata),
         .douta(imem_hrdata),
-        .wea(0),
-    
-        .addrb(|writeb ? {11'h0000, dmem_haddr_r[20:0]} : {11'h0000, dmem_haddr[20:0]}),
+        .wea(4'h0),
+
+        .addrb(|dmem_we ? dmem_haddr_r[20:2] : dmem_haddr[20:2]),
         .clkb(clktree_root),
         .dinb(dmem_hwdata),
         .doutb(dmem_hrdata),
-        .web(writeb)
+        .web(dmem_we)
+    );
+
+`else
+    wire    [`HASTI_ADDR_WIDTH-1:0]     mem_haddr;
+    wire                                mem_hwrite;
+    wire    [`HASTI_SIZE_WIDTH-1:0]     mem_hsize;
+    wire    [`HASTI_BURST_WIDTH-1:0]    mem_hburst;
+    wire                                mem_hmastlock;
+    wire    [`HASTI_PROT_WIDTH-1:0]     mem_hprot;
+    wire    [`HASTI_TRANS_WIDTH-1:0]    mem_htrans;
+    wire    [`HASTI_BUS_WIDTH-1:0]      mem_hwdata;
+    wire    [`HASTI_BUS_WIDTH-1:0]      mem_hrdata;
+    wire                                mem_hready;
+    wire    [`HASTI_RESP_WIDTH-1:0]     mem_hresp;
+    
+    reg     [3:0]                       mem_we;
+    assign                              mem_hready = 1'b1;
+    assign                              mem_hresp  = `HASTI_RESP_OKAY;
+    
+    always @(*) begin
+        mem_we  = 4'b0000;
+        
+        if (mem_hwrite) begin
+            case (mem_hsize)
+            0:  mem_we  = 4'b0001 << mem_haddr[1:0];
+            1:  mem_we  = 4'b0011 << mem_haddr[1:0];
+            2:  mem_we  = 4'b1111 << mem_haddr[1:0];
+            endcase
+        end
+    end
+    
+    airi5c_mem_arbiter arbiter
+    (
+        .setup_complete(1'b1),
+        .nreset(!reset_sync),
+        .clk(clktree_root),
+
+        .mem_haddr(mem_haddr),
+        .mem_hwrite(mem_hwrite),
+        .mem_hsize(mem_hsize),
+        .mem_hburst(mem_hburst),
+        .mem_hmastlock(mem_hmastlock),
+        .mem_hprot(mem_hprot),
+        .mem_htrans(mem_htrans),
+        .mem_hwdata(mem_hwdata),
+        .mem_hrdata(mem_hrdata),
+        .mem_hready(mem_hready),
+        .mem_hresp(mem_hresp),
+
+        .imem_haddr(imem_haddr),
+        .imem_hwrite(imem_hwrite),
+        .imem_hsize(imem_hsize),
+        .imem_hburst(imem_hburst),
+        .imem_hmastlock(imem_hmastlock),
+        .imem_hprot(imem_hprot),
+        .imem_htrans(imem_htrans),
+        .imem_hwdata(imem_hwdata),
+        .imem_hrdata(imem_hrdata),
+        .imem_hready(imem_hready),
+        .imem_hresp(imem_hresp),
+
+        .dmem_haddr(dmem_haddr),
+        .dmem_hwrite(dmem_hwrite),
+        .dmem_hsize(dmem_hsize),
+        .dmem_hburst(dmem_hburst),
+        .dmem_hmastlock(dmem_hmastlock),
+        .dmem_hprot(dmem_hprot),
+        .dmem_htrans(dmem_htrans),
+        .dmem_hwdata(dmem_hwdata),
+        .dmem_hrdata(dmem_hrdata),
+        .dmem_hready(dmem_hready),
+        .dmem_hresp(dmem_hresp)
     );
     
+    blk_mem_gen_0 SRAM
+    (
+        .addra(mem_haddr[20:2]),
+        .clka(clktree_root),
+        .dina(mem_hwdata),
+        .douta(mem_hrdata),
+        .wea(mem_we),
+
+        .addrb(19'h00000),
+        .clkb(clktree_root),
+        .dinb(32'h00000000),
+        .doutb(),
+        .web(4'h0)
+    );
+
+`endif
+
 endmodule

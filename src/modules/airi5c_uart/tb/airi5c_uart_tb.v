@@ -10,11 +10,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
+
 `include "../src/airi5c_uart_constants.vh"
 
 module airi5c_uart_tb();
     localparam      BASE_ADDR           = 'h00000000;
-    localparam      STACK_ADDR          = BASE_ADDR + 0;
+    localparam      DATA_ADDR           = BASE_ADDR + 0;
     localparam      CTRL_REG_ADDR       = BASE_ADDR + 4;
     localparam      CTRL_SET_ADDR       = BASE_ADDR + 8;
     localparam      CTRL_CLR_ADDR       = BASE_ADDR + 12;
@@ -69,7 +70,7 @@ module airi5c_uart_tb();
     reg             test_frame;
 
     reg   [31:0]    counter;
-    reg   [31:0]    errorcount;
+    integer         errorcount;
     integer         i;
     integer         j;
     integer         k;
@@ -84,7 +85,7 @@ module airi5c_uart_tb();
             address   <= waddress;
             write     <= 1'b1;
             wdata     <= 32'h00000000;
-            trans     <= 2'd0;
+            trans     <= 2'd2;
 
             // data phase
             @(posedge clk)
@@ -131,7 +132,7 @@ module airi5c_uart_tb();
         begin
             // write message to tx fifo stack
             for (i = 1; i <= size; i = i + 1)
-                write_uart(STACK_ADDR, tx_msg >> ((size-i)*8));
+                write_uart(DATA_ADDR, tx_msg >> ((size-i)*8));
             // wait until the message is transmitted
             read_uart(TX_STAT_REG_ADDR, uart_dout);
             tx_size = uart_dout[7:0];
@@ -151,7 +152,7 @@ module airi5c_uart_tb();
             rx_size = uart_dout[7:0];
 
             for (i = 1; i <= 32 && rx_size > 0; i = i + 1) begin
-                read_uart(STACK_ADDR, uart_dout);
+                read_uart(DATA_ADDR, uart_dout);
                 msg = {msg[31*8:1],  uart_dout[7:0]};
                 read_uart(RX_STAT_REG_ADDR, uart_dout);
                 rx_size = uart_dout[7:0];
@@ -257,16 +258,16 @@ module airi5c_uart_tb();
         // noise error
         test_noise  = 1'b1;
         $write("UART Test 2: receive data with noise ... ");
-        write_uart(RX_STAT_CLR_ADDR, 32'h0000f800);                                                                           // clear errors
+        write_uart(RX_STAT_CLR_ADDR, 32'h00f80000);                                                                           // clear errors
         write_uart(CTRL_REG_ADDR, {`UART_DATA_BITS_8, `UART_PARITY_NONE, `UART_STOP_BITS_1, `UART_FLOW_CTRL_OFF, 24'd278});   // change UART config
         generate_tx(9'b010000001, 1'b1, 1'b0, 1'b0);                                                                          // transmit faulty data
         for (k = 1; k <= 3; k = k + 1)                                                                                        // rx is double registered, to remove metastability problems
             @(posedge clk);                                                                                                   // so we need to wait 3 clock cycles until the data is received completely
         read_uart(RX_STAT_REG_ADDR, uart_dout);                                                                               // read error flags
-        noise_error   = uart_dout[13];
-        parity_error  = uart_dout[14];
-        frame_error   = uart_dout[15];
-        read_uart(STACK_ADDR, uart_dout);                                                                                     // read data
+        noise_error   = uart_dout[21];
+        parity_error  = uart_dout[22];
+        frame_error   = uart_dout[23];
+        read_uart(DATA_ADDR, uart_dout);                                                                                     // read data
         if (noise_error == 1'b0 || parity_error == 1'b1 || frame_error == 1'b1 || uart_dout[8:0] != 9'b010000001) begin
             $write("Fail!\n");
             errorcount = errorcount + 1;
@@ -279,16 +280,16 @@ module airi5c_uart_tb();
         // parity error
         test_parity = 1'b1;
         $write("UART Test 3: receive data with parity error ... ");
-        write_uart(RX_STAT_CLR_ADDR, 32'h0000f800);                                                                           // clear errors
+        write_uart(RX_STAT_CLR_ADDR, 32'h00f80000);                                                                           // clear errors
         write_uart(CTRL_REG_ADDR, {`UART_DATA_BITS_7, `UART_PARITY_EVEN, `UART_STOP_BITS_15, `UART_FLOW_CTRL_OFF, 24'd1667}); // change UART config
         generate_tx(9'b001100001, 1'b0, 1'b1, 1'b0);                                                                          // transmit faulty data
         for (k = 1; k <= 3; k = k + 1)
             @(posedge clk);
         read_uart(RX_STAT_REG_ADDR, uart_dout);                                                                               // read error flags
-        noise_error   = uart_dout[13];
-        parity_error  = uart_dout[14];
-        frame_error   = uart_dout[15];
-        read_uart(STACK_ADDR, uart_dout);                                                                                     // read data
+        noise_error   = uart_dout[21];
+        parity_error  = uart_dout[22];
+        frame_error   = uart_dout[23];
+        read_uart(DATA_ADDR, uart_dout);                                                                                     // read data
         if (noise_error == 1'b1 || parity_error == 1'b0 || frame_error == 1'b1 || uart_dout[8:0] != 9'b001100001) begin
             $write("Fail!\n");
             errorcount = errorcount + 1;
@@ -301,16 +302,16 @@ module airi5c_uart_tb();
         // frame error
         test_frame = 1'b1;
         $write("UART Test 4: receive data with frame error ... ");
-        write_uart(RX_STAT_CLR_ADDR, 32'h0000f800);                                                                           // clear errors
+        write_uart(RX_STAT_CLR_ADDR, 32'h00f80000);                                                                           // clear errors
         write_uart(CTRL_REG_ADDR, {`UART_DATA_BITS_6, `UART_PARITY_ODD, `UART_STOP_BITS_2, `UART_FLOW_CTRL_OFF, 24'd556});    // change UART config
         generate_tx(9'b000101010, 1'b0, 1'b0, 1'b1);                                                                          // transmit faulty data
         for (k = 1; k <= 3; k = k + 1)
             @(posedge clk);
         read_uart(RX_STAT_REG_ADDR, uart_dout);                                                                               // read error flags
-        noise_error   = uart_dout[13];
-        parity_error  = uart_dout[14];
-        frame_error   = uart_dout[15];
-        read_uart(STACK_ADDR, uart_dout);                                                                                     // read data
+        noise_error   = uart_dout[21];
+        parity_error  = uart_dout[22];
+        frame_error   = uart_dout[23];
+        read_uart(DATA_ADDR, uart_dout);                                                                                     // read data
         if (noise_error == 1'b1 || parity_error == 1'b1 || frame_error == 1'b0 || uart_dout[8:0] != 9'b000101010) begin
             $write("Fail!\n");
             errorcount = errorcount + 1;
@@ -334,9 +335,7 @@ module airi5c_uart_tb();
     #(
         .BASE_ADDR(BASE_ADDR),
         .TX_ADDR_WIDTH(5),
-        .RX_ADDR_WIDTH(5),
-        .TX_MARK(8),
-        .RX_MARK(24)
+        .RX_ADDR_WIDTH(5)
     ) uart_inst
     (
         .n_reset(!reset),
@@ -348,13 +347,11 @@ module airi5c_uart_tb();
         .rts(),
 
         .int_any(),
-        .int_tx_full(),
         .int_tx_empty(),
-        .int_tx_mark_reached(),
+        .int_tx_watermark_reached(),
         .int_tx_overflow_error(),
         .int_rx_full(),
-        .int_rx_empty(),
-        .int_rx_mark_reached(),
+        .int_rx_watermark_reached(),
         .int_rx_overflow_error(),
         .int_rx_underflow_error(),
         .int_rx_noise_error(),

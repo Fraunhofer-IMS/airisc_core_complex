@@ -12,13 +12,13 @@
 //
 //
 // File             : rv32_opcodes.vh
-// Author           : A. Stanitzki
+// Author           : A. Stanitzki, I. Hoyer
 // Creation Date    : 09.10.20
-// Last Modified    : 15.02.21
-// Version          : 1.0
+// Last Modified    : 156.12.21
+// Version          : 1.1
 // Abstract         : Definition of the opcodes
 // History          : 05.03.18 - added dret command to return from debug mode (ASt)
-//
+//                    16.12.21 - Custom Opcodes 
 
 
 
@@ -46,7 +46,11 @@
 `define RV32_OP_IMM         7'b0010011 // o.k., V2.2, REG/IMM ALU operations 
 `define RV32_OP             7'b0110011 // o.k., V2.2, REG/REG ALU operations
 `define RV32_SYSTEM         7'b1110011 // o.k., V2.2 -> ECALL, EBREAK, CSR (RW/RS/RC/RWI/RSI/RCI)
-`define RV32_CUSTOM         7'b1110111 
+`define RV32_CUSTOM0         7'b0001011 //AI Accelerators use h0B 
+`define RV32_CUSTOM1         7'h77 //Custom Module uses SIMD Opcode (h77)
+//`define RV32_CUSTOM2         7'b1011011
+//`define RV32_CUSTOM3         7'b1111011
+//`define RV32_CUSTOM4         7'b1110111
 
 `define RV32_AUIPC          7'b0010111 // o.k., V2.2
 `define RV32_LUI            7'b0110111 // o.k., V2.2

@@ -10,21 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 #
-##
-## File             : simsetup.tcl
-## Author           : A. Stanitzki 
-## Creation Date    : 11.12.19
-## Last Modified    : 19.02.21
-## Version          : 1.0
-## Abstract         : Simulation Setup
-## History          : 
-## Notes            : 
-##
 
 database -open output -shm 
 probe -create airi5c_spi_tb -depth all -all -all -shm -database output
-#dumptcf -internal -overwrite -scope airi5c_top_tb:DUT -output ../synGENUS/SA_BEHAV.tcf 
-#dumptcf -internal -overwrite -scope airi5c_top_tb:DUT -output ../prINNO/SA_SYN.tcf 
-
 run
-#dumptcf -end

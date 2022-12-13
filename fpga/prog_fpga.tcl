@@ -32,7 +32,10 @@ connect_hw_server
 if {$BOARD == {NexysVideo}} {
    puts "Programming BOARD: NexysVideo"
    set BITFILE ./sdcard/FPGA_Top_NexysVideo.bit
-   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210276AD4B83B}
+# Messe Demo Aufbau
+#   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210276AD4B83B}
+# Dev Board
+   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210276AEF67EB}
    set_property PROGRAM.FILE $BITFILE [get_hw_devices xc7a200t_0]
    current_hw_device [get_hw_devices xc7a200t_0]
    refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7a200t_0] 0]
@@ -53,6 +56,21 @@ if {$BOARD == {NexysVideo}} {
    program_hw_devices [get_hw_devices xc7a35t_0]
    refresh_hw_device [lindex [get_hw_devices xc7a35t_0] 0]
    close_project
+} elseif {$BOARD == {CmodA7}} {
+   puts "Programming BOARD: Cmod A7"
+   set BITFILE ./sdcard/FPGA_Top_CmodA7.bit
+#   disconnect_hw_server 
+#   connect_hw_server
+#   open_hw_target [lindex [get_hw_targets] 0]
+   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210328AFE306A}
+  set_property PROGRAM.FILE $BITFILE [get_hw_devices xc7a35t_0]
+  current_hw_device [get_hw_devices xc7a35t_0]
+  refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7a35t_0] 0]
+  set_property PROBES.FILE {} [get_hw_devices xc7a35t_0]
+  set_property FULL_PROBES.FILE {} [get_hw_devices xc7a35t_0]
+  program_hw_devices [get_hw_devices xc7a35t_0]
+  refresh_hw_device [lindex [get_hw_devices xc7a35t_0] 0]
+  close_project
 } else {
    puts "BOARD not supported"
 }

@@ -1,0 +1,5 @@
+echo Load Hello_World.elf \n\n 
+file Debug/Hello_World.elf
+load
+echo \n
+echo Done. Connect to UART 76800 8E1 \n

@@ -11,29 +11,30 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //
 //
+
 `include "airi5c_alu_ops.vh"
 `include "rv32_opcodes.vh"
 `include "airi5c_csr_addr_map.vh"
 `include "airi5c_arch_options.vh"
 
-module dmem_latch(
-  input                  clk,
-  input                  nreset,
-  input  [`XPR_LEN-1:0]  alu_out,
-  input                  loadstore_EX,
-  output [`XPR_LEN-1:0]  dmem_addr
+module airi5c_dmem_latch(
+  input                  clk_i,
+  input                  rst_ni,
+  input  [`XPR_LEN-1:0]  alu_out_i,
+  input                  loadstore_EX_i,
+  output [`XPR_LEN-1:0]  dmem_addr_o
 );
 
 reg  [`XPR_LEN-1:0]  dmem_addr_r;
 
-always @(posedge clk or negedge nreset) begin
-  if(~nreset)
+always @(posedge clk_i or negedge rst_ni) begin
+  if(~rst_ni)
     dmem_addr_r <= 0;
   else begin
-    dmem_addr_r <= loadstore_EX ? alu_out : dmem_addr_r;
+    dmem_addr_r <= loadstore_EX_i ? alu_out_i : dmem_addr_r;
   end
 end
 
-assign dmem_addr = loadstore_EX ? alu_out : dmem_addr_r;
+assign dmem_addr_o = loadstore_EX_i ? alu_out_i : dmem_addr_r;
 
 endmodule

@@ -26,7 +26,7 @@
 `include "rv32_opcodes.vh"
 
 `ifdef ISA_EXT_F
-  `include "modules/airi5c_fpu/airi5c_fpu_constants.vh"
+  `include "modules/airi5c_fpu/airi5c_FPU_constants.vh"
 `endif
 
 module airi5c_decode(
@@ -35,10 +35,19 @@ module airi5c_decode(
   input                          inject_ebreak_i,
   input  [`XPR_LEN-1:0]          pc_if_i,
   output [`XPR_LEN-1:0]          pc_de_o,
+
+
+  output                         de_ready_o,
+  input                          if_valid_i,
+  output                         de_valid_o, 
+  input                          ex_ready_i,
+
+
   input  [`XPR_LEN-1:0]          inst_if_i,
   output [`XPR_LEN-1:0]          inst_de_o,
   input                          killed_de_i,
-  input                          stall_de_i,
+  input                          predicted_branch_if_i,
+  output                         predicted_branch_de_o,
   input                          imem_compressed_if_i,
   output                         imem_compressed_de_o,
   output                         loadstore_de_o,
@@ -81,14 +90,23 @@ module airi5c_decode(
   output [`FPU_OP_WIDTH-1:0]  fpu_op_o,
   output                      sel_fpu_rs1_o,
   output                      sel_fpu_rs2_o,
+  output                      sel_fpu_rs3_o,
   output                      sel_fpu_rd_o
   `endif
   );
+
+  reg                         de_valid_r;
+  assign                      de_ready_o = ex_ready_i;
+  assign                      de_valid_o = de_valid_r;
+
  
   reg  [`XPR_LEN-1:0]         inst_de_r;
   assign                      inst_de_o = inst_de_r;
   reg  [`XPR_LEN-1:0]         pc_de_r;
   assign                      pc_de_o = pc_de_r;
+
+  reg                         predicted_branch_de_r;
+  assign                      predicted_branch_de_o = predicted_branch_de_r;
   
   reg                         imem_compressed_de_r;
   assign                      imem_compressed_de_o = imem_compressed_de_r;
@@ -97,7 +115,7 @@ module airi5c_decode(
 
   assign                      rs1_addr_de_o = inst_de_o[19:15];
   assign                      rs2_addr_de_o = inst_de_o[24:20];
-  assign                      rs3_addr_de_o = inst_de_o[11:7];
+  assign                      rs3_addr_de_o = inst_de_o[31:27];
 
   wire [6:0]                  opcode   = inst_de_r[6:0];
   wire [6:0]                  funct7   = inst_de_r[31:25];
@@ -105,6 +123,7 @@ module airi5c_decode(
   wire [2:0]                  funct3   = inst_de_r[14:12];
   wire [`REG_ADDR_WIDTH-1:0]  rs1_addr = inst_de_r[19:15];
   wire [`REG_ADDR_WIDTH-1:0]  rs2_addr = inst_de_r[24:20];
+  wire [`REG_ADDR_WIDTH-1:0]  rs3_addr = inst_de_r[31:27];
   wire [`REG_ADDR_WIDTH-1:0]  reg_to_wr_dx = inst_de_r[11:7];
 
   reg  [`ALU_OP_WIDTH-1:0]      alu_op_r;              assign alu_op_o = alu_op_r;
@@ -138,8 +157,10 @@ module airi5c_decode(
   reg  [`FPU_OP_WIDTH-1:0]      fpu_op_r;              assign fpu_op_o = fpu_op_r;
   reg                           sel_fpu_rs1_r;         assign sel_fpu_rs1_o = sel_fpu_rs1_r;
   reg                           sel_fpu_rs2_r;         assign sel_fpu_rs2_o = sel_fpu_rs2_r;
+  reg                           sel_fpu_rs3_r;         assign sel_fpu_rs3_o = sel_fpu_rs3_r;
   reg                           sel_fpu_rd_r;          assign sel_fpu_rd_o = sel_fpu_rd_r;
-  reg                           load_fpu_r;            assign load_fpu = load_fpu_r;
+  // currently decoded in ctrl, should be moved here.
+  reg                           load_fpu_r;            assign load_fpu_o = load_fpu_r;
   `endif
 
   wire [`ALU_OP_WIDTH-1:0]      add_or_sub;
@@ -158,16 +179,27 @@ module airi5c_decode(
       inst_de_r            <= `RV_NOP;
       pc_de_r              <= `START_HANDLER;
       imem_compressed_de_r <= 1'b0;
+      predicted_branch_de_r <= 1'b0;
+      de_valid_r           <= 1'b0;
     end else begin
-      if(killed_de_i) inst_de_r <= `RV_NOP; 
-      else if(~stall_de_i) begin 
-        inst_de_r <= inject_ebreak_i ? 32'h00100073 : inst_if_i;
-        pc_de_r   <= pc_if_i;
+      if(killed_de_i) begin 
+        inst_de_r <= `RV_NOP; 
+        pc_de_r   <= pc_de_r;
+        de_valid_r <= 1'b0;
+        imem_compressed_de_r <= 1'b0;
+        predicted_branch_de_r <= 1'b0;
+      end else if(ex_ready_i) begin  
+        //inst_de_r  <= inject_ebreak_i ? 32'h00100073 : (if_valid_i ? inst_if_i : `RV_NOP);
+        inst_de_r  <= if_valid_i ? (inject_ebreak_i ? 32'h00100073 : inst_if_i) : `RV_NOP;
+        pc_de_r    <= pc_if_i;
+        de_valid_r <= if_valid_i;
         imem_compressed_de_r <= imem_compressed_if_i;
+        predicted_branch_de_r <= predicted_branch_if_i;
       end
     end
   end
-    
+
+  
   always @(*) begin
     case (funct3)
       `RV32_FUNCT3_ADD_SUB : alu_op_arith_r = add_or_sub;
@@ -210,7 +242,9 @@ module airi5c_decode(
     fpu_op_r              = `FPU_OP_NOP;
     sel_fpu_rs1_r         = 1'b0;
     sel_fpu_rs2_r         = 1'b0;
+    sel_fpu_rs3_r         = 1'b0;
     sel_fpu_rd_r          = 1'b0;
+    load_fpu_r            = 1'b0;
     `endif
     case(opcode) 
       `RV32_LOAD : begin
@@ -254,13 +288,13 @@ module airi5c_decode(
       `RV32_MISC_MEM : begin
         case (funct3)
           `RV32_FUNCT3_FENCE : begin
-            if ((inst_if_i[31:28] == 0) && (rs1_addr == 0) && (reg_to_wr_dx == 0))
+            if ((inst_de_r[31:28] == 0) && (rs1_addr == 0) && (reg_to_wr_dx == 0))
               ; // NOP
             else
               illegal_instruction_r = 1'b1;
           end
           `RV32_FUNCT3_FENCE_I : begin
-            if ((inst_if_i[31:20] == 0) && (rs1_addr == 0) && (reg_to_wr_dx == 0))
+            if ((inst_de_r[31:20] == 0) && (rs1_addr == 0) && (reg_to_wr_dx == 0))
               fence_i_r = 1'b1;
             else
               illegal_instruction_r = 1'b1;
@@ -285,7 +319,7 @@ module airi5c_decode(
         end
       end
   
-      `RV32_CUSTOM : begin
+      `RV32_CUSTOM0 : begin
         src_b_sel_r = `SRC_B_RS2;
         src_c_sel_r = `SRC_C_RS3;
         alu_op_r    = `ALU_OP_ADD;
@@ -299,6 +333,22 @@ module airi5c_decode(
           uses_pcpi_unkilled_r = 1'b1;
         end
       end
+
+      `RV32_CUSTOM1 : begin
+        src_b_sel_r = `SRC_B_RS2;
+        src_c_sel_r = `SRC_C_RS3;
+        alu_op_r    = `ALU_OP_ADD;
+        wr_reg_unkilled_r = 1'b1;
+        uses_rs2_r  = 1'b1;      
+        uses_rs3_r  = 1'b1;      
+        if (~killed_de_i) begin
+          illegal_instruction_r = 1'b0;//(pcpi_timeout_counter_r == 0) ? 1'b1 : 1'b0;
+          pcpi_valid_r = 1'b1;
+          wb_src_sel_r = `WB_SRC_PCPI;
+          uses_pcpi_unkilled_r = 1'b1;
+        end
+      end
+
   
       `RV32_SYSTEM : begin    
         wr_reg_unkilled_r = (funct3 != `RV32_FUNCT3_PRIV);
@@ -369,9 +419,11 @@ module airi5c_decode(
           fpu_op_r            = `FPU_OP_MADD;
           sel_fpu_rs1_r       = 1'b1;
           sel_fpu_rs2_r       = 1'b1;
+          sel_fpu_rs3_r       = 1'b1;
           sel_fpu_rd_r        = 1'b1;
           wb_src_sel_r        = `WB_SRC_FPU;
           uses_rs2_r          = 1'b1;
+          uses_rs3_r          = 1'b1;
           wr_reg_unkilled_r   = 1'b1;
         end else illegal_instruction_r = 1'b1;
       end
@@ -381,9 +433,11 @@ module airi5c_decode(
           fpu_op_r            = `FPU_OP_MSUB;
           sel_fpu_rs1_r       = 1'b1;
           sel_fpu_rs2_r       = 1'b1;
+          sel_fpu_rs3_r       = 1'b1;
           sel_fpu_rd_r        = 1'b1;
           wb_src_sel_r        = `WB_SRC_FPU;
           uses_rs2_r          = 1'b1;
+          uses_rs3_r          = 1'b1;
           wr_reg_unkilled_r   = 1'b1;
         end else illegal_instruction_r = 1'b1;
       end
@@ -393,9 +447,11 @@ module airi5c_decode(
           fpu_op_r            = `FPU_OP_NMSUB;
           sel_fpu_rs1_r       = 1'b1;
           sel_fpu_rs2_r       = 1'b1;
+          sel_fpu_rs3_r       = 1'b1;
           sel_fpu_rd_r        = 1'b1;
           wb_src_sel_r        = `WB_SRC_FPU;
           uses_rs2_r          = 1'b1;
+          uses_rs3_r          = 1'b1;
           wr_reg_unkilled_r   = 1'b1;
         end else illegal_instruction_r = 1'b1;
       end
@@ -405,9 +461,11 @@ module airi5c_decode(
           fpu_op_r            = `FPU_OP_NMADD;
           sel_fpu_rs1_r       = 1'b1;
           sel_fpu_rs2_r       = 1'b1;
+          sel_fpu_rs3_r       = 1'b1;
           sel_fpu_rd_r        = 1'b1;
           wb_src_sel_r        = `WB_SRC_FPU;
           uses_rs2_r          = 1'b1;
+          uses_rs3_r          = 1'b1;
           wr_reg_unkilled_r   = 1'b1;
         end else illegal_instruction_r = 1'b1;
       end

@@ -30,18 +30,16 @@
 
 module airi5c_pc_mux(
   input  [`PC_SRC_SEL_WIDTH-1:0] pc_src_sel_i,
-  input                          compressed_i,
+  input                          compressed_if_i,
+  input                          compressed_ex_i,
   input  [`INST_WIDTH-1:0]       inst_ex_i,
   input  [`XPR_LEN-1:0]          rs1_data_bypassed_i,
-  input  [`XPR_LEN-1:0]          rs1_data_i,
-  input                          bypass_rs1_i,
   input  [`XPR_LEN-1:0]          pc_if_i,
   input  [`XPR_LEN-1:0]          pc_ex_i,
   input  [`XPR_LEN-1:0]          handler_pc_i,
   input  [`XPR_LEN-1:0]          dpc_i,
   input  [`XPR_LEN-1:0]          epc_i,
-  output [`XPR_LEN-1:0]          pc_pif_o,
-  output [`XPR_LEN-1:0]          branch_target_o
+  output [`XPR_LEN-1:0]          pc_pif_o
   );
 
   wire [`XPR_LEN-1:0] imm_b = { {20{inst_ex_i[31]}}, inst_ex_i[7], inst_ex_i[30:25], inst_ex_i[11:8], 1'b0 };
@@ -62,8 +60,9 @@ module airi5c_pc_mux(
          base = pc_ex_i;
          offset = jal_offset;
       end
-      `PC_JALR_TARGET : begin    
-         base = bypass_rs1_i ? rs1_data_bypassed_i : rs1_data_i;
+      `PC_JALR_TARGET : begin  
+         //base = bypass_rs1_i ? rs1_data_bypassed_i : rs1_data_i;
+         base = rs1_data_bypassed_i;
          offset = jalr_offset;
       end
       `PC_BRANCH_TARGET : begin
@@ -88,19 +87,15 @@ module airi5c_pc_mux(
       end
       `PC_MISSED_PREDICT : begin
          base = pc_ex_i;
-         offset = `XPR_LEN'h4;
+         offset = compressed_ex_i ? `XPR_LEN'h2 : `XPR_LEN'h4;
       end
       default : begin
          base = pc_if_i;
-         offset = compressed_i ? `XPR_LEN'h2 : `XPR_LEN'h4;
+         offset = compressed_if_i ? `XPR_LEN'h2 : `XPR_LEN'h4;
       end
     endcase   
   end 
 
   assign pc_pif_o = base + offset;
 
-  assign branch_target_o = jal ? (pc_ex_i + jal_offset) : 
-       jalr ? (bypass_rs1_i ? (rs1_data_bypassed_i + jalr_offset) : (rs1_data_i + jalr_offset)) :
-       branch ? (pc_ex_i + imm_b) : (compressed_i ? (pc_if_i + `XPR_LEN'h2) : 
-       (pc_src_sel_i == `PC_EPC) ? epc_i : (pc_if_i + `XPR_LEN'h4));
 endmodule

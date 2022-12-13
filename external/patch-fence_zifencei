@@ -1,0 +1,37 @@
+Submodule env contains modified content
+diff --git a/env/v/vm.c b/env/v/vm.c
+index 71700f5..9bafa14 100644
+--- a/env/v/vm.c
++++ b/env/v/vm.c
+@@ -172,7 +172,7 @@ void handle_fault(uintptr_t addr, uintptr_t cause)
+   user_llpt[addr/PGSIZE] = new_pte;
+   flush_page(addr);
+ 
+-  __builtin___clear_cache(0,0);
++//  __builtin___clear_cache(0,0);
+ }
+ 
+ void handle_trap(trapframe_t* tf)
+diff --git a/isa/Makefile b/isa/Makefile
+index 892ed72..51bbf06 100644
+--- a/isa/Makefile
++++ b/isa/Makefile
+@@ -77,15 +77,15 @@ endif
+ 
+ endef
+ 
+-$(eval $(call compile_template,rv32ui,-march=rv32g -mabi=ilp32))
++$(eval $(call compile_template,rv32ui,-march=rv32g_zicsr_zifencei -mabi=ilp32))
+ $(eval $(call compile_template,rv32uc,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32um,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32ua,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32uf,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32ud,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32uzfh,-march=rv32g_zfh -mabi=ilp32))
+-$(eval $(call compile_template,rv32si,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32mi,-march=rv32g -mabi=ilp32))
++$(eval $(call compile_template,rv32si,-march=rv32g_zicsr_zifencei -mabi=ilp32))
++$(eval $(call compile_template,rv32mi,-march=rv32g_zicsr_zifencei -mabi=ilp32))
+ ifeq ($(XLEN),64)
+ $(eval $(call compile_template,rv64ui,-march=rv64g -mabi=lp64))
+ $(eval $(call compile_template,rv64uc,-march=rv64g -mabi=lp64))

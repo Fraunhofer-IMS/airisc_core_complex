@@ -9,4 +9,4 @@ airi5c_timer        -   Memory mapped MTIME/MTIMECOMP timer/comparator that can 
 airi5c_spi          -   SPI Master/Slave with 1-64 Bit transaction length and clk prescaler (AHB-Lite interface)
 airi5c_custom       -   template for custom instructions
 airi5c_gpio         -   GPIO peripheral
-
+airi5c_ai_acc       -   AI Accelerators (tanh, sigmoid, e-function) 
