@@ -168,6 +168,8 @@ assign p1_hready = 1'b1;
 assign p1_hresp = `HASTI_RESP_OKAY;
 integer i = 0;
 
+
+`ifndef VERILATOR
 initial begin
   $write("clearing RAM...");
   for(i = 0; i < (nwords-1); i = i + 1) begin
@@ -175,5 +177,6 @@ initial begin
   end
   $write("done.\n");
 end
+`endif
 
 endmodule

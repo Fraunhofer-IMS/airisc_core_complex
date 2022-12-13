@@ -100,6 +100,7 @@ run_test_program_bulk(7,"./memfiles/rv32ui/rv32ui-p-bge.mem",338,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
+
 // ========================
 // == 8 - ISA test - BGEU  =
 // ========================
@@ -145,7 +146,7 @@ if(result != 0) errorcount = errorcount + 1;
 // ========================
 testtotal = testtotal + 1;
 $write("FENCE_I: ");
-run_test_program_bulk(12,"./memfiles/rv32ui/rv32ui-p-fence_i.mem",264,result);
+run_test_program_bulk(12,"./memfiles/rv32ui/rv32ui-p-fence_i.mem",2057,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -173,7 +174,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("LB     : ");
-run_test_program_bulk(15,"./memfiles/rv32ui/rv32ui-p-lb.mem",324,result);
+run_test_program_bulk(15,"./memfiles/rv32ui/rv32ui-p-lb.mem",2054,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -182,7 +183,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("LBU    : ");
-run_test_program_bulk(16,"./memfiles/rv32ui/rv32ui-p-lbu.mem",324,result);
+run_test_program_bulk(16,"./memfiles/rv32ui/rv32ui-p-lbu.mem",2054,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -191,7 +192,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("LH     : ");
-run_test_program_bulk(17,"./memfiles/rv32ui/rv32ui-p-lh.mem",388,result);
+run_test_program_bulk(17,"./memfiles/rv32ui/rv32ui-p-lh.mem",2054,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -200,7 +201,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("LHU    : ");
-run_test_program_bulk(18,"./memfiles/rv32ui/rv32ui-p-lhu.mem",388,result);
+run_test_program_bulk(18,"./memfiles/rv32ui/rv32ui-p-lhu.mem",2054,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -218,7 +219,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("LW     : ");
-run_test_program_bulk(20,"./memfiles/rv32ui/rv32ui-p-lw.mem",388,result);
+run_test_program_bulk(20,"./memfiles/rv32ui/rv32ui-p-lw.mem",2054,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -245,7 +246,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("SB     : ");
-run_test_program_bulk(23,"./memfiles/rv32ui/rv32ui-p-sb.mem",452,result);
+run_test_program_bulk(23,"./memfiles/rv32ui/rv32ui-p-sb.mem",2060,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -254,7 +255,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =====================
 testtotal = testtotal + 1;
 $write("SH     : ");
-run_test_program_bulk(24,"./memfiles/rv32ui/rv32ui-p-sh.mem",520,result);
+run_test_program_bulk(24,"./memfiles/rv32ui/rv32ui-p-sh.mem",2060,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
@@ -296,7 +297,6 @@ run_test_program_bulk(28,"./memfiles/rv32ui/rv32ui-p-sltiu.mem",338,result);
 
 if(result != 0) errorcount = errorcount + 1;
 
-
 // =====================
 // == 29 - ISA test - SLT  =
 // =====================
@@ -305,6 +305,7 @@ $write("SLT    : ");
 run_test_program_bulk(29,"./memfiles/rv32ui/rv32ui-p-slt.mem",466,result);
 
 if(result != 0) errorcount = errorcount + 1;
+
 
 // =====================
 // == 30 - ISA test - SLTU  =
@@ -365,7 +366,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 testtotal = testtotal + 1;
 $write("SW     : ");
-run_test_program_bulk(36,"./memfiles/rv32ui/rv32ui-p-sw.mem",524,result);
+run_test_program_bulk(36,"./memfiles/rv32ui/rv32ui-p-sw.mem",2060,result);
 
 if(result != 0) errorcount = errorcount + 1;
 

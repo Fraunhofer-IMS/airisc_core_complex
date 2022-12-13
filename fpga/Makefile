@@ -25,9 +25,10 @@
 #     ??.12.20 - new target board: digilent Cmod A7-35T
 #
 ###############################################################################
+#ELF_PATH = /home/barthel/git/make_update_elf/airi5c-base-core/Airisc Debug.elf
 
 
-base_dir = $(abspath .)
+BASE_DIR = $(abspath .)
 
 # User configuration - hardware (zedboardRevD / NexysVideo / CmodA7)
 # zedboardRevD: http://zedboard.org/product/zedboard
@@ -40,8 +41,8 @@ BOARD = NexysVideo
 
 # User configuration - design (AIRI5C_FPGA)
 # -----------------------------------------------------------------------------
-CONFIG = AIRI5C-basic_FPGA
 #CONFIG = AIRI5C_FPGA
+CONFIG = AIRI5C_BASIC_FPGA
 
 # User configuration - Vivado version (2019.2-tested / 2020.2-tested)
 # ----------------------------------------------------------------------------
@@ -54,10 +55,14 @@ PRODUCTS_OUTPUT_DIR = sdcard
 
 # project configuration
 # -----------------------------------------------------------------------------
-PROJ_NAME = $(BOARD)_$(CONFIG)
-#PROJ_NAME = NexysVideo_AIRI5C_FPGA
-#PROJ_NAME = ArtyA7_AIRI5C_FPGA
-#PROJ_NAME = CmodA7_AIRI5C_FPGA
+PROJ_NAME = $(CONFIG)_$(BOARD)
+#PROJ_NAME = AIRI5C_FPGA_NexysVideo
+#PROJ_NAME = AIRI5C_FPGA_ArtyA7
+#PROJ_NAME = AIRI5C_FPGA_CmodA7
+
+ELF_PATH = src_$(BOARD)/ip/HelloWorld.elf
+BIN_PATH = $(basename $(ELF_PATH)).bin
+COE_PATH = src_$(BOARD)/ip/$(basename $(notdir $(ELF_PATH))).coe
 
 # hardware configuration 
 # -----------------------------------------------------------------------------
@@ -96,7 +101,6 @@ else ifeq ($(BOARD), CmodA7)
         PART = XC7A35T-1CPG236C
         UBOOT_CONFIG = none
         ZYNQ_CONFIG = none
-
 else
 	BOARD_MODEL = em.avnet.com:zed:part0:1.2
 	PART = xc7z020clg484-1
@@ -119,7 +123,7 @@ update-boards:
 
 # recreate vivado project file from tcl
 project:
-	vivado -mode batch -notrace -source $(PROJ_NAME).tcl
+	vivado -mode batch -notrace -source $(PROJ_NAME).tcl -nojournal -nolog
 
 build-fpga:
 	vivado -mode tcl -source make_bitstream.tcl -tclargs $(PROJ_NAME)
@@ -132,16 +136,44 @@ copy-bitstream:
 	[ -d ./$(PRODUCTS_OUTPUT_DIR) ] && echo "Directory ./$(PRODUCTS_OUTPUT_DIR) Exists" || mkdir ./$(PRODUCTS_OUTPUT_DIR)
 	cp $(PROJ_NAME)/$(PROJ_NAME).runs/impl_1/FPGA_Top.bit $(PRODUCTS_OUTPUT_DIR)/FPGA_Top_$(BOARD).bit
 
+update-elf:
+	@echo "make sure the path provided does not contain any spaces!"
+	riscv32-unknown-elf-objcopy -O binary "$(ELF_PATH)" "$(BIN_PATH)"
+	../external/bin2coe/bin/Release/bin2coe "$(BIN_PATH)" "$(COE_PATH)"
+	rm "$(BIN_PATH)"
+	vivado -mode tcl -source make_update_coe.tcl -tclargs "$(abspath .)" $(BOARD) $(PROJ_NAME) "$(COE_PATH)"
+	@echo "initial memory conent has been changed, remember to rebuild the bitstream using 'make build-fpga'"
+
+
+# Generate xcelium-compatible simulation libraries from Vivado sources
+# -------------------------------------------------------------------------------
+simlibs:
+	$(Display Generate SimLibs for third-party simulator XCelium)
+	vivado -mode tcl -source simlibs.tcl -tclargs $(PROJ_NAME)
+
+design-xcelium:
+	$(Display Generate Simulation Design for third-party simulator XCelium)
+	vivado -mode tcl -source xcelium_design.tcl -tclargs $(PROJ_NAME)
+
 
 # simulate fpga design
 # -------------------------------------------------------------------------------
 sim-fpga:
 	$(info Simulation of TopLevel Design with TB)
-	$(warning IMPLEMENTATION sim-fpga to be tested with on the fly generated mem files)
 	vivado -mode tcl -source generate_sim_scripts.tcl -tclargs $(PROJ_NAME)
 	cp -r ../tb/memfiles ./$(PROJ_NAME)/$(PROJ_NAME).sim/sim_1/behav/xsim/
 	vivado -mode tcl -source sim_toplevel.tcl -tclargs $(PROJ_NAME)
 	grep "TB PASSED" ./vivado.log && echo "passed" && exit 0 || echo "failed" && exit 1
+
+# simulate fpga design using xcelium simulator
+# -------------------------------------------------------------------------------
+sim-fpga-xcelium:
+	$(info Simulation of TopLevel Design with TB using xcelium)
+	$(warning IMPLEMENTATION sim-fpga to be tested with on the fly generated mem files)
+	cp -r ../tb/memfiles ./sim_xcelium/xcelium/memfiles/
+	cd sim_xcelium/xcelium && ./airi5c_top_tb.sh
+	grep "TB PASSED" ./sim_xcelium/xcelium/xrun.log && echo "passed" && exit 0 || echo "failed" && exit 1
+
 
 
 # program fpga board

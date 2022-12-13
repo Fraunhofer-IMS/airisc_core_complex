@@ -11,12 +11,16 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //
 //
+//
 // File              : airi5c_top_asic.v
 // Author            : A. Stanitzki
 // Creation Date     : 09.10.20
 // Version           : 1.0
-// Abstract          : AIRI5C top level for the ASIC implementation         
+// Abstract          : AIRI5C top level for the ASIC implementation
 //
+
+//`define   ram_debug
+`undef    ram_debug
 
 `include "airi5c_ctrl_constants.vh"
 `include "airi5c_csr_addr_map.vh"
@@ -26,20 +30,21 @@
 
 module airi5c_top_asic(
    input                           clk,
-   input                           nreset,
-   input                           testmode,
+   input                           nreset,   
    input                           ext_interrupt,
-
-// scan chain interface for core
-/*   input                           sdi,
-   output                          sdo,
-   input                           sen,*/
-
+   
+   
 // jtag interface
    input                           tdi,
-   input                           tck, 
-   input                           tms, 
+   input                           tck,
+   input                           tms,
    output                          tdo,
+   
+// scan chain interface for core
+   input                           testmode,
+   input                           sdi,
+   output                          sdo,
+   input                           sen,
 
 // connections to IMEM/DMEM bus
    output [`HASTI_ADDR_WIDTH-1:0]  imem_haddr,
@@ -65,22 +70,33 @@ module airi5c_top_asic(
    input                           dmem_hready,
    input                           dmem_hresp,
 
-// -- Chip specific -- 
+// -- Chip specific --
 
 // GPIOs
-   output [7:0]                    oGPIO_D,
-   output [7:0]                    oGPIO_EN,
-   input  [7:0]                    iGPIO_I,
+   output [7:0]                    gpio0_out,
+   input  [7:0]                    gpio0_in,
+   output [7:0]                    gpio0_oe,
 
-// UART
-   output                          oUART_TX,
-   input                           iUART_RX,
+// UART 0
+   output                          uart0_tx,
+   input                           uart0_rx,
 
-// SPI Master
-   output                          oSPI1_MOSI,
-   input                           iSPI1_MISO,
-   output                          oSPI1_SCLK,
-   output                          oSPI1_NSS,
+// SPI 0
+   output                          spi0_mosi_out,
+   input                           spi0_mosi_in,
+   output                          spi0_mosi_oe,
+
+   output                          spi0_miso_out,
+   input                           spi0_miso_in,
+   output                          spi0_miso_oe,
+
+   output                          spi0_sclk_out,
+   input                           spi0_sclk_in,
+   output                          spi0_sclk_oe,
+
+   output [3:0]                    spi0_ss_out,
+   input                           spi0_ss_in,
+   output                          spi0_ss_oe,
 
 // -- Post-Synthesis debug port --
    output reg [7:0]                debug_out
@@ -92,7 +108,7 @@ module airi5c_top_asic(
   // DMI Bus
   // =======
   // signals driven by debug transfer module
-  // and received by the debug module  
+  // and received by the debug module
   wire  [`DMI_ADDR_WIDTH-1:0]     dmi_addr;
   wire  [`DMI_WIDTH-1:0]          dmi_wdata;
   wire  [`DMI_WIDTH-1:0]          dmi_rdata;
@@ -100,51 +116,81 @@ module airi5c_top_asic(
   wire                            dmi_wen;
   wire                            dmi_error;
   wire                            dmi_dm_busy;
-   
+
   // Databus- and Peripherybus-Multiplexer signals
   // =============================================
-  wire  [`HASTI_BUS_WIDTH-1:0]     muxed_hrdata;
-  wire  [`HASTI_RESP_WIDTH-1:0]    muxed_hresp;
-  wire                             muxed_hready;
-  
-  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_gpio;
-  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_gpio;
-  wire                            per_hready_gpio;
-  
+
+  wire [`HASTI_BUS_WIDTH-1:0]     muxed_hrdata;
+  wire [`HASTI_RESP_WIDTH-1:0]    muxed_hresp;
+  wire                            muxed_hready;
+
+  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_gpio0;
+  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_gpio0;
+  wire                            per_hready_gpio0;
+
   wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_system_timer;
   wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_system_timer;
   wire                            per_hready_system_timer;
-  
-  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_spi1;
-  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_spi1;
-  wire                            per_hready_spi1;
-    
-  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_uart;
-  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_uart;
-  wire                            per_hready_uart;    
+
+  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_uart0;
+  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_uart0;
+  wire                            per_hready_uart0;
+
+  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_spi0;
+  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_spi0;
+  wire                            per_hready_spi0;
 
   wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_icap;
   wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_icap;
-  wire                            per_hready_icap;    
-    
-  wire                            nrst = nreset & ndmreset;  
-  wire                            lock_custom;
+  wire                            per_hready_icap;
 
-  
-  // Interrupt signals generated by core local peripherals
-  // =====================================================
-
+  wire                            nrst = nreset & ndmreset;
   wire                            system_timer_tick;
 
-  
-  // DMEM bus multiplexer
-  // ====================
+  wire                            lock_custom;
 
+  // Interrupt signals generated by core local peripherals
+  // =====================================================
+  
+  
+  
+  //Debugging statements 
+`ifdef ram_debug
+always@(*) begin 
+  if (dmem_haddr == 32'h80002198) begin 
+    $display(""); 
+    $display("  DMEM Accessing 2198... "); 
+    $display("    Time: %0t", $time); 
+      if (dmem_hwrite) begin 
+        $display("    Write Access"); 
+        $display("    Content is %0h", dmem_hwdata);
+      end else begin 
+         $display("    Read Access"); 
+         $display("    Content is 0%h", dmem_hrdata);
+      end
+  end 
+  else if (imem_haddr == 32'h80002198) begin 
+    $display(""); 
+    $display("  IMEM Accessing 2198... "); 
+    $display("    Time: %0t", $time); 
+      if (imem_hwrite) begin 
+        $display("    Write Access"); 
+        $display("    Content is %0h", imem_hwdata);
+      end else begin 
+         $display("    Read Access"); 
+         $display("    Content is 0%h", imem_hrdata);
+      end  
+  end 
+end
+`endif
+
+// DMEM bus multiplexer
+  // ====================
   airi5c_periph_mux #
   (
     .S_COUNT(6),
-    .S_BASE_ADDR({`MEMORY_BASE_ADDR,`SYSTEM_TIMER_BASE_ADDR,`UART1_BASE_ADDR,`SPI1_BASE_ADDR,`GPIO1_BASE_ADDR,`ICAP_BASE_ADDR}),        
-    .S_ADDR_WIDTH({`MEMORY_ADDR_WIDTH,`SYSTEM_TIMER_ADDR_WIDTH,`UART1_ADDR_WIDTH,`SPI1_ADDR_WIDTH,`GPIO1_ADDR_WIDTH,`ICAP_ADDR_WIDTH})    
+    .S_BASE_ADDR({`MEMORY_BASE_ADDR,`SYSTEM_TIMER_BASE_ADDR,`UART0_BASE_ADDR,`SPI0_BASE_ADDR,`GPIO0_BASE_ADDR,`ICAP_BASE_ADDR}),
+    .S_ADDR_WIDTH({`MEMORY_ADDR_WIDTH,`SYSTEM_TIMER_ADDR_WIDTH,`UART0_ADDR_WIDTH,`SPI0_ADDR_WIDTH,`GPIO0_ADDR_WIDTH,`ICAP_ADDR_WIDTH})
   )
   peripheral_mux ( 
     .clk_i(clk),
@@ -155,20 +201,19 @@ module airi5c_top_asic(
     .m_hresp(muxed_hresp),
     .m_hrdata(muxed_hrdata), 
     
-    .s_hready({dmem_hready,per_hready_system_timer,per_hready_uart,per_hready_spi1,per_hready_gpio,per_hready_icap}),
-    .s_hresp({dmem_hresp,per_hresp_system_timer,per_hresp_uart,per_hresp_spi1,per_hresp_gpio,per_hresp_icap}),
-    .s_hrdata({dmem_hrdata,per_hrdata_system_timer,per_hrdata_uart,per_hrdata_spi1,per_hrdata_gpio,per_hrdata_icap})
+    .s_hready({dmem_hready,per_hready_system_timer,per_hready_uart0,per_hready_spi0,per_hready_gpio0,per_hready_icap}),
+    .s_hresp({dmem_hresp,per_hresp_system_timer,per_hresp_uart0,per_hresp_spi0,per_hresp_gpio0,per_hresp_icap}),
+    .s_hrdata({dmem_hrdata,per_hrdata_system_timer,per_hrdata_uart0,per_hrdata_spi0,per_hrdata_gpio0,per_hrdata_icap})
   );
 
- 
-  // Core Complex peripherals 
+  // Core Complex peripherals
   // ========================
 
   airi5c_timer #(.BASE_ADDR(`SYSTEM_TIMER_BASE_ADDR)) system_timer
   (
     .nreset(nrst),
     .clk(clk),
-  
+
     .timer_tick(system_timer_tick),
 
     .haddr(dmem_haddr),
@@ -185,14 +230,14 @@ module airi5c_top_asic(
   );
 
 
-  airi5c_gpio #(.BASE_ADDR(`GPIO1_BASE_ADDR),.WIDTH(8)) 
-  gpio(
+  airi5c_gpio #(.BASE_ADDR(`GPIO0_BASE_ADDR),.WIDTH(8))
+  gpio0(
     .nreset(nrst),
     .clk(clk),
 
-    .gpio_d(oGPIO_D),
-    .gpio_en(oGPIO_EN),
-    .gpio_i(iGPIO_I),
+    .gpio_d(gpio0_out),
+    .gpio_en(gpio0_oe),
+    .gpio_i(gpio0_in),
 
     .haddr(dmem_haddr),
     .hwrite(dmem_hwrite),
@@ -202,35 +247,31 @@ module airi5c_top_asic(
     .hprot(dmem_hprot),
     .htrans(dmem_htrans),
     .hwdata(dmem_hwdata),
-    .hrdata(per_hrdata_gpio),
-    .hready(per_hready_gpio),
-    .hresp(per_hresp_gpio)
+    .hrdata(per_hrdata_gpio0),
+    .hready(per_hready_gpio0),
+    .hresp(per_hresp_gpio0)
   );
 
   airi5c_uart #(
-    .BASE_ADDR(`UART1_BASE_ADDR),
+    .BASE_ADDR(`UART0_BASE_ADDR),
     .TX_ADDR_WIDTH(5),
-    .RX_ADDR_WIDTH(5),
-    .TX_MARK(8),
-    .RX_MARK(24)
-  ) uart1
+    .RX_ADDR_WIDTH(5)
+  ) uart0
   (
     .n_reset(nrst),
     .clk(clk),
 
-    .tx(oUART_TX), // airi5c to dtm
-    .rx(iUART_RX), // dtm to airi5c
+    .tx(uart0_tx), // airi5c to dtm
+    .rx(uart0_rx), // dtm to airi5c
     .cts(1'b1),
     .rts(),
   
     .int_any(),
-    .int_tx_full(),
     .int_tx_empty(),
-    .int_tx_mark_reached(),
+    .int_tx_watermark_reached(),
     .int_tx_overflow_error(),
     .int_rx_full(),
-    .int_rx_empty(),
-    .int_rx_mark_reached(),
+    .int_rx_watermark_reached(),
     .int_rx_overflow_error(),
     .int_rx_underflow_error(),
     .int_rx_noise_error(),
@@ -241,20 +282,65 @@ module airi5c_top_asic(
     .hwrite(dmem_hwrite),
     .htrans(dmem_htrans),
     .hwdata(dmem_hwdata),
-    .hrdata(per_hrdata_uart),
-    .hready(per_hready_uart),
-    .hresp(per_hresp_uart)
+    .hrdata(per_hrdata_uart0),
+    .hready(per_hready_uart0),
+    .hresp(per_hresp_uart0)
   );
-  
-  airi5c_icap #(
-    .BASE_ADDR(`ICAP_BASE_ADDR),
-    .CLK_FREQ_HZ(`SYS_CLK_HZ))
-  icap1(
+
+airi5c_spi
+#(
+  .BASE_ADDR(`SPI0_BASE_ADDR),
+  .MASTER_ON_RESET(1'b1),
+  .ADDR_WIDTH(3),
+  .DATA_WIDTH(8)
+) spi0
+(
+  .n_reset(nrst),
+  .clk(clk),
+
+  .mosi_out(spi0_mosi_out),
+  .mosi_in(spi0_mosi_in),
+  .mosi_oe(spi0_mosi_oe),
+
+  .miso_out(spi0_miso_out),
+  .miso_in(spi0_miso_in),
+  .miso_oe(spi0_miso_oe),
+
+  .sclk_out(spi0_sclk_out),
+  .sclk_in(spi0_sclk_in),
+  .sclk_oe(spi0_sclk_oe),
+
+  .ss_out(spi0_ss_out),
+  .ss_in(spi0_ss_in),
+  .ss_oe(spi0_ss_oe),
+
+  .int_any(),
+  .int_tx_empty(),
+  .int_tx_watermark_reached(),
+  .int_tx_overflow_error(),
+  .int_tx_ready(),
+  .int_rx_full(),
+  .int_rx_watermark_reached(),
+  .int_rx_overflow_error(),
+  .int_rx_underflow_error(),  
+
+  .haddr(dmem_haddr),
+  .hwrite(dmem_hwrite),
+  .htrans(dmem_htrans),
+  .hwdata(dmem_hwdata),
+  .hrdata(per_hrdata_spi0),
+  .hready(per_hready_spi0),
+  .hresp(per_hresp_spi0)
+);
+
+  airi5c_icap #(.BASE_ADDR(`ICAP_BASE_ADDR),
+        .CLK_FREQ_HZ(`SYS_CLK_HZ))
+    icap1(
     .n_reset(nrst),
     .clk(clk),
 
     .lock(lock_custom),
-    
+
     .haddr(dmem_haddr),
     .hwrite(dmem_hwrite),
     .hsize(dmem_hsize),
@@ -267,89 +353,55 @@ module airi5c_top_asic(
     .hready(per_hready_icap),
     .hresp(per_hresp_icap)
   );
-  
-  airi5c_spi #(
-    .BASE_ADDR(`SPI1_BASE_ADDR),
-    .DEFAULT_MASTER(1),
-    .DEFAULT_SD(1))
-  spi1(
-    .n_reset(nrst),
-    .clk(clk),
-  
-    .enable_master(),
-
-    .master_miso(iSPI1_MISO),
-    .master_mosi(oSPI1_MOSI),
-    .master_sclk(oSPI1_SCLK),
-    .master_nss(oSPI1_NSS),
-
-    .slave_miso(),
-    .slave_mosi(1'b0),
-    .slave_sclk(1'b0),
-    .slave_nss(1'b1),
-
-    .haddr(dmem_haddr),
-    .hwrite(dmem_hwrite),
-    .hsize(dmem_hsize),
-    .hburst(dmem_hburst),
-    .hmastlock(dmem_hmastlock),
-    .hprot(dmem_hprot),
-    .htrans(dmem_htrans),
-    .hwdata(dmem_hwdata),
-    .hrdata(per_hrdata_spi1),
-    .hready(per_hready_spi1),
-    .hresp(per_hresp_spi1)
-  );
-
 
 // core/hart instances
 // ===================
- 
+
 airi5c_core airi5c(
-  .nreset(nreset),
-  .clk(clk),
-  .testmode(testmode),
+  .rst_ni(nreset),
+  .clk_i(clk),
+  .testmode_i(testmode),
 
-  .ndmreset(ndmreset),
-  .ext_interrupts({`N_EXT_INTS{ext_interrupt}}),
-  .system_timer_tick(system_timer_tick),
-        
-  .imem_haddr(imem_haddr),
-  .imem_hwrite(imem_hwrite),
-  .imem_hsize(imem_hsize),
-  .imem_hburst(imem_hburst),
-  .imem_hmastlock(imem_hmastlock),
-  .imem_hprot(imem_hprot),
-  .imem_htrans(imem_htrans),
-  .imem_hwdata(imem_hwdata),
-  .imem_hrdata(imem_hrdata),
-  .imem_hready(imem_hready),
-  .imem_hresp(imem_hresp),
-         
-  .dmem_haddr(dmem_haddr),
-  .dmem_hwrite(dmem_hwrite),
-  .dmem_hsize(dmem_hsize),
-  .dmem_hburst(dmem_hburst),
-  .dmem_hmastlock(dmem_hmastlock),
-  .dmem_hprot(dmem_hprot),
-  .dmem_htrans(dmem_htrans),
-  .dmem_hwdata(dmem_hwdata),
-  .dmem_hrdata(muxed_hrdata),
-  .dmem_hready(muxed_hready), 
-  .dmem_hresp(muxed_hresp),
-  
-  .lock_custom(lock_custom),
-  
-  .dmi_addr(dmi_addr),
-  .dmi_en(dmi_en),
-  .dmi_error(dmi_error),
-  .dmi_wen(dmi_wen),
-  .dmi_wdata(dmi_wdata),
-  .dmi_rdata(dmi_rdata),
-  .dmi_dm_busy(dmi_dm_busy)
-  ); 
+  .ndmreset_o(ndmreset),
+  .ext_interrupts_i({`N_EXT_INTS{ext_interrupt}}),
+  .system_timer_tick_i(system_timer_tick),
 
-// Debug Transfer Module (DTM) 
+  .imem_haddr_o(imem_haddr),
+  .imem_hwrite_o(imem_hwrite),
+  .imem_hsize_o(imem_hsize),
+  .imem_hburst_o(imem_hburst),
+  .imem_hmastlock_o(imem_hmastlock),
+  .imem_hprot_o(imem_hprot),
+  .imem_htrans_o(imem_htrans),
+  .imem_hwdata_o(imem_hwdata),
+  .imem_hrdata_i(imem_hrdata),
+  .imem_hready_i(imem_hready),
+  .imem_hresp_i(imem_hresp),
+
+  .dmem_haddr_o(dmem_haddr),
+  .dmem_hwrite_o(dmem_hwrite),
+  .dmem_hsize_o(dmem_hsize),
+  .dmem_hburst_o(dmem_hburst),
+  .dmem_hmastlock_o(dmem_hmastlock),
+  .dmem_hprot_o(dmem_hprot),
+  .dmem_htrans_o(dmem_htrans),
+  .dmem_hwdata_o(dmem_hwdata),
+  .dmem_hrdata_i(muxed_hrdata),
+  .dmem_hready_i(muxed_hready),
+  .dmem_hresp_i(muxed_hresp),
+
+  .lock_custom_i(lock_custom),
+
+  .dmi_addr_i(dmi_addr),
+  .dmi_en_i(dmi_en),
+  .dmi_error_o(dmi_error),
+  .dmi_wen_i(dmi_wen),
+  .dmi_wdata_i(dmi_wdata),
+  .dmi_rdata_o(dmi_rdata),
+  .dmi_dm_busy_o(dmi_dm_busy)
+  );
+
+// Debug Transfer Module (DTM)
 // ===========================
 
 airi5c_dtm dtm(
@@ -358,7 +410,7 @@ airi5c_dtm dtm(
   .tck(tck),
   .tms(tms),
   .tdi(tdi),
-  .tdo(tdo),   
+  .tdo(tdo),
   .dmi_addr(dmi_addr),
   .dmi_en(dmi_en),
   .dmi_error(dmi_error),
@@ -376,11 +428,11 @@ reg    debug_hwrite;
 
  // DEBUG Signals
  // =============
- // The debug_out port is used in 
- // verification to output testbench 
+ // The debug_out port is used in
+ // verification to output testbench
  // results from the official ISA tests.
  // It can be handy for silicon verification
- // as well, but might also be excluded from 
+ // as well, but might also be excluded from
  // synthesis.
 
 always @(posedge clk or negedge nreset) begin
@@ -399,12 +451,12 @@ always @(posedge clk or negedge nreset) begin
     `endif
     `ifdef VPIMODE
     if((debug_addr == 32'hc0000024) && (debug_hwrite))
-    begin     
+    begin
         //debug_out <= dmem_hwdata[7:0];
         $write("%c",dmem_hwdata[7:0]);
         if((dmem_hwdata[7:0] == 8'h13) || (dmem_hwdata[7:0] == 8'h10)) $fflush(1);
     end
-    `endif  
+    `endif
   end
 end
 

@@ -20,16 +20,25 @@
 `include "rv32_opcodes.vh"
 
 `ifdef ISA_EXT_F
-  `include "modules/airi5c_fpu/airi5c_fpu_constants.vh"
+  `include "modules/airi5c_fpu/airi5c_FPU_constants.vh"
 `endif
 
 module airi5c_EX_pregs(
   input                           clk_i,
   input                           rst_ni,
 
+
+  input                           flush_i, 
+
   input                           killed_de_i,
   input                           killed_ex_i,
   input                           stall_ex_i,
+
+  input                           de_valid_i,
+  input                           wb_ready_i,
+  output                          ex_ready_o,
+  output                          ex_valid_o,
+
 
   input   [`XPR_LEN-1:0]          pc_de_i,
   input   [`INST_WIDTH-1:0]       inst_de_i,
@@ -65,12 +74,14 @@ module airi5c_EX_pregs(
   input   [4:0]                   rs2_addr_de_i,
   input   [4:0]                   rs3_addr_de_i,
   input                           loadstore_de_i,
+  input                           predicted_branch_de_i,
 
 `ifdef ISA_EXT_F
   // FPU
   input   [`FPU_OP_WIDTH-1:0]     fpu_op_de_i,
   input                           sel_fpu_rs1_de_i,
   input                           sel_fpu_rs2_de_i,
+  input                           sel_fpu_rs3_de_i,
   input                           sel_fpu_rd_de_i,
 `endif
 
@@ -107,7 +118,8 @@ module airi5c_EX_pregs(
   output  [4:0]                   rs1_addr_EX_o,
   output  [4:0]                   rs2_addr_EX_o,
   output  [4:0]                   rs3_addr_EX_o,
-  output                          loadstore_EX_o
+  output                          loadstore_EX_o,
+  output                          predicted_branch_ex_o
 
 `ifdef ISA_EXT_F
   ,
@@ -115,9 +127,14 @@ module airi5c_EX_pregs(
   output  [`FPU_OP_WIDTH-1:0]     fpu_op_EX_o,
   output                          sel_fpu_rs1_EX_o,
   output                          sel_fpu_rs2_EX_o,
+  output                          sel_fpu_rs3_EX_o,
   output                          sel_fpu_rd_EX_o
 `endif
 );
+
+  reg ex_valid_r;
+  assign ex_valid_o = ex_valid_r;
+  assign ex_ready_o = ~stall_ex_i;
 
   reg   [`XPR_LEN-1:0]          PC_EX_d;
   reg   [`INST_WIDTH-1:0]       inst_EX_d;
@@ -153,14 +170,17 @@ module airi5c_EX_pregs(
   reg   [4:0]                   rs2_addr_EX_d;
   reg   [4:0]                   rs3_addr_EX_d;
   reg                           loadstore_EX_d;
+  reg                           predicted_branch_ex_d;
 
 `ifdef ISA_EXT_F
   // FPU
   reg   [`FPU_OP_WIDTH-1:0]     fpu_op_EX_d;
   reg                           sel_fpu_rs1_EX_d;
   reg                           sel_fpu_rs2_EX_d;
+  reg                           sel_fpu_rs3_EX_d;
   reg                           sel_fpu_rd_EX_d;
 `endif
+
 
   assign PC_EX_o                  = PC_EX_d;
   assign inst_EX_o                = inst_EX_d;
@@ -196,18 +216,21 @@ module airi5c_EX_pregs(
   assign rs2_addr_EX_o            = rs2_addr_EX_d;
   assign rs3_addr_EX_o            = rs3_addr_EX_d;
   assign loadstore_EX_o           = loadstore_EX_d;
+  assign predicted_branch_ex_o    = predicted_branch_ex_d;
 
 `ifdef ISA_EXT_F
   // FPU
   assign fpu_op_EX_o              = fpu_op_EX_d;
   assign sel_fpu_rs1_EX_o         = sel_fpu_rs1_EX_d;
   assign sel_fpu_rs2_EX_o         = sel_fpu_rs2_EX_d;
+  assign sel_fpu_rs3_EX_o         = sel_fpu_rs3_EX_d;
   assign sel_fpu_rd_EX_o          = sel_fpu_rd_EX_d;
 `endif
 
 
   always @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin
+      ex_valid_r               <= 1'b0;
       PC_EX_d                  <= `START_HANDLER;
       inst_EX_d                <= `RV_NOP; 
       imem_compressed_EX_d     <= 1'b0;
@@ -242,14 +265,17 @@ module airi5c_EX_pregs(
       dret_unkilled_EX_d       <= 1'b0;
       wfi_unkilled_EX_d        <= 1'b0;
       loadstore_EX_d           <= 1'b0;
+      predicted_branch_ex_d    <= 1'b0;
 `ifdef ISA_EXT_F
       fpu_op_EX_d              <= 0;
       sel_fpu_rs1_EX_d         <= 0;
       sel_fpu_rs2_EX_d         <= 0;
+      sel_fpu_rs3_EX_d         <= 0;
       sel_fpu_rd_EX_d          <= 0;
 `endif
     end else if (~stall_ex_i) begin
       if (killed_de_i | killed_ex_i) begin
+        ex_valid_r               <= 1'b0;
         inst_EX_d                <= `RV_NOP;  
         rs1_addr_EX_d            <= 0;
         rs2_addr_EX_d            <= 0;
@@ -281,14 +307,17 @@ module airi5c_EX_pregs(
         ebreak_EX_d              <= 1'b0;
         dret_unkilled_EX_d       <= 1'b0;
         wfi_unkilled_EX_d        <= 1'b0;
-        loadstore_EX_d           <= loadstore_EX_d;
+        loadstore_EX_d           <= 1'b0;
+        predicted_branch_ex_d    <= 1'b0;
 `ifdef ISA_EXT_F
         fpu_op_EX_d              <= 0;
         sel_fpu_rs1_EX_d         <= 0;
         sel_fpu_rs2_EX_d         <= 0;
+        sel_fpu_rs3_EX_d         <= 0;
         sel_fpu_rd_EX_d          <= 0;
 `endif
       end else begin
+        ex_valid_r               <= de_valid_i;
         PC_EX_d                  <= pc_de_i;     
         imem_compressed_EX_d     <= imem_compressed_de_i;
         inst_EX_d                <= inst_de_i;
@@ -323,10 +352,12 @@ module airi5c_EX_pregs(
         dret_unkilled_EX_d       <= dret_unkilled_de_i;
         wfi_unkilled_EX_d        <= wfi_unkilled_de_i;
         loadstore_EX_d           <= loadstore_de_i;
+        predicted_branch_ex_d    <= predicted_branch_de_i;
 `ifdef ISA_EXT_F
         fpu_op_EX_d              <= fpu_op_de_i;
         sel_fpu_rs1_EX_d         <= sel_fpu_rs1_de_i;
         sel_fpu_rs2_EX_d         <= sel_fpu_rs2_de_i;
+        sel_fpu_rs3_EX_d         <= sel_fpu_rs3_de_i;
         sel_fpu_rd_EX_d          <= sel_fpu_rd_de_i;
 `endif
       end

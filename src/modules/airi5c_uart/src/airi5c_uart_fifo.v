@@ -13,74 +13,87 @@
 
 module airi5c_uart_fifo
 #(
-    parameter   ADDR_WIDTH  = 4,
-    parameter   DATA_WIDTH  = 8
+    parameter       ADDR_WIDTH  = 4,
+    parameter       DATA_WIDTH  = 8
 )
 (
-    input                     n_reset,
-    input                     clk,
-    
+    input                       n_reset,
+    input                       clear,
+    input                       clk,
+
     // write port
-    input                     push,
-    input   [DATA_WIDTH-1:0]  data_in,
-    
+    input                       push,
+    input   [DATA_WIDTH-1:0]    data_in,
+
     // read port
-    input                     pop,
-    output  [DATA_WIDTH-1:0]  data_out,    
-    
-    output  [ADDR_WIDTH:0]    size,
-    output  reg               empty,
-    output  reg               full
+    input                       pop,
+    output  [DATA_WIDTH-1:0]    data_out,
+
+    output  [ADDR_WIDTH:0]      size,
+    output  reg                 empty,
+    output  reg                 full
 );
-    
-    reg     [DATA_WIDTH-1:0]  stack[2**ADDR_WIDTH-1:0];
-    
-    reg     [ADDR_WIDTH-1:0]  read_ptr;
-    reg     [ADDR_WIDTH-1:0]  write_ptr;
-    reg     [ADDR_WIDTH-1:0]  next_ptr;    
-    
-    assign  data_out  = push && pop && empty ? data_in : stack[read_ptr];
-    assign  size      = full ? 2**ADDR_WIDTH : write_ptr - read_ptr;
-    
+
+    reg     [DATA_WIDTH-1:0]    fifo[2**ADDR_WIDTH-1:0];
+
+    reg     [ADDR_WIDTH-1:0]    read_ptr;
+    wire    [ADDR_WIDTH-1:0]    read_ptr_next;
+    reg     [ADDR_WIDTH-1:0]    write_ptr;
+    wire    [ADDR_WIDTH-1:0]    write_ptr_next;
+
+    assign                      read_ptr_next   = read_ptr + 1;
+    assign                      write_ptr_next  = write_ptr + 1;
+
+    assign                      data_out        = push && pop && empty ? data_in : fifo[read_ptr];
+    assign                      size            = {full, write_ptr - read_ptr};
+
     integer i;
-    
+
     always @(posedge clk, negedge n_reset) begin
         if (!n_reset) begin
-            for (i = 0; i < 2**ADDR_WIDTH; i = i + 1)
-                stack[i] <= 0;
-            
-            read_ptr  <= 0;
-            write_ptr <= 0;
-            empty     <= 1'b1;
-            full      <= 1'b0;
+            for (i = 0; i < 2**ADDR_WIDTH; i = i+1)
+                fifo[i] <= 0;
+
+            read_ptr        <= 0;
+            write_ptr       <= 0;
+            empty           <= 1'b1;
+            full            <= 1'b0;
         end
-        
+
+        else if (clear) begin
+            for (i = 0; i < 2**ADDR_WIDTH; i = i+1)
+                fifo[i] <= 0;
+
+            read_ptr        <= 0;
+            write_ptr       <= 0;
+            empty           <= 1'b1;
+            full            <= 1'b0;
+        end
+
         else if (push && pop) begin
-            stack[write_ptr]  <= data_in;
-            stack[read_ptr]   <= 0;
-            write_ptr         <= write_ptr + 1;
-            read_ptr          <= read_ptr + 1;
+            fifo[write_ptr] <= data_in;
+            fifo[read_ptr]  <= 0;
+            write_ptr       <= write_ptr_next;
+            read_ptr        <= read_ptr_next;
         end
-        
+
         else if (push && !full) begin
-            next_ptr          = write_ptr + 1;           
-            stack[write_ptr]  <= data_in;
-            write_ptr         <= next_ptr;
-            empty             <= 1'b0;
-            
-            if (next_ptr == read_ptr)
-                full  <= 1'b1;            
+            fifo[write_ptr] <= data_in;
+            write_ptr       <= write_ptr_next;
+            empty           <= 1'b0;
+
+            if (write_ptr_next == read_ptr)
+                full <= 1'b1;
         end
-        
+
         else if (pop && !empty) begin
-            next_ptr          = read_ptr + 1;
-            stack[read_ptr]   <= 0;
-            read_ptr          <= next_ptr;
-            full              <= 1'b0;
-            
-            if (next_ptr == write_ptr)
-                empty <= 1'b1;                            
+            fifo[read_ptr]  <= 0;
+            read_ptr        <= read_ptr_next;
+            full            <= 1'b0;
+
+            if (read_ptr_next == write_ptr)
+                empty <= 1'b1;
         end
     end
-    
+
 endmodule

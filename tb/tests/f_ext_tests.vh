@@ -29,7 +29,7 @@ errorcount <= 0;
 // =========================
 $write("FADD     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(0,"./memfiles/rv32uf/rv32uf-p-fadd.mem",360,result);
+run_test_program_bulk(0,"./memfiles/rv32uf/rv32uf-p-fadd.mem",2090,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -45,7 +45,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("FCMP     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(2,"./memfiles/rv32uf/rv32uf-p-fcmp.mem",444,result);
+run_test_program_bulk(2,"./memfiles/rv32uf/rv32uf-p-fcmp.mem",2110,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -53,7 +53,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("FCVT     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(3,"./memfiles/rv32uf/rv32uf-p-fcvt.mem",260,result);
+run_test_program_bulk(3,"./memfiles/rv32uf/rv32uf-p-fcvt.mem",2090,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -61,7 +61,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("FCVT_W   : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(4,"./memfiles/rv32uf/rv32uf-p-fcvt_w.mem",524,result);
+run_test_program_bulk(4,"./memfiles/rv32uf/rv32uf-p-fcvt_w.mem",2125,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -69,7 +69,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("FDIV     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(5,"./memfiles/rv32uf/rv32uf-p-fdiv.mem",352,result);
+run_test_program_bulk(5,"./memfiles/rv32uf/rv32uf-p-fdiv.mem",2090,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -77,7 +77,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("FMADD    : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(6,"./memfiles/rv32uf/rv32uf-p-fmadd.mem",432,result);
+run_test_program_bulk(6,"./memfiles/rv32uf/rv32uf-p-fmadd.mem",2130,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -85,7 +85,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("FMIN     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(7,"./memfiles/rv32uf/rv32uf-p-fmin.mem",520,result);
+run_test_program_bulk(7,"./memfiles/rv32uf/rv32uf-p-fmin.mem",2130,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -93,7 +93,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("LDST     : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(8,"./memfiles/rv32uf/rv32uf-p-ldst.mem",200,result);
+run_test_program_bulk(8,"./memfiles/rv32uf/rv32uf-p-ldst.mem",2090,result);
 if(result != 0) errorcount = errorcount + 1;
 
 // =========================
@@ -109,7 +109,7 @@ if(result != 0) errorcount = errorcount + 1;
 // =========================
 $write("RECODING : ");
 testtotal = testtotal + 1;
-run_test_program_bulk(10,"./memfiles/rv32uf/rv32uf-p-recoding.mem",260,result);
+run_test_program_bulk(10,"./memfiles/rv32uf/rv32uf-p-recoding.mem",2090,result);
 if(result != 0) errorcount = errorcount + 1;
 
 $write("\n\n RV32F Tests completed with errorcount = ",errorcount);

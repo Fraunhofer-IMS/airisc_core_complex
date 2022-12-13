@@ -33,6 +33,85 @@ begin
 end
 endtask
 
+task jtag_bypass1f_write;
+input [15:0] data;
+
+output reg[15:0] result;
+
+begin
+  // DEBUG if(command == 2'h2) $display("dmi: write to %h : %h",addr, data);
+  // goto Shift-IR state
+  tdi <= 1'b0;
+  tms <= 1'b0; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tms <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tms <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tms <= 1'b0; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tms <= 1'b0; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  // Shift in address of DMI register (LSB to MSB)
+  tms <= 1'b0;
+
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tms <= 1'b1;
+  tdi <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  // goto Update-IR state
+  tdi <= 1'b0;
+  tms <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  // goto Shift-DR state
+  tdi <= 1'b0;
+  tms <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tms <= 1'b0; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tms <= 1'b0; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  // shift in DMI address (0x10), data (0x80000000) and write command (0x2)
+  tms <= 1'b0;
+  tdi <= data[0]; #(`JTAG_CLK_PERIOD/2) result[0] <= tdo; tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[1]; #(`JTAG_CLK_PERIOD/2) result[1] <= tdo; tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[2]; #(`JTAG_CLK_PERIOD/2) result[2] <= tdo; tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[3]; #(`JTAG_CLK_PERIOD/2) result[3] <= tdo; tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tdi <= data[4]; #(`JTAG_CLK_PERIOD/2) result[4] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[5]; #(`JTAG_CLK_PERIOD/2) result[5] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[6]; #(`JTAG_CLK_PERIOD/2) result[6] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[7]; #(`JTAG_CLK_PERIOD/2) result[7] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tdi <= data[8]; #(`JTAG_CLK_PERIOD/2) result[8] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[9]; #(`JTAG_CLK_PERIOD/2) result[9] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[10]; #(`JTAG_CLK_PERIOD/2) result[10] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[11]; #(`JTAG_CLK_PERIOD/2) result[11] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tdi <= data[12]; #(`JTAG_CLK_PERIOD/2) result[12] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[13]; #(`JTAG_CLK_PERIOD/2) result[13] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  tdi <= data[14]; #(`JTAG_CLK_PERIOD/2) result[14] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+
+  tms <= 1'b1;
+  tdi <= data[15]; #(`JTAG_CLK_PERIOD/2) result[15] <= tdo;  tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  // goto Update-DR state
+  tdi <= 1'b0;
+  tms <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+  // goto RUN_TEST_IDLE state
+  tms <= 1'b0; #(`JTAG_CLK_PERIOD/2) tck <= 1'b1; #(`JTAG_CLK_PERIOD/2) tck <= 1'b0;
+end
+endtask
+
+
+
 task jtag_dmi_write;
 input [5:0] addr;
 input [31:0] data;

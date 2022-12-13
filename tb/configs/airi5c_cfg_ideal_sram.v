@@ -33,48 +33,63 @@
 `include "../src/airi5c_hasti_constants.vh"
 
 
-module airi5c_cfg_ideal_sram(
+module airi5c_cfg_ideal_sram (
    input                        VDD,
    input                        CLK,
    input                        nRESET,
    input                        EXT_INT, 
 
-   // JTAG signals
+// JTAG signals
    input                        tdi,
    input                        tms,
    input                        tck,
    output                       tdo,
 
-   // default debug signals
+// default debug signals
    output [3:0]                 debug_state,
    output [7:0]                 debug_out,
 
-   // scan chain interface
+// scan chain interface
    input                        testmode,
    input                        sdi,
    output                       sdo,
    input                        sen,
 
-   // additional, configuration specific 
-   // signals. Might be unconnected in 
-   // toplevel testbench.
+// additional, configuration specific 
+// signals. Might be unconnected in 
+// toplevel testbench.
 
-   inout  [7:0]                 gpio,
+// UART 0
+   output                       uart0_tx,
+   input                        uart0_rx,
 
-   output                       uart_tx,
-   input                        uart_rx,
+// GPIOs
+   output [7:0]                 gpio0_out,
+   input  [7:0]                 gpio0_in,
+   output [7:0]                 gpio0_oe,
+   
+// SPI 0
+   output                       spi0_mosi_out,
+   input                        spi0_mosi_in,
+   output                       spi0_mosi_oe,
 
-   output                       spi_mosi,
-   input                        spi_miso,
-   output                       spi_sclk,
-   output                       spi_nss
+   output                       spi0_miso_out,
+   input                        spi0_miso_in,
+   output                       spi0_miso_oe,
+
+   output                       spi0_sclk_out,
+   input                        spi0_sclk_in,
+   output                       spi0_sclk_oe,
+
+   output [3:0]                 spi0_ss_out,
+   input                        spi0_ss_in,
+   output                       spi0_ss_oe
 );
 
 
 // ==========================================================
-// ==   Core + Dual-Port-SRAM type memory     =
+// ==   Core + Dual-Port-SRAM type memory                  ==
 // ==========================================================
-wire  [7:0]                     gpio_d, gpio_en;
 
 wire  [`HASTI_ADDR_WIDTH-1:0]   imem_haddr;
 wire                            imem_hwrite;
@@ -128,20 +143,20 @@ airi5c_dp_hasti_sram SRAM(
   .p1_hresp(imem_hresp)
 );
 
-// generate tristate outputs for gpio 
-genvar i;
-generate
-  for (i = 0; i < 8; i = i + 1) begin : GPIO_bufs
-    bufif1(gpio[i],gpio_d[i],gpio_en[i]);
-  end
-endgenerate 
-
-
 airi5c_top_asic DUT(
   .clk(CLK),
   .nreset(nRESET),
   .ext_interrupt(EXT_INT),
+  
+  .tdi(tdi),
+  .tdo(tdo),
+  .tms(tms),
+  .tck(tck),
+  
   .testmode(testmode),
+  .sdi(sdi),
+  .sdo(sdo),
+  .sen(sen),
 
   .imem_haddr(imem_haddr),
   .imem_hwrite(imem_hwrite),
@@ -167,24 +182,34 @@ airi5c_top_asic DUT(
   .dmem_hready(dmem_hready),
   .dmem_hresp(dmem_hresp),
 
-  .oGPIO_D(gpio_d),
-  .oGPIO_EN(gpio_e),
-  .iGPIO_I(gpio),
+// GPIO 0
+  .gpio0_out(gpio0_out),
+  .gpio0_in(gpio0_in),
+  .gpio0_oe(gpio0_oe),
 
-  .oUART_TX(uart_tx),
-  .iUART_RX(uart_rx),
+// UART 0
+  .uart0_tx(uart0_tx),
+  .uart0_rx(uart0_rx),
 
-  .oSPI1_MOSI(spi_mosi),
-  .oSPI1_SCLK(spi_sclk),
-  .oSPI1_NSS(spi_nss),
-  .iSPI1_MISO(spi_miso),
-  
-  .tdi(tdi),
-  .tdo(tdo),
-  .tms(tms),
-  .tck(tck),
+// SPI 0
+  .spi0_mosi_out(spi0_mosi_out),
+  .spi0_mosi_in(spi0_mosi_in),
+  .spi0_mosi_oe(spi0_mosi_oe),
 
-  .debug_out(debug_out)  
+  .spi0_miso_out(spi0_miso_out),
+  .spi0_miso_in(spi0_miso_in),
+  .spi0_miso_oe(spi0_miso_oe),
+
+  .spi0_sclk_out(spi0_sclk_out),
+  .spi0_sclk_in(spi0_sclk_in),
+  .spi0_sclk_oe(spi0_sclk_oe),
+
+  .spi0_ss_out(spi0_ss_out),
+  .spi0_ss_in(spi0_ss_in),
+  .spi0_ss_oe(spi0_ss_oe),
+
+  .debug_out(debug_out)
 );
 
 endmodule
+

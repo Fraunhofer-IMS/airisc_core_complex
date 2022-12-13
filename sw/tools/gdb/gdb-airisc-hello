@@ -1,5 +1,0 @@
-echo Load Hello_World.elf \n\n 
-file ../airisc-hello-world.elf
-load
-echo \n
-echo Done. Connect to UART 9600 8N1 \n

@@ -41,5 +41,4 @@ sim:
 	cd $(simdir); \
 	$(HDLCOM) $(MODHDLCOMOPTS) \
 		-linedebug -input simsetup.tcl \
-
 	$(foreach hdlfile,$(HDLFILES),../$(hdlfile))

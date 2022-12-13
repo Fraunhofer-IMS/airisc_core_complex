@@ -26,8 +26,8 @@
 `include "rv32_opcodes.vh"
 
 module airi5c_debug_module(
-   input nreset,
-   input clk,
+   input rst_ni,
+   input clk_i,
 
    // ================================
    // = Debug Module Interface (DMI) =
@@ -36,13 +36,13 @@ module airi5c_debug_module(
    // Interface to the JTAG-TAP or other means of transport (e.g. serial)
    //
 
-   input                                 dmi_en,      // enable (for read or write)
-   input         [`DMI_ADDR_WIDTH-1:0]   dmi_addr,    // addr of target register within Debug Module (DM)
-   output  reg   [`DMI_WIDTH-1:0]        dmi_rdata,   // data from DM to JTAG-TAP
-   output                                dmi_error,   // error signalin from DM to JTAG-TAP
-   input         [`DMI_WIDTH-1:0]        dmi_wdata,   // data from JTAG-TAP to DM
-   input                                 dmi_wen,     // write enable
-   output  reg                           dmi_dm_busy, // busy signaling from DM to JTAG-TAP
+   input                                 dmi_en_i,      // enable (for read or write)
+   input         [`DMI_ADDR_WIDTH-1:0]   dmi_addr_i,    // addr of target register within Debug Module (DM)
+   output  reg   [`DMI_WIDTH-1:0]        dmi_rdata_o,   // data from DM to JTAG-TAP
+   output                                dmi_error_o,   // error signalin from DM to JTAG-TAP
+   input         [`DMI_WIDTH-1:0]        dmi_wdata_i,   // data from JTAG-TAP to DM
+   input                                 dmi_wen_i,     // write enable
+   output  reg                           dmi_dm_busy_o, // busy signaling from DM to JTAG-TAP
 
    // ===================================
    // = Processor register access ports =
@@ -59,7 +59,7 @@ module airi5c_debug_module(
    input        [`XPR_LEN-1:0]           dm_regfile_rd,   // read data
 
    // interface to control and status register (csr) file
-   input                                 dm_illegal_csr_access, // illegal access (not existing, prohibited etc.) signaling
+   input                                 dm_illegal_csr_access, // illegal access (not existing, prohibited etc.) signaling; unused/not implemented
    output  reg  [`CSR_ADDR_WIDTH-1:0]    dm_csr_addr,           // register addr (see csr_addr_map header file)
    output  reg  [`CSR_CMD_WIDTH-1:0]     dm_csr_cmd,            // command (100 = read, 101 = write, others are bit-set / -unset
    output  reg  [`XPR_LEN-1:0]           dm_csr_wdata,          // data from DM to CSR
@@ -92,7 +92,7 @@ module airi5c_debug_module(
       
 // DMI error signaling
 
-assign dmi_error    = 1'b0;                                     // we don't currently handle errors
+assign dmi_error_o    = 1'b0;                                     // we don't currently handle errors
 wire   hart0_halted = dm_hart0_halted;
 
 // =====================
@@ -108,28 +108,28 @@ reg   [`DMI_WIDTH-1:0]   command;      // command,      0x17
 reg   [`DMI_WIDTH-1:0]   abstractauto; // abstractauto, 0x18
 reg   [`DMI_WIDTH-1:0]   progbuf0;     // progbuf0,     0x20
 reg   [`DMI_WIDTH-1:0]   progbuf1;     // progbuf1,     0x21
-reg   [`DMI_WIDTH-1:0]   authdata;     // authdata,     0x30
+//reg   [`DMI_WIDTH-1:0]   authdata;     // authdata,     0x30  not yet implemented
 
 // forward progbuf0/1 to debug_rom
 assign  dm_hart0_progbuf0 = progbuf0;
 assign  dm_hart0_progbuf1 = progbuf1;
 
 // named fields of abstractcs
-wire  [4:0]   progbufsize = abstractcs[28:24];
-wire          busy        = abstractcs[12];
-wire          relaxedpriv = abstractcs[11];
-wire  [2:0]   cmderr      = abstractcs[10:8];
-wire  [3:0]   datacount   = abstractcs[3:0];
+//wire  [4:0]   progbufsize = abstractcs[28:24]; not yet implemented
+//wire          busy        = abstractcs[12]; not yet implemented
+//wire          relaxedpriv = abstractcs[11]; not yet implemented
+//wire  [2:0]   cmderr      = abstractcs[10:8]; not yet impelemented
+//wire  [3:0]   datacount   = abstractcs[3:0]; not yet impelemented
 
 // named fields of dmcontrol
 wire          haltreq      = dmcontrol[31];        // halt request for selected harts
 wire          resumereq    = dmcontrol[30];        // resume request for selected harts
-wire          hartreset    = dmcontrol[29];        // reset request for selected harts
-wire          ackhavereset = dmcontrol[28];        // acknolege of "havereset" for selected harts
-wire          hasel        = dmcontrol[26];        // hart selection mode (0 = single, 1 = multiple selected)
+//wire          hartreset    = dmcontrol[29];        // reset request for selected harts; not used
+//wire          ackhavereset = dmcontrol[28];        // acknolege of "havereset" for selected harts; not used
+//wire          hasel        = dmcontrol[26];        // hart selection mode (0 = single, 1 = multiple selected); not used
 wire  [9:0]   hartsel      = dmcontrol[25:16];     // index of selected hart
 wire          ndmreset     = dmcontrol[1];         // reset system excluding debug module
-wire          dmactive     = dmcontrol[0];         // reset for debug module, not yet handled
+//wire          dmactive     = dmcontrol[0];         // reset for debug module, not yet handled; not used
 
 assign  dm_hart0_ndmreset  = testmode | ~ndmreset; // THE SYSTEM USES A NEGATIVE ASSERTED RESET! THE INVERSION HAPPENS HERE!!!
 assign  dm_hart0_haltreq   = haltreq;              // right now only single haltreq in singlecore implementation...
@@ -137,26 +137,26 @@ assign  dm_hart0_resumereq = resumereq;            // only single resumereq in s
 
 // Fields of the dmstatus register
 
-wire          ndmresetpending = dmstatus[24];
-wire          stickyunavail   = dmstatus[23];
-wire          impebreak       = dmstatus[22];
-wire          allhavereset    = dmstatus[19];
-wire          anyhavereset    = dmstatus[18];
-wire          allresumeack    = dmstatus[17];
-wire          anyresumeack    = dmstatus[16];
-wire          allnonexistent  = dmstatus[15];
-wire          anynonexistent  = dmstatus[14];
-wire          allunavail      = dmstatus[13];
-wire          anyunavail      = dmstatus[12];
-wire          allrunning      = dmstatus[11];
-wire          anyrunning      = dmstatus[10];
+//wire          ndmresetpending = dmstatus[24]; not used
+//wire          stickyunavail   = dmstatus[23]; not used
+//wire          impebreak       = dmstatus[22]; not used
+//wire          allhavereset    = dmstatus[19]; not used
+//wire          anyhavereset    = dmstatus[18]; not used 
+//wire          allresumeack    = dmstatus[17]; not used
+//wire          anyresumeack    = dmstatus[16]; not used
+//wire          allnonexistent  = dmstatus[15]; not used
+//wire          anynonexistent  = dmstatus[14]; not used
+//wire          allunavail      = dmstatus[13]; not used
+//wire          anyunavail      = dmstatus[12]; not used
+//wire          allrunning      = dmstatus[11]; not used
+//wire          anyrunning      = dmstatus[10]; not used
 wire          allhalted       = dmstatus[9];
-wire          anyhalted       = dmstatus[8];
-wire          authenticated   = dmstatus[7];
-wire          authbusy        = dmstatus[6];
-wire          hasresethaltreq = dmstatus[5];
-wire          confstrptrvalid = dmstatus[4];
-wire   [3:0]  version         = dmstatus[3:0];
+//wire          anyhalted       = dmstatus[8]; not used
+//wire          authenticated   = dmstatus[7]; not used
+//wire          authbusy        = dmstatus[6]; not used
+//wire          hasresethaltreq = dmstatus[5]; not used
+//wire          confstrptrvalid = dmstatus[4]; not used
+//wire   [3:0]  version         = dmstatus[3:0]; not used
 
 // -------------------
 
@@ -166,36 +166,36 @@ wire   [3:0]  version         = dmstatus[3:0];
 // == This handles the parallel DMI bus  =
 // =======================================
 
-reg                     dmi_state, dmi_state_next;
+reg   [7:0]             dmi_state, dmi_state_next;
 
 reg   [`DMI_WIDTH-1:0]  rdata_r;
-reg   [`DMI_WIDTH-1:0]  wdata_r;
 
 wire                    dm_command_received;
-assign  dm_command_received = (dmi_state == `DMI_STATE_IDLE) && (dmi_wen & dmi_en) && (dmi_addr == `DMI_ADDR_COMMAND);
+assign  dm_command_received = (dmi_state == `DMI_STATE_IDLE) && (dmi_wen_i & dmi_en_i) && (dmi_addr_i == `DMI_ADDR_COMMAND);
 
 wire   dm_autoexec;
-assign dm_autoexec = ((dmi_state  == `DMI_STATE_IDLE) & dmi_en) && 
-                     ( ((dmi_addr == `DMI_ADDR_DATA0) && (abstractauto[0] == 1'b1))     ||
-                       ((dmi_addr == `DMI_ADDR_PROGBUF0) && (abstractauto[16] == 1'b1)) ||
-                       ((dmi_addr == `DMI_ADDR_PROGBUF1) && (abstractauto[17] == 1'b1))  );
+assign dm_autoexec = ((dmi_state  == `DMI_STATE_IDLE) & dmi_en_i) && 
+                     ( ((dmi_addr_i == `DMI_ADDR_DATA0) && (abstractauto[0] == 1'b1))     ||
+                       ((dmi_addr_i == `DMI_ADDR_PROGBUF0) && (abstractauto[16] == 1'b1)) ||
+                       ((dmi_addr_i == `DMI_ADDR_PROGBUF1) && (abstractauto[17] == 1'b1))  );
 
-always @(posedge clk or negedge nreset) begin
-   if(~nreset) begin
+always @(posedge clk_i or negedge rst_ni) begin
+   if(~rst_ni) begin
       dmi_state   <= `DMI_STATE_IDLE;
-      dmi_dm_busy <= 1'b0;
-      dmi_rdata   <= 0;
+      dmi_dm_busy_o <= 1'b0;
+      dmi_rdata_o   <= 0;
    end
    else begin   
       dmi_state <= dmi_state_next;
 
-      if((dmi_state == `DMI_STATE_IDLE) & dmi_en) 
-        dmi_rdata <= rdata_r;
+      if((dmi_state == `DMI_STATE_IDLE) & dmi_en_i) 
+        dmi_rdata_o <= rdata_r;
 
       if(dmi_state_next == `DMI_STATE_IDLE)
-        dmi_dm_busy <= 1'b0;
+//      if(dmi_state == `DMI_STATE_IDLE)
+        dmi_dm_busy_o <= 1'b0;
       else
-        dmi_dm_busy <= 1'b1;
+        dmi_dm_busy_o <= 1'b1;
       end
 end
 
@@ -203,17 +203,17 @@ always @(*) begin
    dmi_state_next = `DMI_STATE_IDLE;
    case (dmi_state) 
       `DMI_STATE_IDLE    : begin 
-                             dmi_state_next = dmi_en ? `DMI_STATE_WAITEND : `DMI_STATE_IDLE;
+                             dmi_state_next = dmi_en_i ? `DMI_STATE_WAITEND : `DMI_STATE_IDLE;
                            end
       `DMI_STATE_WAITEND : begin 
-                             dmi_state_next = dmi_en ? `DMI_STATE_WAITEND : `DMI_STATE_IDLE;
+                             dmi_state_next = dmi_en_i ? `DMI_STATE_WAITEND : `DMI_STATE_IDLE;
                            end
    endcase
 end
 
 always @* begin
    rdata_r = 32'hdeaddead;
-   case(dmi_addr)
+   case(dmi_addr_i)
       `DMI_ADDR_ABSTRACTAUTO : begin rdata_r = abstractauto; end
       `DMI_ADDR_ABSTRACTCS   : begin rdata_r = abstractcs; end
       `DMI_ADDR_COMMAND      : begin rdata_r = command; end
@@ -246,19 +246,19 @@ wire           dm_transfer; assign dm_transfer = command[17];
 wire           dm_write;    assign dm_write    = command[16];
 
 wire           dm_regfile_access; assign dm_regfile_access = command[12]; // GPRs start at 0x1000
-wire           dm_csr_access;     assign dm_csr_access = ~command[12];    // CSRs start at 0x0000
+//wire           dm_csr_access;     assign dm_csr_access = ~command[12];    // CSRs start at 0x0000; not used
 
 wire   [15:0]  dm_regno;    assign dm_regno    = command[15:0];
 
 wire   dm_size_invalid;     assign dm_size_invalid = ~(dm_size == 3'h2);
-wire   dm_wr_reg_while_running;   
-assign dm_wr_reg_while_running = (dm_regfile_access & dm_transfer & dm_write & ~allhalted);
+//wire   dm_wr_reg_while_running;   
+//assign dm_wr_reg_while_running = (dm_regfile_access & dm_transfer & dm_write & ~allhalted); not used
 
-reg    [3:0]   errorcode;
+reg    [2:0]   errorcode;
 
-always @(posedge clk or negedge nreset)
+always @(posedge clk_i or negedge rst_ni)
 begin
-  if(~nreset) begin
+  if(~rst_ni) begin
     dm_state <= `DM_STATE_RESET;
   end else begin
     dm_state <= dm_state_next;
@@ -371,11 +371,11 @@ end
 // write Debug Module registers in various situations
 reg had_postexec;
 
-always @(posedge clk or negedge nreset)
+always @(posedge clk_i or negedge rst_ni)
 begin
-  if(~nreset) begin
+  if(~rst_ni) begin
     dmstatus    <= {7'h0,1'b0,1'b0,1'b1,2'h0,1'b1,1'b1,1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,1'b1,1'b1,1'b0,1'b0,1'b1,1'b0,1'b0,1'b0,4'h2};
-    abstractcs  <= {3'h0,5'h2,11'h0,1'b0,1'b1,3'h0,4'h0,4'h1}; 
+    abstractcs  <= {3'h0,5'h2,11'h0,1'b0,1'b0,3'h0,4'h0,4'h1}; 
     dmcontrol   <= `XPR_LEN'h00000000;
     data0       <= `XPR_LEN'hbabebabe;
     command     <= `XPR_LEN'h0000;
@@ -398,23 +398,23 @@ begin
     dmstatus[9]  <= hart0_halted;           // allhalted
     dmstatus[8]  <= hart0_halted;           // anyhalted
                 
-    if((dmi_state == `DMI_STATE_IDLE) & dmi_wen & dmi_en) begin         // write due to DMI bus write access
-      case (dmi_addr) 
-        `DMI_ADDR_DATA0   : data0 <= dmi_wdata;
+    if((dmi_state == `DMI_STATE_IDLE) & dmi_wen_i & dmi_en_i) begin         // write due to DMI bus write access
+      case (dmi_addr_i) 
+        `DMI_ADDR_DATA0   : data0 <= dmi_wdata_i;
         `DMI_ADDR_DMCONTROL : begin             
-                dmcontrol[31:27] <= dmi_wdata[31:27];
-                dmcontrol[1:0] <= dmi_wdata[1:0];
+                dmcontrol[31:27] <= dmi_wdata_i[31:27];
+                dmcontrol[1:0] <= dmi_wdata_i[1:0];
                 end 
         `DMI_ADDR_DMSTATUS  : begin 
         end
-        `DMI_ADDR_COMMAND : command <= dmi_wdata;
+        `DMI_ADDR_COMMAND : command <= dmi_wdata_i;
         `DMI_ADDR_ABSTRACTCS  : begin
-                if(|dmi_wdata[10:8]) abstractcs[10:8] <= 3'b000; // clear cmderr is the only write operation allowed to abstractcs
+                if(|dmi_wdata_i[10:8]) abstractcs[10:8] <= 3'b000; // clear cmderr is the only write operation allowed to abstractcs
                   abstractcs[11] <= 1'b1;                        // relaxedpriv WARL, but we only support 1.
                 end
-        `DMI_ADDR_PROGBUF0  : progbuf0 <= dmi_wdata;
-        `DMI_ADDR_PROGBUF1  : progbuf1 <= dmi_wdata;
-        `DMI_ADDR_ABSTRACTAUTO  : abstractauto <= dmi_wdata;
+        `DMI_ADDR_PROGBUF0  : progbuf0 <= dmi_wdata_i;
+        `DMI_ADDR_PROGBUF1  : progbuf1 <= dmi_wdata_i;
+        `DMI_ADDR_ABSTRACTAUTO  : abstractauto <= dmi_wdata_i;
       endcase
     end
     else if(dm_state == `DM_STATE_ACCESSREG_R) begin      

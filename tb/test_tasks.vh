@@ -52,13 +52,63 @@ begin
 end
 endtask
 
-task run_test_program_bulk;
+
+task run_test_program_long;
 input reg[7:0]    testnum;
 input reg[255*8:1]    filename;
 input reg[15:0]    length;
 output reg[31:0] result;
 begin
   #(10*`CORE_CLK_PERIOD) RESET <= 1'b1;
+  #(3*`CORE_CLK_PERIOD) RESET <= 1'b0;
+  testcase = testnum;    // marker variable so we can trace the results in simvision more easily.
+  $write("read mem file for testcase ", testnum);$fflush();
+  // read program into buffer
+  $readmemh(filename,memimg);
+
+
+
+ // write to QSPI-Flash via JTAG
+  #(300*`CORE_CLK_PERIOD);
+
+
+
+ jtag_write_mem(32'h80000000,memimg[0],result);
+  jtag_write_mem_bulk_init;    
+
+
+
+ for (i = 1; i < length; i = i + 1) begin        
+    jtag_write_mem_bulk(32'h80000000 + i*4,memimg[i],result);
+  end
+  jtag_write_mem_bulk_end;
+
+
+
+ $write(" o.k., running..");$fflush();
+  #(10*`CORE_CLK_PERIOD) RESET <= 1'b1;
+  #(3*`CORE_CLK_PERIOD) RESET <= #2 1'b0;
+//  #(50000*`CORE_CLK_PERIOD);
+  #(40000000*`CORE_CLK_PERIOD);
+  if(debug_out == 1)begin    
+     result = 0;
+     $write("success.\n");
+  end
+  else begin
+    $write("error.\n");
+    result = 1;
+  end
+end
+endtask
+task run_test_program_bulk;
+input reg[7:0]    testnum;
+input reg[255*8:1]    filename;
+input reg[15:0]    length;
+output reg[31:0] result;
+begin
+  #(10*`CORE_CLK_PERIOD) RESET <= 1'b1; 
+  
+  `ifdef CONFIG_DOLPHIN_SRAM MEM_RESET <= 1'b1; MEM_RESET <= #(`CORE_CLK_PERIOD) 1'b0; `endif
   #(3*`CORE_CLK_PERIOD) RESET <= 1'b0;
   testcase = testnum;    // marker variable so we can trace the results in simvision more easily.
   $write("read mem file for testcase ", testnum);$fflush();
@@ -77,9 +127,9 @@ begin
   jtag_write_mem_bulk_end;
 
   $write(" o.k., running..");$fflush();
-  #(10*`CORE_CLK_PERIOD) RESET <= 1'b1;
-  #(3*`CORE_CLK_PERIOD) RESET <= #2 1'b0;
-//  #(50000*`CORE_CLK_PERIOD);
+  #(10*`CORE_CLK_PERIOD) RESET <= 1'b1;// MEM_RESET <= 1'b1; No MEM_RESET here to avoid imem loss 
+  #(3*`CORE_CLK_PERIOD) RESET <= #2 1'b0;// MEM_RESET <= #2 1'b0;
+//  #(70000*`CORE_CLK_PERIOD);
   #(40000*`CORE_CLK_PERIOD);
   if(debug_out == 1)begin    
      result = 0;
@@ -91,6 +141,50 @@ begin
   end
 end
 endtask
+
+
+task run_test_program_bulk_long;
+input reg[7:0]    testnum;
+input reg[255*8:1]    filename;
+input reg[15:0]    length;
+output reg[31:0] result;
+begin
+  #(10*`CORE_CLK_PERIOD) RESET <= 1'b1; 
+  
+  `ifdef CONFIG_DOLPHIN_SRAM MEM_RESET <= 1'b1; MEM_RESET <= #(`CORE_CLK_PERIOD) 1'b0; `endif
+  #(3*`CORE_CLK_PERIOD) RESET <= 1'b0;
+  testcase = testnum;    // marker variable so we can trace the results in simvision more easily.
+  $write("read mem file for testcase ", testnum);$fflush();
+  // read program into buffer
+  $readmemh(filename,memimg);
+
+  // write to QSPI-Flash via JTAG
+  #(300*`CORE_CLK_PERIOD);
+
+  jtag_write_mem(32'h80000000,memimg[0],result);
+  jtag_write_mem_bulk_init;    
+
+  for (i = 1; i < length; i = i + 1) begin        
+    jtag_write_mem_bulk(32'h80000000 + i*4,memimg[i],result);
+  end
+  jtag_write_mem_bulk_end;
+
+  $write(" o.k., running..");$fflush();
+  #(10*`CORE_CLK_PERIOD) RESET <= 1'b1;// MEM_RESET <= 1'b1; No MEM_RESET here to avoid imem loss 
+  #(3*`CORE_CLK_PERIOD) RESET <= #2 1'b0;// MEM_RESET <= #2 1'b0;
+//  #(70000*`CORE_CLK_PERIOD);
+  #(2000000*`CORE_CLK_PERIOD);
+  if(debug_out == 1)begin    
+     result = 0;
+     $write("success.\n");
+  end
+  else begin
+    $write("error.\n");
+    result = 1;
+  end
+end
+endtask
+
 
 
 task run_test_program_step;

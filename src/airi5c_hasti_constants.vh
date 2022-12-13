@@ -14,15 +14,16 @@
 // File             : airi5c_hasti_constants.vh
 // Author           : A. Stanitzki
 // Creation Date    : 09.10.20
-// Last Modified    : 15.02.21
-// Version          : 1.0
+// Last Modified    : 12.07.22
+// Version          : 1.1
 // Abstract         : constants for the hasti bus
-//
+//			Prapared for Dolphin IP, ADDR_WIDTH = 14
 
 
 `define HASTI_BUS_WIDTH      32
 `define HASTI_BUS_NBYTES     4
 `define HASTI_ADDR_WIDTH     32
+// was: 32
 
 `define HASTI_TRANS_WIDTH    2
 `define HASTI_TRANS_IDLE     `HASTI_TRANS_WIDTH'd0

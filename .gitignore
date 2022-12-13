@@ -1,5 +1,12 @@
-# workflow artifacts
-.github/sim_log
+*.log
+*.jou
+*.str
+*_webtalk.html
+*_webtalk.xml
 
-# simulator artifacts
+fpga/AIRI5C_FPGA_NexysVideo/
+fpga/AIRI5C_BASIC_FPGA_NexysVideo/
+
+.github/sim_log
 .ci/airi5c-sim
+

@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //
 
-`include "modules/airi5c_uart/src/airi5c_uart_constants.vh"
+`include "airi5c_uart_constants.vh"
 
 module airi5c_uart_rx
 #(
@@ -20,6 +20,7 @@ module airi5c_uart_rx
 (
     input                             clk,
     input                             n_reset,
+    input                             clear,
 
     input                             rx,
     output                            rts,
@@ -67,13 +68,16 @@ module airi5c_uart_rx
     reg             noise_e_reg;
     reg             parity_e_reg;   
     
-    assign          noise_error     = (noise_e_reg || !(samples == 3'b111 || samples == 3'b000)) && (push || abort);
+    assign          noise_error     = (noise_e_reg || !(samples == 3'b111 || samples == 3'b000)) 
+                                       && (push || abort);
     assign          parity_error    = parity_e_reg && push;
-    assign          frame_error     = (!(&samples[2:1] || &samples[1:0] || (samples[2] && samples[0]))) && push;
+    assign          frame_error     = ( !(&samples[2:1] || &samples[1:0] || 
+                                       (samples[2] && samples[0]) ) ) && push;
     assign          overflow_error  = full && !pop && push;
 
     // to prevent data loss, rts is set some bytes before rx stack is full
-    assign          rts       = flow_ctrl == `UART_FLOW_CTRL_ON ? size > 2**STACK_ADDR_WIDTH - 4 : 1'b0;
+    assign          rts       = flow_ctrl == 
+                                     `UART_FLOW_CTRL_ON ? size > 2**STACK_ADDR_WIDTH - 4 : 1'b0;
     
     always @(posedge clk, negedge n_reset) begin
         if (!n_reset) begin
@@ -118,7 +122,8 @@ module airi5c_uart_rx
                         // wait until start bit is finished
                         if (counter == baud_reg - 24'd1) begin
                             // major value of start bit should be 0
-                            if (!(&samples[2:1] || &samples[1:0] || (samples[2] && samples[0]))) begin
+                            if ( !( &samples[2:1] || &samples[1:0] 
+                                    || (samples[2] && samples[0]) ) ) begin
                                 noise_e_reg <= |samples;
                                 counter     <= 25'd0;
                                 state       <= DATA;
@@ -149,7 +154,8 @@ module airi5c_uart_rx
                         // wait until data bit is finished
                         if (counter == baud_reg - 24'd1) begin
                             // shift in major value of all samples left (LSB is received first)
-                            data          <= {&samples[2:1] || &samples[1:0] || (samples[2] && samples[0]), data[8:1]};
+                            data          <= {&samples[2:1] || &samples[1:0] 
+                                              || (samples[2] && samples[0]), data[8:1]};
                             noise_e_reg   <= noise_e_reg || !(samples == 3'b111 || samples == 3'b000);
                             counter       <= 25'd0;
 
@@ -182,14 +188,16 @@ module airi5c_uart_rx
         PARITY:     begin
                         // wait until parity bit is finished
                         if (counter == baud_reg - 24'd1) begin
-                            parity_received = &samples[2:1] || &samples[1:0] || (samples[2] && samples[0]);
+                            parity_received = &samples[2:1] || &samples[1:0] 
+                                              || (samples[2] && samples[0]);
 
                             if (parity == `UART_PARITY_EVEN)
                                 parity_computed = ^data;
                             else
                                 parity_computed = ~^data;
 
-                            noise_e_reg   <= noise_e_reg || !(samples == 3'b111 || samples == 3'b000);
+                            noise_e_reg   <= noise_e_reg || 
+                                             !(samples == 3'b111 || samples == 3'b000);
                             parity_e_reg  <= parity_received != parity_computed;
                             counter       <= 25'd0;
                             state         <= STOP;
@@ -218,35 +226,52 @@ module airi5c_uart_rx
 
                         else begin
                             if ((stop_bits == `UART_STOP_BITS_1   && counter == baud_reg - 24'd2) ||
-                                (stop_bits == `UART_STOP_BITS_15  && counter == baud_reg + (baud_reg >> 1) - 24'd2) ||
-                                (stop_bits == `UART_STOP_BITS_2   && counter == (baud_reg << 1) - 24'd2)) begin
+                                (stop_bits == `UART_STOP_BITS_15  && counter == baud_reg + 
+                                                                         (baud_reg >> 1) - 24'd2) ||
+                                (stop_bits == `UART_STOP_BITS_2   && counter == (baud_reg << 1) 
+                                                                                     - 24'd2)) begin
                                 // because LSB is received first, data has to be aligned
-                                push            <= 1'b1;
-                                data            <= data >> (3'd4 - data_bits);
+                                push       <= 1'b1;
+                                data       <= data >> (3'd4 - data_bits);
                             end
                             // read 3 samples around the middle of the stop bit
                             // c_bit / 2 - c_bit / 16
-                            // (c_bit + c_bit / 2) / 2 - (c_bit + c_bit / 2) / 16  = c_bit / 2 + c_bit / 4 - c_bit / 16 - c_bit / 32
+                            // (c_bit + c_bit / 2) / 2 - (c_bit + c_bit / 2) / 16  = c_bit / 2 + 
+                            //  c_bit / 4 - c_bit / 16 - c_bit / 32
                             // 2 * (c_bit / 2 - c_bit / 16) = c_bit - c_bit / 8
-                            if ((stop_bits == `UART_STOP_BITS_1   && counter == (baud_reg >> 1) - (baud_reg >> 4)) ||
-                                (stop_bits == `UART_STOP_BITS_15  && counter == (baud_reg >> 1) + (baud_reg >> 2) - (baud_reg >> 4) - (baud_reg >> 5)) ||
-                                (stop_bits == `UART_STOP_BITS_2   && counter == baud_reg - (baud_reg >> 3)))
+                            if ((stop_bits == `UART_STOP_BITS_1   && counter == (baud_reg >> 1) - 
+                                                                                 (baud_reg >> 4)) ||
+                                                                                 
+                                (stop_bits == `UART_STOP_BITS_15  && counter == (baud_reg >> 1) + 
+                                             (baud_reg >> 2) - (baud_reg >> 4) - (baud_reg >> 5)) ||
+                                             
+                                (stop_bits == `UART_STOP_BITS_2   && counter == baud_reg - 
+                                                                                   (baud_reg >> 3)))
                                 samples[0] <= rx_stable;
 
                             // c_bit / 2
                             // (c_bit + c_bit / 2) / 2 = c_bit / 2 + c_bit / 4
                             // 2 * (c_bit / 2) = c_bit
                             if ((stop_bits == `UART_STOP_BITS_1   && counter == baud_reg >> 1) ||
-                                (stop_bits == `UART_STOP_BITS_15  && counter == (baud_reg >> 1) + (baud_reg >> 2)) ||
+                            
+                                (stop_bits == `UART_STOP_BITS_15  && counter == (baud_reg >> 1) + 
+                                                                                 (baud_reg >> 2)) ||
+                                                                                 
                                 (stop_bits == `UART_STOP_BITS_2   && counter == baud_reg))
                                 samples[1] <= rx_stable;
 
                             // c_bit / 2 + c_bit / 16
-                            // (c_bit + c_bit / 2) / 2 + (c_bit + c_bit / 2) / 16  = c_bit / 2 + c_bit / 4 + c_bit / 16 + c_bit / 32
+                            // (c_bit + c_bit / 2) / 2 + (c_bit + c_bit / 2) / 16  = c_bit / 2 +
+                            //  c_bit / 4 + c_bit / 16 + c_bit / 32
                             // 2 * (c_bit / 2 + c_bit / 16) = c_bit + c_bit / 8
-                            if ((stop_bits == `UART_STOP_BITS_1   && counter == (baud_reg >> 1) + (baud_reg >> 4)) ||
-                                (stop_bits == `UART_STOP_BITS_15  && counter == (baud_reg >> 1) + (baud_reg >> 2) + (baud_reg >> 4) + (baud_reg >> 5)) ||
-                                (stop_bits == `UART_STOP_BITS_2   && counter == baud_reg + (baud_reg >> 3)))
+                            if ((stop_bits == `UART_STOP_BITS_1   && counter == (baud_reg >> 1) + 
+                                                                                 (baud_reg >> 4)) ||
+                                                                                 
+                                (stop_bits == `UART_STOP_BITS_15  && counter == (baud_reg >> 1) + 
+                                             (baud_reg >> 2) + (baud_reg >> 4) + (baud_reg >> 5)) ||
+                                             
+                                (stop_bits == `UART_STOP_BITS_2   && counter == baud_reg + 
+                                                                                   (baud_reg >> 3)))
                                 samples[2] <= rx_stable;
 
                             counter <= counter + 25'd1;
@@ -259,6 +284,7 @@ module airi5c_uart_rx
     airi5c_uart_fifo #(STACK_ADDR_WIDTH, 9) rx_fifo
     (
         .n_reset(n_reset),
+        .clear(clear),
         .clk(clk),
 
         // write port

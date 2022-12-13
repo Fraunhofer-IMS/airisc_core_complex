@@ -37,11 +37,12 @@ module airi5c_icap
 );
 // messy / experimental, switch ICAP for ASIC compatible stub if 
 // we are not in an FPGA environment.
+`define ASIC 1
 `ifdef ASIC
 
 assign hready = 1'b1;
 assign hresp  = `HASTI_RESP_OKAY;
-
+assign lock = 0; 
 always @(posedge clk, negedge n_reset) begin
   if(~n_reset) begin
     hrdata <= 32'hdeadbeef;

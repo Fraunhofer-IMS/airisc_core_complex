@@ -23,11 +23,12 @@
 module airi5c_periph_mux #
   (
     // number of slave ports
-    parameter S_COUNT = 6,
+    parameter S_COUNT = 7,
+    // Hier könnte auch eine 8 stimmen, aber vermutlich stimmen die Bitbreiten und Adressen nicht mehr (AUt/IHo)
     // base addresses of slave ports
-    parameter S_BASE_ADDR  = {32'h80000000,32'hC0000100,32'hC0000200,32'hC0000300,32'hC0000400,32'hC0000500},        
+    parameter S_BASE_ADDR  = {32'h80000000,32'hC0000100,32'hC0000200,32'hC0000300,32'hC0000400,32'hC0000500,32'hC0000600,32'hC0000700},        
     // widht of slave port addresses    
-    parameter S_ADDR_WIDTH = {32'd28,32'd8,32'd8,32'd8,32'd8,32'd8}
+    parameter S_ADDR_WIDTH = {32'd28,32'd8,32'd8,32'd8,32'd8,32'd8,32'd8,32'd8}
   )
   ( 
   input                           clk_i,
@@ -44,7 +45,7 @@ module airi5c_periph_mux #
   input  [S_COUNT*`HASTI_BUS_WIDTH-1:0]   s_hrdata
   );
 
-  parameter CL_S_COUNT = $clog2(S_COUNT);
+  localparam CL_S_COUNT = $clog2(S_COUNT);
     
   // hold register to store addr during data phase.
   reg  [`HASTI_ADDR_WIDTH-1:0]  data_phase_addr;
@@ -77,7 +78,7 @@ module airi5c_periph_mux #
       m_hready = s_hready[select];
       m_hresp  = s_hresp[select*`HASTI_RESP_WIDTH +: `HASTI_RESP_WIDTH];
     end else begin
-      m_hready = 1'b1;
+      m_hready = &s_hready; //1'b1;
       m_hresp = `HASTI_RESP_ERROR; 
     end
   end

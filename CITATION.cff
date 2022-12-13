@@ -8,6 +8,6 @@ authors:
   country: DE
   website: https://www.ims.fraunhofer.de/en.html
 title: "The Fraunhofer IMS AIRISC RISC-V Processor"
-version: 1.0.0
-date-released: 2022-02-18
+version: 1.1.0
+date-released: 2022-12-09
 url: https://github.com/Fraunhofer-IMS/airisc_core_complex

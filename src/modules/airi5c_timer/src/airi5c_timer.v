@@ -95,7 +95,7 @@ always @(posedge clk or negedge nreset) begin
   end
 end
 
-assign  timer_tick = (time_r >= timecmp_r) && |timecmp_r;
+assign  timer_tick = (time_r >= timecmp_r);
 assign  hresp = `HASTI_RESP_OKAY;
 
 endmodule
