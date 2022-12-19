@@ -4,7 +4,7 @@
 
 [![Fraunhofer_IMS](https://img.shields.io/badge/Fraunhofer-IMS-179c7d.svg?longCache=true&style=flat-square&logo=fraunhofergesellschaft&logoColor=179c7d)](https://www.ims.fraunhofer.de/en.html)
 [![GitHub Pages](https://img.shields.io/website.svg?label=Documentation%20@%20GitHub%20Pages&longCache=true&style=flat-square&url=http%3A%2F%2Ffraunhofer-ims.github.io%2Fairisc_core_complex%2Findex.html&logo=GitHub)](https://fraunhofer-ims.github.io/airisc_core_complex/index.html)
-[![airisc-sim_check](https://img.shields.io/github/workflow/status/Fraunhofer-IMS/airisc_core_complex/airisc-sim/main?longCache=true&style=flat-square&label=airisc-sim&logo=Github%20Actions&logoColor=fff)](https://github.com/Fraunhofer-IMS/airisc_core_complex/actions/workflows/main.yml)
+[![airisc-sim_check](https://img.shields.io/github/actions/workflow/status/Fraunhofer-IMS/airisc_core_complex/main.yml?branch=main&longCache=true&style=flat-square&label=airisc-sim&logo=Github%20Actions&logoColor=fff)](https://github.com/Fraunhofer-IMS/airisc_core_complex/actions/workflows/main.yml)
 
 The Fraunhofer IMS **AIRISC** is a RISC-V-powered ASIC- and FPGA-proven processor core optimized for embedded AI
 applications. It comes with a set of common peripherals together with a wide variety of optional extensions to build
