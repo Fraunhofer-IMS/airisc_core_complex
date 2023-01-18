@@ -1,0 +1,46 @@
+name: 'sw_build'
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'bsp/**'
+  pull_request:
+    branches:
+    - main
+    paths:
+    - 'bsp/**'
+  workflow_dispatch:
+
+jobs:
+
+  Check:
+    runs-on: ubuntu-latest
+    name: 'AIRISC SW Example Build'
+
+    steps:
+
+    - name: '📂 Repository Checkout'
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: '📦 Install RISC-V GCC'
+      run: |
+        wget -q https://github.com/stnolting/riscv-gcc-prebuilt/releases/download/rv32i-4.0.0/riscv32-unknown-elf.gcc-12.1.0.tar.gz
+        mkdir $GITHUB_WORKSPACE/riscv-gcc
+        tar -xzf riscv32-unknown-elf.gcc-12.1.0.tar.gz -C $GITHUB_WORKSPACE/riscv-gcc
+        echo $GITHUB_WORKSPACE/riscv-gcc/bin >> $GITHUB_PATH
+
+    - name: '🚀 Compile Example Program'
+      run: make -C bsp/example/ clean_all elf asm
+
+    - name: '📤 Archive test report'
+      uses: actions/upload-artifact@v3
+      with:
+        name: sw_build
+        path: |
+          bsp/example/main.elf
+          bsp/example/main.asm
