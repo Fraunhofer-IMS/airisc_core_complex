@@ -35,7 +35,7 @@ jobs:
         echo $GITHUB_WORKSPACE/riscv-gcc/bin >> $GITHUB_PATH
 
     - name: '🚀 Compile Example Program'
-      run: make -C bsp/example/ clean_all elf asm
+      run: make -C bsp/example/ clean_all check info elf asm
 
     - name: '📤 Archive test report'
       uses: actions/upload-artifact@v3
