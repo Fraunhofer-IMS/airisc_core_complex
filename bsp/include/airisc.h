@@ -11,6 +11,8 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //
 
+/* Main include file */
+
 #ifndef AIRISC_H_
 #define AIRISC_H_
 
@@ -18,9 +20,14 @@
 
 #include "airisc_csr.h"
 #include "airisc_defines.h"
+#include "airisc_spi.h"
 #include "airisc_syscalls.h"
+#include "airisc_timer.h"
 #include "airisc_uart.h"
 #include "airisc_spi.h"
+#include "airisc_custom.h"
+
+#include "airisc_simd.h"
 
 
 /**********************************************************************//**

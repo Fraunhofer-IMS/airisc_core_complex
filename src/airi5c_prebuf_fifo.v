@@ -11,58 +11,138 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //
 //
-//
 // File             : airi5c_prebuf_fifo.v
-// Author           : M. Richter
-// Creation Date    : 20.12.21
-// Last Modified    : 20.12.21
-// Version          : 0.1
+// Author           : S. Nolting
+// Creation Date    : 15.12.2022
+// Version          : 1.0
 // Abstract         : Prefetch Buffer FIFO with parameterizable data width
-//                    and depth. Allows direct feedthrough of data as well
-//                    as reading data with halfword-alignment (required for
-//                    RISC-V C-Extension support).
-// History          : 20.12.2021 - initial creation
-// Notes            : The input index_i is twice as wide as the FIFO depth.
-//                    This is because it indexes the FIFO at a halfword 
-//                    granularity. The width parameters must both be 
-//                    multiples of 2. `PREFETCH_INPUTWIDTH_MULTIPLIER must be 1 or 2. 
-//                    The depth is the number of `PREFETCH_WIDTH-bit 
-//                    data values that fit into the FIFO. `PREFETCH_DEPTH must be at 
-//                    least as big as `PREFETCH_INPUTWIDTH_MULTIPLIER.
+//                    and depth and async. (!) read access.
+// Note             : Derived from https://github.com/stnolting/neorv32/blob/main/rtl/core/neorv32_fifo.vhd (BSD-License)
+// History          : 15.12.2021 - initial setup / complete redesign
 //
-// 
+//
 
 `include "airi5c_arch_options.vh"
 
-module airi5c_prebuf_fifo (
-  input                             clk_i,
-  input                             rst_ni,
-  input                             enable_push_i,
-  input  [`PREFETCH_INPUTWIDTH-1:0] data_i,
-  input  [2:0]                      index_i,
-  output [`PREFETCH_WIDTH-1:0]      data_o
+module airi5c_prebuf_fifo
+#(
+  parameter FIFO_DEPTH = 2, // has to be a power of two
+  parameter FIFO_WIDTH = 32
+)
+(
+  // global control
+  input                   clk_i,
+  input                   rstn_i,  // async reset
+  input                   clear_i, // sync reset
+  output                  hfull_o, // at least half full
+  // write port
+  input                   we_i,
+  input  [FIFO_WIDTH-1:0] data_i,
+  output                  free_o,
+  // read port
+  input  [2:0]            re_i,
+  output [FIFO_WIDTH-1:0] data_o,
+  output                  avail_o
 );
 
-reg   [`PREFETCH_WIDTH-1:0]       data_q, data_q2; 
-wire  [3*`PREFETCH_WIDTH-1:0]     indexed_data;
+// status flags
+wire match;
+wire full;
+wire empty;
+wire free;
+wire avail;
+wire half;
 
-integer i;
-always @(posedge clk_i or negedge rst_ni) begin
-  if (!rst_ni) begin
-    data_q <= `PREFETCH_WIDTH'h0;
-    data_q2 <= `PREFETCH_WIDTH'h0;
-  end else if (enable_push_i) begin 
-    data_q <= data_i;
-    data_q2 <= data_q;
+// internal access
+wire we;
+wire re;
+
+
+// --------------------------------------------------------------------------------------------
+// FIFO read/write pointers
+// --------------------------------------------------------------------------------------------
+
+reg [$clog2(FIFO_DEPTH):0] wr_pnt;
+reg [$clog2(FIFO_DEPTH):0] rd_pnt;
+
+always @(posedge clk_i or negedge rstn_i) begin
+  if (!rstn_i) begin
+    wr_pnt <= 0;
+    rd_pnt <= 0;
+  end else begin
+    // write pointer
+    if (clear_i) begin
+      wr_pnt <= 0;
+    end else if (we) begin
+      wr_pnt <= wr_pnt + 1;
+    end
+    // read pointer
+    if (clear_i) begin
+      rd_pnt <= 0;
+    end else if (re) begin
+      rd_pnt <= rd_pnt + 1;
+    end
   end
 end
 
-assign indexed_data = {data_i, data_q, data_q2};
+// safe access - ignore read/write commands if FIFO is empty/full
+assign we = we_i & free;
+assign re = re_i & avail;
 
-assign data_o = (index_i == 3'b000) ? {16'h0, indexed_data[95:80]} :
-                (index_i == 3'b001) ? indexed_data[95:64] :
-                (index_i == 3'b010) ? indexed_data[79:48] :
-                (index_i == 3'b011) ? indexed_data[63:32] :
-                (index_i == 3'b100) ? indexed_data[47:16] :
-                indexed_data[31:0];
+
+// --------------------------------------------------------------------------------------------
+// FIFO status
+// --------------------------------------------------------------------------------------------
+assign match = ((rd_pnt[$clog2(FIFO_DEPTH)-1:0] == wr_pnt[$clog2(FIFO_DEPTH)-1:0]) || (FIFO_DEPTH == 1)) ? 1'b1 : 1'b0;
+assign full  = ((rd_pnt[$clog2(FIFO_DEPTH)] != wr_pnt[$clog2(FIFO_DEPTH)]) && match) ? 1'b1 : 1'b0;
+assign empty = ((rd_pnt[$clog2(FIFO_DEPTH)] == wr_pnt[$clog2(FIFO_DEPTH)]) && match) ? 1'b1 : 1'b0;
+
+assign free  = ~full;
+assign avail = ~empty;
+
+assign free_o  = free;
+assign avail_o = avail;
+
+
+// half full?
+generate
+  if (FIFO_DEPTH == 1) begin
+    assign hfull_o = full;
+  end else begin
+    wire [$clog2(FIFO_DEPTH):0] level_diff;
+    assign level_diff = wr_pnt - rd_pnt;
+    assign hfull_o    = level_diff[$clog2(FIFO_DEPTH)-1] | full;
+  end
+endgenerate
+
+
+// --------------------------------------------------------------------------------------------
+// FIFO memory access
+// --------------------------------------------------------------------------------------------
+
+generate
+  if (FIFO_DEPTH == 1) begin // implement a single register
+
+    reg [FIFO_WIDTH-1:0] fifo_mem;
+    always @(posedge clk_i) begin
+      if (we) begin
+        fifo_mem <= data_i;
+      end
+    end
+    assign data_o = fifo_mem; // async. read!
+
+  end else begin // implement a "real" FIFO memory (several entries deep)
+
+    reg [FIFO_WIDTH-1:0] fifo_mem [0:FIFO_DEPTH-1];
+    always @(posedge clk_i) begin
+      if (we) begin
+        fifo_mem[wr_pnt[$clog2(FIFO_DEPTH)-1:0]] <= data_i;
+      end
+    end
+    assign data_o = fifo_mem[rd_pnt[$clog2(FIFO_DEPTH)-1:0]]; // async. read!
+
+  end
+endgenerate
+
+
 endmodule

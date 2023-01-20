@@ -47,21 +47,23 @@
 
 
 ../src/airi5c_alu.v
+../src/airi5c_branch_prediction.v
 ../src/airi5c_core.v
 ../src/airi5c_csr_file.v
 ../src/airi5c_ctrl.v
 ../src/airi5c_debug_module.v
 ../src/airi5c_debug_rom.v
 ../src/airi5c_decode.v
+../src/airi5c_decompression.v
 ../src/airi5c_dmem_latch.v
 ../src/airi5c_EX_pregs.v
-../src/airi5c_fetch_simple.v
 ../src/airi5c_fetch.v
 ../src/airi5c_imm_gen.v
 ../src/airi5c_mem_arbiter.v
 ../src/airi5c_PC_mux.v
 ../src/airi5c_periph_mux.v
 ../src/airi5c_pipeline.v
+../src/airi5c_prebuf_fifo.v
 ../src/airi5c_regfile.v
 ../src/airi5c_src_a_mux.v
 ../src/airi5c_src_b_mux.v

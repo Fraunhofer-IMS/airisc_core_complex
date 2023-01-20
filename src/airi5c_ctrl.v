@@ -114,7 +114,10 @@ module airi5c_ctrl(
   output wire [`MCAUSE_WIDTH-1:0]     exception_code_WB, // signal exception cause in WB stage to airi5c_csr_file.v)
   output                              exception_int_WB,
   output wire                         retire_WB          // signal instruction completion in WB stage to airi5c_csr_file.v)
-
+`ifdef ISA_EXT_P
+  ,
+  input                               pcpi_ready_mul_div
+`endif
 `ifdef ISA_EXT_F
   ,
   // FPU
@@ -184,6 +187,7 @@ wire                             load_in_WB;
 wire                             active_wfi_WB;
 
 // Hazard signals
+// RAW: Read after Write
 wire                             load_use;
 wire                             raw_rs1;
 wire                             raw_rs2;
@@ -268,7 +272,13 @@ assign illegal = illegal_instruction & ~pcpi_wait & ~pcpi_ready;
 
 // all stalls lead to kills, not all kills stall..
 assign kill_EX = stall_EX || ex_EX || ex_WB || interrupt_taken;
+`ifdef ISA_EXT_P
+reg pcpi_ready_mul_div_r; 
 
+always @(posedge clk_i) begin 
+  pcpi_ready_mul_div_r <= pcpi_ready_mul_div; 
+end 
+`endif
 assign stall_EX = stall_WB || (dmem_en & ~dmem_hready_i) || 
   ((load_use || raw_on_busy_pcpi || (uses_pcpi_unkilled && ~pcpi_ready)) &&
   !(ex_EX || ex_WB || ex_WB_r || interrupt_taken)) 
@@ -445,6 +455,18 @@ assign retire_WB = !(kill_WB || killed_WB || bubble_in_WB) || (~dmode_WB && step
 assign load_in_WB = dmem_en_WB && !store_in_WB;
 
 //assign raw_rs1 = wr_reg_WB && (rs1_addr == reg_to_wr_WB) && (sel_fpu_rs1_EX == sel_fpu_rd_WB)
+
+//In Case of SIMD: writeback uses address and address +1, hence errors for RAW extend to reg_to_wr_WB+1
+//To-Do: Add actual SIMD dependency to avoid unneccessary stalls. 
+`ifdef ISA_EXT_P
+`ifdef ISA_EXT_F
+  assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB || ( pcpi_ready_mul_div_r  == 1 && rs1_addr == (reg_to_wr_WB+1)) ) && (sel_fpu_rs1_EX == sel_fpu_rd_uk_WB) && (rs1_addr != 0 || sel_fpu_rs1_EX) && uses_rs1;
+  assign raw_rs2 = (wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB || ( pcpi_ready_mul_div_r  == 1 && rs2_addr == (reg_to_wr_WB+1)) ) && (sel_fpu_rs2_EX == sel_fpu_rd_uk_WB)) && (rs2_addr != 0 || sel_fpu_rs2_EX) && uses_rs2;
+`else
+  assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB || rs1_addr == (reg_to_wr_WB+1) ) && (rs1_addr != 0) && uses_rs1;
+  assign raw_rs2 = (wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB || rs2_addr == (reg_to_wr_WB+1) )) && (rs2_addr != 0) && uses_rs2;
+`endif
+`else
 `ifdef ISA_EXT_F
   assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB) && (sel_fpu_rs1_EX == sel_fpu_rd_uk_WB) && (rs1_addr != 0 || sel_fpu_rs1_EX) && uses_rs1;
   assign raw_rs2 = (wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB) && (sel_fpu_rs2_EX == sel_fpu_rd_uk_WB)) && (rs2_addr != 0 || sel_fpu_rs2_EX) && uses_rs2;
@@ -452,7 +474,7 @@ assign load_in_WB = dmem_en_WB && !store_in_WB;
   assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB) && (rs1_addr != 0) && uses_rs1;
   assign raw_rs2 = (wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB)) && (rs2_addr != 0) && uses_rs2;
 `endif
-
+`endif
 assign bypass_rs1 = !load_in_WB && raw_rs1;
 
 assign bypass_rs2 = !load_in_WB && raw_rs2;

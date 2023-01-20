@@ -69,8 +69,10 @@ wire  [6:0] funct7; assign funct7 = pcpi_insn[31:25]; //insn_r[31:25];
 wire  [2:0] funct3; assign funct3 = pcpi_insn[14:12]; //insn_r[14:12];
 wire  [6:0] opcode; assign opcode = pcpi_insn[6:0];   //insn_r[6:0];
 
+wire simd_funct = (funct3 == 0) && (funct7 == 7'b1010100 || funct7 == 7'b1010101 || funct7 == 7'b1011100 || funct7 == 7'b1011101 || (funct7 == 7'h50) || (funct7 == 7'h51) || (funct7 == 7'h58) || (funct7 == 7'h59) ); 
+
 wire  custom_funct;
-assign custom_funct = (opcode == 7'h77);
+assign custom_funct = (opcode == 7'h77) && ~simd_funct;
 
 wire  inst_custom;
 assign inst_custom = custom_funct;

@@ -82,28 +82,27 @@
 
 // Default = undefined (no hardware floats)
 
-//`undef ISA_EXT_F
-`define ISA_EXT_F
+`undef ISA_EXT_F
+//`define ISA_EXT_F
 
 // ISA Extension "C" - compressed instructions
 // ===========================================
 //
 // This option enables the C extension, which 
-// adds support for 16 bit compressed instructions.
-// This adds another pipeline delay / branch penalty 
-// and reduces code size by approx. 30%
+// adds support for 16 bit compressed instructions
+// reduceing code size by ~30%.
 
 // Default = defined (compressed instructions supported)
 
-`undef ISA_EXT_C
-//`define ISA_EXT_C
+//`undef ISA_EXT_C
+`define ISA_EXT_C
 
 // ISA Extension "M" - hardware MUL/DIV/REM
 // ========================================
 //
 // This option enables the M extension, which adds hardware
 // support for MUL/DIV/REM 
-//
+
 // Default = defined (hardware MUL enabled)
 
 //`undef ISA_EXT_M
@@ -139,8 +138,8 @@
 
 // Default = defined (include example custom instruction)
 
-// `undef ISA_EXT_CUSTOM
-`define ISA_EXT_CUSTOM
+ `undef ISA_EXT_CUSTOM
+//`define ISA_EXT_CUSTOM
 
 // Custom AI Functions 
 // Sigmoid, Tanh, e-Function 
@@ -174,15 +173,8 @@
 // Core / Debug options
 // ====================
 
-// Prefetch Buffer constants
-`define PREFETCH_DEPTH 1
-`define PREFETCH_INDEX_WIDTH 3
-`define PREFETCH_WIDTH 32
-`define PREFETCH_INPUTWIDTH_MULTIPLIER 1
-`define PREFETCH_INPUTWIDTH `PREFETCH_INPUTWIDTH_MULTIPLIER*`PREFETCH_WIDTH
-
-// Prefetch Buffer ShortCut for Debugging
-//`define prebuf_shortcut
+// Instruction prefetch buffer
+`define IPB_DEPTH 4 // has to be a power of 2, min 4
 
 // Entry point after reset
 `define START_HANDLER `XPR_LEN'h80000000

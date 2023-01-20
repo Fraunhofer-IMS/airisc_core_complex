@@ -102,7 +102,7 @@ end
 
 
 initial begin
-  $readmemh("./memfiles/torture/simple.mem",DUT.SRAM.mem);
+  $readmemh("./memfiles/torture/coremark.mem",DUT.SRAM.mem);
   $write("airi5c_top_tb: tb started\r\n");
 end
 

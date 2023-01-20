@@ -47,7 +47,7 @@
 `define RV32_OP             7'b0110011 // o.k., V2.2, REG/REG ALU operations
 `define RV32_SYSTEM         7'b1110011 // o.k., V2.2 -> ECALL, EBREAK, CSR (RW/RS/RC/RWI/RSI/RCI)
 `define RV32_CUSTOM0         7'b0001011 //AI Accelerators use h0B 
-`define RV32_CUSTOM1         7'h77 //Custom Module uses SIMD Opcode (h77)
+`define RV32_CUSTOM1         7'h77 //Custom Module uses SIMD Opcode (h77) 1110111
 //`define RV32_CUSTOM2         7'b1011011
 //`define RV32_CUSTOM3         7'b1111011
 //`define RV32_CUSTOM4         7'b1110111

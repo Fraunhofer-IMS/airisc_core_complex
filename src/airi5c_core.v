@@ -376,7 +376,7 @@ module airi5c_core(
   wire                 pcpi_ready_ai_acc;
 
   airi5c_ai_acc ai_acc(
-    .nreset(nrst),
+    .nreset(rst_pipeline_n),
     .clk(clk_i),
     .pcpi_valid(pcpi_valid),
     .pcpi_insn(pcpi_insn),
@@ -491,7 +491,10 @@ module airi5c_core(
     | pcpi_wr_efpga
 `endif
 `ifdef ISA_EXT_P
-    | pcpi_wr_dsp
+  | pcpi_wr_dsp
+`endif
+`ifdef ISA_EXT_AIACC
+  | pcpi_wr_ai_acc
 `endif;
 
   assign  pcpi_rd = 1'b0
@@ -505,7 +508,10 @@ module airi5c_core(
     | pcpi_rd_efpga
 `endif
 `ifdef ISA_EXT_P
-    | pcpi_rd_dsp
+  | pcpi_rd_dsp
+`endif
+`ifdef ISA_EXT_AIACC
+  | pcpi_rd_ai_acc
 `endif;
 
   assign  pcpi_rd2 = 1'b0
@@ -519,7 +525,10 @@ module airi5c_core(
     | pcpi_rd2_efpga
 `endif
 `ifdef ISA_EXT_P
-    | pcpi_rd2_dsp
+  | pcpi_rd2_dsp
+`endif
+`ifdef ISA_EXT_AIACC
+  | pcpi_rd2_ai_acc
 `endif;
 
   assign  pcpi_use_rd64 = 1'b0
@@ -533,7 +542,10 @@ module airi5c_core(
     | pcpi_use_rd64_efpga
 `endif
 `ifdef ISA_EXT_P
-    | pcpi_use_rd64_dsp
+  | pcpi_use_rd64_dsp
+`endif
+`ifdef ISA_EXT_AIACC
+  | pcpi_use_rd64_ai_acc
 `endif;
 
   assign  pcpi_wait = 1'b0
@@ -547,7 +559,10 @@ module airi5c_core(
     | pcpi_wait_efpga
 `endif
 `ifdef ISA_EXT_P
-    | pcpi_wait_dsp
+  | pcpi_wait_dsp
+`endif
+`ifdef ISA_EXT_AIACC
+  | pcpi_wait_ai_acc
 `endif;
 
   assign  pcpi_ready =  1'b0
@@ -562,6 +577,12 @@ module airi5c_core(
 `endif
 `ifdef ISA_EXT_P
     | pcpi_ready_dsp
+  `ifndef ISA_EXT_M
+    | pcpi_ready_mul_div
+  `endif
+`endif
+`ifdef ISA_EXT_AIACC
+  | pcpi_ready_ai_acc
 `endif;
 
 
@@ -630,6 +651,10 @@ module airi5c_core(
     .pcpi_use_rd64(pcpi_use_rd64),
     .pcpi_wait(pcpi_wait),
     .pcpi_ready(pcpi_ready)
+    `ifdef ISA_EXT_P
+    ,
+    .pcpi_ready_mul_div(pcpi_ready_mul_div)
+    `endif
   );
 
 endmodule
