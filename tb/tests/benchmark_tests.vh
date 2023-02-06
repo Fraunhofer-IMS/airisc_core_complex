@@ -14,27 +14,21 @@
 // File              : benchmark_tests.vh
 // Author            : A. Stanitzki
 // Creation Date     : 09.10.20
-// Last Modified     : 15.02.21
+// Last Modified     : 08.12.22
 // Version           : 1.0         
 //
 
 errorcount <= 0;
-$write("===================\n");
-$write("= Benchmarks      =\n");
-$write("===================\n");
 
 // ========================
 // == Coremark            =
 // ========================;
 $write("Coremark:\n");
 
-$write("\nremove $finish command from tb before running this! \n");
 $write("Coremark takes ~30min. real time to finish\n");
 $write("Beware to disable all probes during simulation!\n\n");
 
-`define VPI_MODE
 testtotal = testtotal + 1;
-run_test_program(1,"./memfiles/coremark.mem",5500,result);
-`undef VPI_MODE
-$write("loaded. Running");
+run_test_program(1,"./memfiles/torture/coremark.mem",7000,result);
+
 $write("\n\n");

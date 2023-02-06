@@ -106,7 +106,11 @@ module airi5c_pipeline(
   input                        pcpi_use_rd64,
   input                        pcpi_wait,
   input                        pcpi_ready
+  `ifdef ISA_EXT_P
+  ,
+  input                        pcpi_ready_mul_div
   `endif
+`endif
 );
 
 
@@ -430,7 +434,10 @@ airi5c_ctrl ctrl(
   .dmode_WB(dmode_WB),
   .prev_killed_WB(prev_killed_WB),
   .had_ex_WB(had_ex_WB)
-
+  `ifdef ISA_EXT_P
+  ,
+  .pcpi_ready_mul_div(pcpi_ready_mul_div)
+  `endif
 `ifdef ISA_EXT_F
   //FPU
   ,
@@ -910,6 +917,8 @@ airi5c_csr_file csr(
 
   .exception(had_ex_WB),
   .exception_PC(PC_WB),
+  .interrupt_PC(PC_EX),
+  .interrupt_PC_valid(ex_valid),
   .exception_code(exception_code_WB),
   .exception_int(exception_int_WB),
   .exception_load_addr(alu_out_WB),

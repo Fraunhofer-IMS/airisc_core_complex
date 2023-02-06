@@ -154,8 +154,6 @@ set files [list \
  [file normalize "${origin_dir}/../src/airi5c_alu_ops.vh"] \
  [file normalize "${origin_dir}/../src/airi5c_alu.v"] \
  [file normalize "${origin_dir}/../src/airi5c_fetch.v"] \
- [file normalize "${origin_dir}/../src/airi5c_fetch_simple.v"] \
- [file normalize "${origin_dir}/../src/airi5c_prebuf.v"] \
  [file normalize "${origin_dir}/../src/airi5c_prebuf_fifo.v"] \
  [file normalize "${origin_dir}/../src/airi5c_decompression.v"] \
  [file normalize "${origin_dir}/../src/airi5c_mem_arbiter.v"] \

@@ -58,6 +58,7 @@ module airi5c_regfile(
   reg     [`XPR_LEN-1:0]  data [15:0];  // reduced 16 x 32 bit regs
 `endif
 
+
 `ifdef ISA_EXT_F
   reg     [31:0]          data_fpu [31:0];
   assign  rd1_o = sel_fpu_rs1_i ? data_fpu[ra1_i] : (|ra1_i ? data[ra1_i] : 0);
@@ -121,15 +122,15 @@ module airi5c_regfile(
         if (sel_fpu_rd_i) begin
           data_fpu[wa_i] <= wd_i;
         end else if (use_rd64_i) begin
-          data[{wa_i[4:1],1'b0}] <= wd_i;
-          data[{wa_i[4:1],1'b1}] <= wd2_i;
+          data[wa_i[4:0]] <= wd_i;
+          data[wa_i[4:0]+1] <= wd2_i;
         end else begin
           data[wa_i] <= wd_i;
         end
       `else
         if (use_rd64_i) begin
-          data[{wa_i[4:1],1'b0}] <= wd_i;
-          data[{wa_i[4:1],1'b1}] <= wd2_i;
+          data[wa_i[4:0]] <= wd_i;
+          data[wa_i[4:0]+1] <= wd2_i;
         end else begin
           data[wa_i] <= wd_i;
         end

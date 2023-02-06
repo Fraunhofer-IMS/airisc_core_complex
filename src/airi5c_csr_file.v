@@ -55,6 +55,8 @@ module airi5c_csr_file
   input                             redirect,             // 06.08.19, ASt - added to determine new dpc value (jmp or no jmp?)      
   input       [`XPR_LEN-1:0]        exception_load_addr,  // Memory access address in case of exception
   input       [`XPR_LEN-1:0]        exception_PC,         // PC of the instruction causing the exception (NOT the instruction after!)
+  input       [`XPR_LEN-1:0]        interrupt_PC,         // PC of the instruction that has not been executed because of an Interrupt
+  input                             interrupt_PC_valid,   // PC (in EX stage) is valid
 
   output      [`XPR_LEN-1:0]        handler_PC,           // The handler address set by MTVEC/STVEC/UTVEC and the defined mode. We only support one handler. 
   output      [`XPR_LEN-1:0]        mepc,                 // PC causing the exception (if exception) or pointer to instruction after (if interrupt)
@@ -292,6 +294,22 @@ module airi5c_csr_file
   end 
 `endif
 
+  // stn: make sure to trigger the hardware stack for interrupt enable
+  // and privilege level only *once* when a tryp is firing
+  reg trap_trigger_r;
+  wire trap_trigger;
+
+  always @(posedge clk or negedge nreset) begin
+    if(~nreset) begin
+      trap_trigger_r <= 1'b0;
+    end else begin
+      trap_trigger_r <= exception;
+    end
+  end
+
+  assign trap_trigger = (exception) && (~trap_trigger_r);
+
+  // hardware stack for interrupt enable and privilege level
   always @(posedge clk or negedge nreset) begin
     if (~nreset) begin
       dmode <= 1'b0;
@@ -313,7 +331,7 @@ module airi5c_csr_file
 
       MPIE  <= wdata_internal[7];
       MIE   <= wdata_internal[3];
-    end else if (exception) begin
+    end else if (trap_trigger) begin
       if (exception_code == `MCAUSE_BREAKPOINT) begin
         dmode <= 1'b1;
       end else begin
@@ -446,6 +464,19 @@ module airi5c_csr_file
     end
   end
 
+  // stn: buffer address of next instruction to be executed
+  reg [`XPR_LEN-1:0] interrupt_PC_r;
+
+  always @(posedge clk or negedge nreset) begin
+    if (~nreset) begin
+      interrupt_PC_r <= `XPR_LEN'b0;
+    end else begin
+      if (interrupt_PC_valid) begin
+        interrupt_PC_r <= interrupt_PC;
+      end
+    end
+  end
+
   // set MEPC and current mode in exception/interrupt/write situations
   // on an exception, the MEPC points to the causing instruction (which might be repeated then..)
   always @(posedge clk or negedge nreset) begin
@@ -454,8 +485,13 @@ module airi5c_csr_file
     end else begin
       if (wen_internal_or_debug && (addr_muxed == `CSR_ADDR_MEPC)) begin
         mepc_r <= wdata_internal; 
-      end else if (exception & ~dmode & ~(stepmode && exception_code == `MCAUSE_BREAKPOINT))
-        mepc_r <= (exception_PC & {{31{1'b1}},1'b0}); 
+      end else if (exception & ~dmode & ~(stepmode && exception_code == `MCAUSE_BREAKPOINT)) begin
+        if (exception) begin // interrupt (= async. exception)
+          mepc_r <= (interrupt_PC_r & {{31{1'b1}},1'b0});
+        end else begin // software exception (= sync. exception)
+          mepc_r <= (exception_PC & {{31{1'b1}},1'b0});
+        end
+      end
     end
   end
 
@@ -595,13 +631,14 @@ module airi5c_csr_file
       `CSR_ADDR_TSELECT    : rdata = 32'hdeadbeef; // for debugger auto-detect
 
       `ifndef ISA_EXT_E
-        `CSR_ADDR_CYCLE    : rdata = cycle_full[0+:`XPR_LEN];
-        `CSR_ADDR_CYCLEH   : rdata = cycle_full[`XPR_LEN+:`XPR_LEN];
-        `CSR_ADDR_INSTRET  : rdata = instret_full[0+:`XPR_LEN];
-        `CSR_ADDR_INSTRETH : rdata = instret_full[`XPR_LEN+:`XPR_LEN];
-        `CSR_ADDR_MCYCLE   : rdata = cycle_full[0+:`XPR_LEN];
-        `CSR_ADDR_MCYCLEH  : rdata = cycle_full[`XPR_LEN+:`XPR_LEN];
-        `CSR_ADDR_MINSTRET : rdata = instret_full[0+:`XPR_LEN];
+        `CSR_ADDR_CYCLE     : rdata = cycle_full[0+:`XPR_LEN];
+        `CSR_ADDR_CYCLEH    : rdata = cycle_full[`XPR_LEN+:`XPR_LEN];
+        `CSR_ADDR_INSTRET   : rdata = instret_full[0+:`XPR_LEN];
+        `CSR_ADDR_INSTRETH  : rdata = instret_full[`XPR_LEN+:`XPR_LEN];
+        `CSR_ADDR_MCYCLE    : rdata = cycle_full[0+:`XPR_LEN];
+        `CSR_ADDR_MCYCLEH   : rdata = cycle_full[`XPR_LEN+:`XPR_LEN];
+        `CSR_ADDR_MINSTRET  : rdata = instret_full[0+:`XPR_LEN];
+        `CSR_ADDR_MINSTRETH : rdata = instret_full[`XPR_LEN+:`XPR_LEN];
       `endif
   
       `ifdef ISA_EXT_F
@@ -644,6 +681,7 @@ module airi5c_csr_file
         `CSR_ADDR_MCYCLE    : dm_csr_rdata = cycle_full[0+:`XPR_LEN];
         `CSR_ADDR_MCYCLEH   : dm_csr_rdata = cycle_full[`XPR_LEN+:`XPR_LEN];
         `CSR_ADDR_MINSTRET  : dm_csr_rdata = instret_full[0+:`XPR_LEN];
+        `CSR_ADDR_MINSTRETH : dm_csr_rdata = instret_full[`XPR_LEN+:`XPR_LEN];
       `endif
       
       `ifdef ISA_EXT_F

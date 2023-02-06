@@ -24,15 +24,15 @@ The following revisions of the RISC-V specification is implemented in the curren
 
 AIRISC architecture overview
 ----------------------------
-The AIRISC core implements the RISC-V ISA as a 32 bit harvard architecture with a five-stage pipeline. There are two AHB lite system interfaces for instruction and data access. The base ISA is RV32I. Extensions to the ISA can be added via a coprocessor interface (PCPI and RVX are supported). The AIRISC Core Complex comprises a hardware multiplier / divider unit (MUL/DIV) as well as compressed instructions (RV32IMC) as standard extensions.
+The AIRISC core implements the RISC-V ISA as a 32 bit harvard architecture with a five-stage pipeline. There are two AHB lite system interfaces for instruction and data access. The base ISA is RV32I. Extensions to the ISA can be added via a coprocessor interface (PCPI and RVX are supported). The AIRISC Core Complex comprises a hardware multiplier / divider unit (MUL/DIV), an IEEE 754-complaint floating point unit as well as compressed instructions (RV32IMFC) as standard extensions.
 
-Several standard peripherals are included in the AIRISC Core Complex: an MTIME compatible timer, a UART, an SPI master device, an ICAP dynamic reconfiguration port (on FPGAs) and a JTAG based debug transport module.
+Several standard peripherals are included in the AIRISC Core Complex: an MTIME-compatible system timer, a UART, an SPI master device, an ICAP dynamic reconfiguration port (on Xilinx FPGAs) and a JTAG-based debug transport module.
 
 Additional ISA extenstion modules are available under a comercial license from `Fraunhofer IMS <http://www.ims.fraunhofer.de>`_ and will be relased under Solderpad license after a comercial-only period. Currently available extensions are:
 
-* F - single precision floating point 
 * P - SIMD extension
 * eAI - embedded AI package including hardware accelerators and software libraries
+* ...
 
 Memory map
 ==========
@@ -246,7 +246,7 @@ Tab. 2: Ports of the AIRISC top level module
 
 Instruction set extensions 
 --------------------------
-The standard configuration contains the ISA extensions ``M`` and ``C``. All extensions can be activated and deactivated in the corresponding configuration file to optimize for are and current consumption.
+The standard configuration contains the ISA extensions ``M``, ``F`` and ``C``. All extensions can be activated and deactivated in the corresponding configuration file to optimize for area, performance and current consumption.
 
 
 E extension, reduced register set
@@ -256,6 +256,14 @@ A substantial amount of are consumption is caused by the general purpose registe
 C extension, compressed instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The C extension introduces 16 bit instructions and the strict demand on 32 bit alignment is relaxed. The 16 bit compressed instructions are decoded to their 32 bit equivalent in the first pipeline stage. For correct operation, the used memory has to support 32 bit read accesses with 16 bit alignment.
+
+M extension, harware multiplier/divider
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The M extensions provides a hardware-based integer multiplier and divider.
+
+F extension, floating-point unit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The RISC-V F ISa extensions adds a full-scale IEEE754-complaint floating-point unit to the processor core.
 
 
 Standard peripherals
@@ -278,9 +286,9 @@ TIMER1 - MTIME Compliant Timer - 0xC0000100
 | ``0xC000010C`` | TIMECMPH         |   32   |   R/W   | 64 Bit Timer Compare Register (MSB)  |
 +----------------+------------------+--------+---------+--------------------------------------+
 
-The timer consists of a 64 bit counter (MTIMEH/MTIMEL) and a 64 bit compare register (MTIMECMPH/MTIMECMPL). The counter is incremented with every system clock. As soon and as long as the content of the counter is greater or equal to the timer compare register a timer interrupt is triggered. An interrupt will never be triggered if the timer compare register is set to ``0x00000000_00000000``.
+The timer consists of a 64 bit counter (MTIMEH/MTIMEL) and a 64 bit compare register (MTIMECMPH/MTIMECMPL). The counter is incremented with every system clock. As soon and as long as the content of the counter is greater or equal to the timer compare register a timer interrupt is triggered. It is compatible to the RISC-V MTIME system timer specifications (privileged ISA spec.).
 
-The timer is often used to realize a scheduler for simple multi-threading or multi-tasking.
+The timer is often used to implement a scheduler for simple multi-threading or multi-tasking.
 
 UART
 ^^^^
@@ -864,54 +872,6 @@ Debug Support
 
 The core complex includes a debug module and debug transfer module for communication via JTAG. Register accesses via the debug module are implemented as abstract instructions for both GPR and CSR. They can be performed while the core is running and have priority over concurrent write accesses of the core itself. Memory accesses to the system memory are implemented program buffer-based. The debug module can write to a two-line program buffer (with implicit EBREAK after the second instruction) and execute it with limited privileges. The second line in the program buffer also allows bulk read/write with automatic increment of the target address.
 
-Resource requirements and benchmark
-===================================
-Tab. 12: Resource usage on the Xilinx XC7A32 FPGA @ 32 MHz
-
-+------------------------+---------+
-| Resource designation   |  Number |
-+========================+=========+
-| Slice LUTs             | 6177    |
-+------------------------+---------+
-| Slice Regsiters        | 3762    |
-+------------------------+---------+
-| F7 Muxes               | 515     |
-+------------------------+---------+
-| F8 Muxes               | 131     |
-+------------------------+---------+
-| Slices                 | 2247    |
-+------------------------+---------+
-| Logic LUTs             | 6177    |
-+------------------------+---------+
-| BRAM Tile              | 32      |
-+------------------------+---------+
-| DSP                    | 4       |
-+------------------------+---------+
-| Bonded IOB             | 30      |
-+------------------------+---------+
-| BUFGCTRL               | 3       |
-+------------------------+---------+
-| MMCME2_ADV             | 1       | 
-+------------------------+---------+
-
-Coremark result @32 MHz on the NexysVideo FPGA Dev Board with local BlockRAM as instruction memory: ::
-
-  2K performance run parameters for coremark.
-    CoreMark Size    : 666
-    Total ticks      : 7794
-    Total time (secs): 15
-    Iterations/Sec   : 80
-    Iterations       : 1200
-    Compiler version : GCC10.1.0
-    Compiler flags   : -o3 
-    Memory location  : STACK
-    seedcrc          : 0xe9f5
-    [0]crclist       : 0xe714
-    [0]crcmatrix     : 0x1fd7
-    [0]crcstate      : 0x8e3a
-    [0]crcfinal      : 0x988c
-    Correct operation validated. See README.md for run and reporting rules.
-
 
 First steps with the virtual prototype
 ======================================
@@ -925,7 +885,7 @@ Prerequisite for the commissioning of the virtual prototype
 Commissioning of the virtual prototype
 --------------------------------------
 
-Mithilfe von Cadence Incisive und OpenOCD kann ein Virtueller Prototyp in Betrieb genommen werden. Dazu reicht es aus folgede Schritte durchzuführen:
+Using openOCD together with Cadence Incisive allows to setup a virtual prototype:
 
 1. start the simulation without a stop condition with ``make sim_vpi``, check if signal probing is disabled in the simIUS/simsetup.tcl file.
 2. in a second terminal start OpenOCD from the tb directory with ``../tools/openocd -f./vpi.cfg"`` (with the -d flag you can output more debugging messages).
@@ -937,8 +897,8 @@ Mithilfe von Cadence Incisive und OpenOCD kann ein Virtueller Prototyp in Betrie
 Tip: To increase speed, the debugger can be detached with Ctrl+C in the OpenOCD terminal, but be aware that a later connection to this session is no longer possible. 
 
 
-AIRISC on an FPGA - Quickstart
-==============================
+AIRISC on a FPGA - Quickstart
+=============================
 
 Prerequisite for bitstream generation and FPGA deployment
 ---------------------------------------------------------
@@ -963,63 +923,7 @@ Create Vivado project manually and generate bitstream
 2. create new Vivado project (RTL based), FPGA type: XC7A200T-1SBG484C
 3. import standard constraints file from ``$TOPDIR/fpga/src_NexysVideo/constraints/constraints.xdc``
 4. import standard FPGA toplevel from ``$TOPDIR/fpga/src_NexysVideo/verilog/FPGA_Top.v``
-5. import AIRISC sources: ::
-    $TOPDIR/src/airi5c_alu.v 
-    $TOPDIR/src/airi5c_csr_file.v
-    $TOPDIR/src/airi5c_ctrl.v 
-    $TOPDIR/src/airi5c_decode.v 
-    $TOPDIR/src/airi5c_hasti_bridge.v 
-    $TOPDIR/src/airi5c_imm_gen.v 
-    $TOPDIR/src/airi5c_PC_mux.v 
-    $TOPDIR/src/airi5c_pipeline.v 
-    $TOPDIR/src/airi5c_EX_pregs.v 
-    $TOPDIR/src/airi5c_WB_pregs.v 
-    $TOPDIR/src/airi5c_dmem_latch.v 
-    $TOPDIR/src/airi5c_regfile.v 
-    $TOPDIR/src/airi5c_src_a_mux.v 
-    $TOPDIR/src/airi5c_src_b_mux.v 
-    $TOPDIR/src/airi5c_core.v 
-    $TOPDIR/src/airi5c_debug_rom.v 
-    $TOPDIR/src/airi5c_debug_module.v 
-    $TOPDIR/src/airi5c_fetch.v 
-    $TOPDIR/src/modules/airi5c_alu_simd/src/airi5c_alu_simd.v 
-    $TOPDIR/src/modules/airi5c_mul_div_simd/src/airi5c_mul_div_simd.v 
-    $TOPDIR/src/modules/airi5c_dtm/src/airi5c_dtm.v 
-    $TOPDIR/src/modules/airi5c_gpio/src/airi5c_gpio.v 
-    $TOPDIR/src/modules/airi5c_timer/src/airi5c_timer.v 
-    $TOPDIR/src/modules/airi5c_uart/src/airi5c_uart_fifo.v 
-    $TOPDIR/src/modules/airi5c_uart/src/airi5c_uart.v 
-    $TOPDIR/src/modules/airi5c_uart/src/airi5c_uart_rx.v 
-    $TOPDIR/src/modules/airi5c_uart/src/airi5c_uart_tx.v 
-    $TOPDIR/src/modules/airi5c_spi/src/airi5c_spi.v 
-    $TOPDIR/src/modules/airi5c_custom/src/airi5c_custom.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_adder.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_arithmetic.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_divider.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_multiplier.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_post_processing.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_sign_logic.v 
-    $TOPDIR/src/modules/airi5c_fpu/arithmetic/airi5c_fpu_sqrt.v 
-    $TOPDIR/src/modules/airi5c_fpu/comparison/airi5c_fpu_classifier.v 
-    $TOPDIR/src/modules/airi5c_fpu/comparison/airi5c_fpu_comparator.v 
-    $TOPDIR/src/modules/airi5c_fpu/comparison/airi5c_fpu_comparator_out.v 
-    $TOPDIR/src/modules/airi5c_fpu/conversion/airi5c_fpu_floatToInt.v 
-    $TOPDIR/src/modules/airi5c_fpu/conversion/airi5c_fpu_intToFloat.v 
-    $TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_core.v 
-    $TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_pre_normalizer.v 
-    $TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_selector.v 
-    $TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_sign_modifier.v 
-    $TOPDIR/src/modules/airi5c_fpu/core/airi5c_fpu_splitter.v 
-    $TOPDIR/src/modules/airi5c_fpu/rounding/airi5c_fpu_rounding_logic_float.v 
-    $TOPDIR/src/modules/airi5c_fpu/rounding/airi5c_fpu_rounding_logic_int.v 
-    $TOPDIR/src/modules/airi5c_fpu/universal/LZC_4.v 
-    $TOPDIR/src/modules/airi5c_fpu/universal/LZC_24.v 
-    $TOPDIR/src/modules/airi5c_fpu/universal/LZC_32.v
-    $TOPDIR/src/modules/airi5c_fpu/universal/rshifter.v 
-    $TOPDIR/src/modules/airi5c_fpu/universal/rshifter_static.v 
-    $TOPDIR/src/modules/airi5c_fpu/airi5c_fpu.v 
-    $TOPDIR/src/modules/airi5c_icap/src/airi5c_icap.v 
-    $TOPDIR/src/modules/airi5c_sigmoid/src/airi5c_sigmoid.v
+5. import AIRISC sources: see ``.ci/sim_file_list.txt`` for the required rtl files of the base core configuration
 
 6. create the already instantiated BlockRAM: ::
 
@@ -1110,7 +1014,7 @@ We then recommend installing the `Eclipse MCU <https://eclipse-embed-cdt.github.
 
 Board Support Package (BSP)
 ---------------------------
-The Board Support Package includes examples of linker scripts, syscall implementations, and configuration scripts for OpenOCD, GDB, and other tools.
+The Board Support Package includes the HAL (hardware abstraction layer) for using the peripherals and core features, the AIRISC-specific linker script and start-up code, syscall implementations, configuration scripts for OpenOCD and GDB and simple example program, which can be compiled using the provided Makefile (no IDE required).
 
 
 Connection of the Olimex JTAG Adapter (Arty-A7 only)
@@ -1421,7 +1325,7 @@ CoreMark
 ^^^^^^^^
 CoreMark is the de facto standard to compare the performance of processors in the embedded area. The implementation for AIRISC is located in the ``airi5c`` folder in the ``coremark`` directory. To compile this, the riscv-toolchain must have been fully installed, then it is sufficient to run make with a reference to the appropriate port. This is done from the ``coremark`` directory as follows: ``make PORT_DIR=airi5c``. The binary is named ``coremark.elf`` and is located in the same directory. 
 
-The results of the core are listed in the chapter ``Benchmarks``_ for an FPGA implementation.
+The results of the core are listed in the front page's README.md for an FPGA implementation.
 
 
 Reference portings

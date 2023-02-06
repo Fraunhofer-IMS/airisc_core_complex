@@ -56,6 +56,7 @@ library header, which will automatically include all further AIRISC header files
 ```c
 #include <airisc.h>
 ```
+:warning: You want to call the provided test functions `simd_test_uart();` for SIMD and `ai_acc_test();` for AI_ACC, just add them in the `bsp/example/main.c`!
 
 ### Using Makefile
 

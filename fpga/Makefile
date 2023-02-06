@@ -119,6 +119,7 @@ all-fpga: update-boards project build-fpga copy-bitstream sim-fpga program-fpga
 
 update-boards:
 	git clone https://github.com/Xilinx/XilinxBoardStore.git
+#       Only once needed: 
 #	vivado -mode batch -source update_boards.tcl
 
 # recreate vivado project file from tcl

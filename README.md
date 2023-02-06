@@ -111,12 +111,73 @@ Requirements for (re-)building the hardware and programming the (pre-build) bits
 
 - Xilinx Vivado: [2020.2 WebPack](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive.html) (for generating and programming the bitstream)
 - Xilinx Vivado: [2020.2 LabEdition](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/vivado-design-tools/archive.html) (for programming the pre-compiled bitstream only)
-- FPGA board: [Digilent Nexys Video](https://digilent.com/reference/programmable-logic/nexys-video/start)
+- FPGA board: [Digilent Nexys Video](https://digilent.com/reference/programmable-logic/nexys-video/start) or
+[Digilent Arty A7](https://digilent.com/reference/programmable-logic/arty-a7/start)
 
 The [`fpga`](https://github.com/Fraunhofer-IMS/airisc_core_complex/tree/main/fpga) folder provides pre-configured TCL scripts
 to automatically generate a Xilinx Vivado project and to program the bitstream to the FPGA. See the project's
 [online documentation](https://fraunhofer-ims.github.io/airisc_core_complex/index.html) for more information on how to setup a
 AIRISC Xilinx Vivado project from scratch.
+
+:bulb: Prebuilt bitstreams for the supported boards can be found in
+[`fpga/sdcard`](https://github.com/Fraunhofer-IMS/airisc_core_complex/tree/main/fpga/sdcard).
+
+#### Exemplary Synthesis Results
+
+* FPGA: Xilinx Artix-7 `xc7a200tsbg484-1`
+* Board: Digilent Nexys Video
+* Results generated on Dec. 19th, 2022
+
+| Name | Slice LUTs | Slice Registers | DSPs |
+|:-----|-----------:|----------------:|-----:|
+| FPGA_Top                                | 8476 | 4236 | 4 |
+| > clkgen (clk_wiz_0)                    |    0 |    0 | 0 |
+| > DUT (airi5c_top_asic)                 | 6650 | 4167 | 4 |
+| >> airi5c (airi5c_core)                 | 4351 | 2612 | 4 |
+| >>> debug_module (airi5c_debug_module)  |  168 |  214 | 0 |
+| >>> debug_rom (airi5c_debug_rom)        |   20 |   75 | 0 |
+| >>> mul_div (airi5c_mul_div)            |  581 |  337 | 4 |
+| >>> pipeline (airi5c_pipeline)          | 2963 | 1984 | 0 |
+| >>>> csr (airi5c_csr_file)              |  394 |  425 | 0 |
+| >>>> ctrl (airi5c_ctrl)                 |  114 |   24 | 0 |
+| >>>> decoder (airi5c_decode)            |   52 |   65 | 0 |
+| >>>> EX_pipeline_regs (airi5c_EX_pregs) | 1049 |  107 | 0 |
+| >>>> fetcher (airi5c_fetch)             |  283 |  119 | 0 |
+| >>>> imm_gen (airi5c_imm_gen)           |    3 |    0 | 0 |
+| >>>> regfile (airi5c_regfile)           |  834 | 1024 | 0 |
+| >>>> src_a_mux (airi5c_src_a_mux)       |   64 |    0 | 0 |
+| >>>> the_dmem_latch (airi5c_dmem_latch) |   16 |   32 | 0 |
+| >>>> WB_pipeline_regs (airi5c_WB_pregs) |  155 |  188 | 0 |
+| >> dtm (airi5c_dtm)                     |   86 |  178 | 0 |
+| >> gpio0 (airi5c_gpio)                  |   43 |   33 | 0 |
+| >> icap1 (airi5c_icap)                  |    0 |    2 | 0 |
+| >> peripheral_mux (airi5c_periph_mux)   |  110 |   24 | 0 |
+| >> spi0 (airi5c_spi)                    |  267 |  336 | 0 |
+| >> system_timer (airi5c_timer)          |  131 |  163 | 0 |
+| >> uart0 (airi5c_uart)                  | 1664 |  819 | 0 |
+| > SRAM (blk_mem_gen_0)                  | 1819 |   44 | 0 |
+
+#### CoreMark Benchmark
+
+Coremark result @32 MHz on the NexysVideo FPGA Dev Board with local BlockRAM as instruction memory:
+
+```
+2K performance run parameters for coremark.
+  CoreMark Size    : 666
+  Total ticks      : 7794
+  Total time (secs): 15
+  Iterations/Sec   : 80
+  Iterations       : 1200
+  Compiler version : GCC10.1.0
+  Compiler flags   : -o3 
+  Memory location  : STACK
+  seedcrc          : 0xe9f5
+  [0]crclist       : 0xe714
+  [0]crcmatrix     : 0x1fd7
+  [0]crcstate      : 0x8e3a
+  [0]crcfinal      : 0x988c
+  Correct operation validated. See README.md for run and reporting rules.
+```
 
 ### Application
 
@@ -129,6 +190,9 @@ Requirements for running the _hello world_ example program:
 Requirements for (re-)building the software example (_optional_):
 
 - [RISC-V GCC Toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain)
+
+:bulb: A pre-compiled version (`*.elf`; including debug symbols) of the example/demo program can be found in
+[`bsp/example`](https://github.com/Fraunhofer-IMS/airisc_core_complex/tree/main/bsp/example).
 
 ### Simulation / CI
 
