@@ -2,11 +2,11 @@
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
@@ -24,7 +24,7 @@
 //
 
 //Supress dolphin warnings 
-// Standard is defined, to avoid unneccessary warnings between ISA Tests. 
+// Standard is defined, to avoid unneccessary warnings between ISA Tests.
 `ifdef CONFIG_DOLPHIN_SRAM
 `define   SUPR_DOLPHIN
 //`undef    SUPR_DOLPHIN
@@ -44,15 +44,15 @@
 `define VENDOR_ID 32'h00000000
 
 // Implementation ID
-// differentiates between versions of the same 
+// differentiates between versions of the same
 // architecture.
 
 `define IMPL_ID   32'h00008000
 
 // Hardware Threat (HART) ID
-// only ID 0x00 is present in a single-core system. 
+// only ID 0x00 is present in a single-core system.
 // For multi-core/multi-threads, the cores/threads are 
-// enumerated by this field and the ID has to be set 
+// enumerated by this field and the ID has to be set
 // for each HART/Core.
 
 `define HART_ID   32'h00000000
@@ -66,7 +66,7 @@
 // ===========================================
 //
 // This option enables the E extension, which reduces the number
-// of GPRs to 16 and removes the rdcycle[h], rdtime[h] and rdinstret[h] 
+// of GPRs to 16 and removes the rdcycle[h], rdtime[h] and rdinstret[h]
 // instructions and CSR registers.
 
 // Default = undefined (full register set)
@@ -77,13 +77,13 @@
 // ISA Extension "F" - single precision float
 // ===========================================
 //
-// This option enables the F extension, which provides hardware 
+// This option enables the F extension, which provides hardware
 // support for single precision floating point.
 
-// Default = undefined (no hardware floats)
+// Default = defined
 
-`undef ISA_EXT_F
-//`define ISA_EXT_F
+//`undef ISA_EXT_F
+`define ISA_EXT_F
 
 // ISA Extension "C" - compressed instructions
 // ===========================================
@@ -110,7 +110,6 @@
 
 // ISA Extension "P" - DSP/SIMD extension
 // ========================================
-//
 
 // Default = undefined
 
@@ -182,8 +181,8 @@
 // Entry point of debug park loop (e.g. location of debug ROM)
 `define DEBUG_HANDLER `XPR_LEN'h00000000
 
-// number of support external interrupt lines
-`define N_EXT_INTS 24
+// number of AIRISC external interrupt lines (0..16)
+`define N_EXT_INTS 16
 
 // memory segments for debug ROM and main memory
 `define ADDR_DEBUG_ROM       32'b0???????????????????????????????
@@ -228,6 +227,9 @@
 `define ICAP_BASE_ADDR          32'hC0000700
 `define ICAP_ADDR_WIDTH         32'd8
 
+`define TRNG_BASE_ADDR          32'hC0000800
+`define TRNG_ADDR_WIDTH         32'd2
+
 
 // ==============================================
 // = Performance tweaks / architectural choices =
@@ -239,6 +241,14 @@
 // certain memories to block/distributed RAM (leading to
 // less logic & routing utilization)
 // ====================
+// requires: nothing
 
 `define WITH_MEM_HW_RESET
 //`undef WITH_MEM_HW_RESET
+
+// Enable latch-based register file. 
+// =================================
+// requires: WITH_MEM_HW_RESET
+
+//`define WITH_LATCH_REGFILE
+`undef WITH_LATCH_REGFILE

@@ -2,11 +2,11 @@
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
@@ -44,7 +44,7 @@ module airi5c_pc_mux(
 
   wire [`XPR_LEN-1:0] imm_b = { {20{inst_ex_i[31]}}, inst_ex_i[7], inst_ex_i[30:25], inst_ex_i[11:8], 1'b0 };
   wire [`XPR_LEN-1:0] jal_offset = { {12{inst_ex_i[31]}}, inst_ex_i[19:12], inst_ex_i[20], inst_ex_i[30:25], inst_ex_i[24:21], 1'b0 };
-  wire [`XPR_LEN-1:0] jalr_offset = { {21{inst_ex_i[31]}}, inst_ex_i[30:21], 1'b0 };
+  wire [`XPR_LEN-1:0] jalr_offset = { {21{inst_ex_i[31]}}, inst_ex_i[30:20]};
 
   wire [6:0]          opcode = inst_ex_i[6:0];
 
@@ -53,49 +53,60 @@ module airi5c_pc_mux(
   wire                branch = (opcode == `RV32_BRANCH);
   reg [`XPR_LEN-1:0]  base;
   reg [`XPR_LEN-1:0]  offset;
+  reg [`XPR_LEN-1:0]  result;
 
   always @(*) begin
     case (pc_src_sel_i)
       `PC_JAL_TARGET : begin
          base = pc_ex_i;
          offset = jal_offset;
+         result = base + offset;
       end
       `PC_JALR_TARGET : begin  
          //base = bypass_rs1_i ? rs1_data_bypassed_i : rs1_data_i;
          base = rs1_data_bypassed_i;
          offset = jalr_offset;
+         result = (base + offset) & ~(`XPR_LEN'h1);
       end
       `PC_BRANCH_TARGET : begin
          base = pc_ex_i;
          offset = imm_b;
+         result = base + offset;
       end
       `PC_REPLAY : begin
          base = pc_if_i;
          offset = `XPR_LEN'h0;
+         result = base + offset;
       end
       `PC_HANDLER : begin
          base = handler_pc_i;
          offset = `XPR_LEN'h0;
+         result = base + offset;
       end
       `PC_EPC : begin
          base = epc_i;
          offset = `XPR_LEN'h0;
+         result = base + offset;
       end
       `PC_DPC : begin
          base = dpc_i;
          offset = `XPR_LEN'h0;
+         result = base + offset;
       end
       `PC_MISSED_PREDICT : begin
          base = pc_ex_i;
          offset = compressed_ex_i ? `XPR_LEN'h2 : `XPR_LEN'h4;
+         result = base + offset;
       end
       default : begin
          base = pc_if_i;
          offset = compressed_if_i ? `XPR_LEN'h2 : `XPR_LEN'h4;
+         result = base + offset;
       end
     endcase   
   end 
 
-  assign pc_pif_o = base + offset;
+  assign pc_pif_o = result;
 
 endmodule
+

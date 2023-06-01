@@ -2,11 +2,11 @@
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
@@ -463,8 +463,8 @@ assign load_in_WB = dmem_en_WB && !store_in_WB;
   assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB || ( pcpi_ready_mul_div_r  == 1 && rs1_addr == (reg_to_wr_WB+1)) ) && (sel_fpu_rs1_EX == sel_fpu_rd_uk_WB) && (rs1_addr != 0 || sel_fpu_rs1_EX) && uses_rs1;
   assign raw_rs2 = (wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB || ( pcpi_ready_mul_div_r  == 1 && rs2_addr == (reg_to_wr_WB+1)) ) && (sel_fpu_rs2_EX == sel_fpu_rd_uk_WB)) && (rs2_addr != 0 || sel_fpu_rs2_EX) && uses_rs2;
 `else
-  assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB || rs1_addr == (reg_to_wr_WB+1) ) && (rs1_addr != 0) && uses_rs1;
-  assign raw_rs2 = (wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB || rs2_addr == (reg_to_wr_WB+1) )) && (rs2_addr != 0) && uses_rs2;
+  assign raw_rs1 = wr_reg_unkilled_WB && (rs1_addr == reg_to_wr_WB || ( pcpi_ready_mul_div_r  == 1 && rs1_addr == (reg_to_wr_WB+1)) ) && (rs1_addr != 0) && uses_rs1;
+  assign raw_rs2 = wr_reg_unkilled_WB && (rs2_addr == reg_to_wr_WB || ( pcpi_ready_mul_div_r  == 1 && rs2_addr == (reg_to_wr_WB+1)) ) && (rs2_addr != 0) && uses_rs2;
 `endif
 `else
 `ifdef ISA_EXT_F

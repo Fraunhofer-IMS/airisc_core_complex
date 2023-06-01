@@ -1,16 +1,21 @@
 //
-// Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
+// Copyright 2023 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
-
+//
+// File             : crt0.S
+// Author           : S. Nolting
+// Last Modified    : 18.01.2023
+// Abstract         : AIRISC start-up code.
+//
 
 .file "crt0.S"
 .section .init, "ax"
@@ -39,26 +44,20 @@ crt0_begin:
 // Initialize core CSRs
 // ****************************************************************************
 crt0_init_csrs:
-  csrw mstatus, zero
-  la   x10,     __trap_entry  // function in airisc.c
-  csrw mtvec,   x10
-  csrw mepc,    x10
-  csrw mcause,  zero
-  csrw mtval,   zero
-  csrw mip,     zero
-
-  // reset CPU counters
-  csrw mcycle,    zero
-  csrw mcycleh,   zero
-  //csrw minstret,  zero
-  //csrw minstreth, zero
+  la   x10,    __trap_entry // function defined in airisc.c
+  csrw mie,    zero
+  csrw mip,    zero
+  csrw mcause, zero
+  csrw mtval,  zero
+  csrw mtvec,  x10
+  csrw mepc,   x10
 
 
 // ****************************************************************************
 // Reset MTIME machine system timer
 // ****************************************************************************
 crt0_init_mtime:
-  la  x10,   _timer_base  // linker script symbol
+  la  x10,   _timer_base // linker script symbol
   sw  zero,  0(x10)
   sw  zero,  4(x10)
   sw  zero,  8(x10)
@@ -121,8 +120,8 @@ crt0_bss_loop_end:
 // Call main function
 // ****************************************************************************
 crt0_call_main:
-  addi x10, zero, 0  // x10 = a0 = argc = 0
-  addi x11, zero, 0  // x11 = a1 = argv = 0
+  addi x10, zero, 0 // x10 = a0 = argc = 0
+  addi x11, zero, 0 // x11 = a1 = argv = 0
   call main      
 
 
@@ -130,12 +129,9 @@ crt0_call_main:
 // Go to endless sleep mode if main returns
 // ****************************************************************************
 crt0_end:
-  csrci mstatus,  8    // disable interrupt globally
-  csrw  mscratch, x10  // copy main's return value (for debugger)
-  wfi                  // go to sleep mode
-ctr0_end_loop:
-  j .                  // endless loop
+  csrw mie, zero     // disable all interrupt source
+  csrw mscratch, x10 // copy main's return value (for debugger)
+  wfi                // go to sleep mode
+  j .                // endless loop
 
 .cfi_endproc
-
-

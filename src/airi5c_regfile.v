@@ -2,11 +2,11 @@
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
@@ -22,6 +22,9 @@
 `include "rv32_opcodes.vh"
 `include "airi5c_arch_options.vh"
 
+//data-Arrays unsupported in simvision
+//`define debug_xcelium
+`undef debug_xcelium
 module airi5c_regfile(
   // regular operation port
   input                             clk_i,
@@ -52,12 +55,35 @@ module airi5c_regfile(
   output reg  [`XPR_LEN-1:0]        dm_rd_o
 );
 
+
+
+
+
 `ifndef ISA_EXT_E
   reg     [`XPR_LEN-1:0]  data [31:0];  // full 32 x 32 bit regs
 `else
   reg     [`XPR_LEN-1:0]  data [15:0];  // reduced 16 x 32 bit regs
 `endif
 
+// Simvision/xcelium is not able to display arrays... 
+`ifdef debug_xcelium
+ wire [31:0] data_00; assign data_00 = data[0];
+ wire [31:0] data_01; assign data_01 = data[1];
+ wire [31:0] data_02; assign data_02 = data[2];
+ wire [31:0] data_03; assign data_03 = data[3];
+ wire [31:0] data_04; assign data_04 = data[4];
+ wire [31:0] data_05; assign data_05 = data[5];
+ wire [31:0] data_06; assign data_06 = data[6];
+ wire [31:0] data_07; assign data_07 = data[7];
+ wire [31:0] data_08; assign data_08 = data[8];
+ wire [31:0] data_09; assign data_09 = data[9];
+ wire [31:0] data_0A; assign data_0A = data[10];
+ wire [31:0] data_0B; assign data_0B = data[11];
+ wire [31:0] data_0C; assign data_0C = data[12];
+ wire [31:0] data_0D; assign data_0D = data[13];
+
+
+`endif
 
 `ifdef ISA_EXT_F
   reg     [31:0]          data_fpu [31:0];
@@ -87,7 +113,18 @@ module airi5c_regfile(
   end
 
 `ifdef WITH_MEM_HW_RESET // use dedicated hardware reset to initialize whole register file
+`ifdef WITH_LATCH_REGFILE
+
+`ifdef ISA_EXT_F
+  always @(wen_i or dm_wen_i or dm_wd_i or wd_i or wd2_i or rst_ni or dm_wara_i or wa_i or use_rd64_i\
+                 or dm_sel_fpu_reg_i or sel_fpu_rd_i) begin
+`else 
+  always @(wen_i or dm_wen_i or dm_wd_i or wd_i or wd2_i or rst_ni or dm_wara_i or wa_i or use_rd64_i) begin
+`endif
+
+`else
   always @(posedge clk_i or negedge rst_ni) begin
+`endif
     if(~rst_ni) begin
       for (i = 1; i < 32; i = i + 1)
         data[i] <= (32'hdeadbe00 + i);

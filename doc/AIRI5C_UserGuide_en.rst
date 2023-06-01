@@ -6,8 +6,9 @@ AIRISC User Guide
 
 Target Audience
 ===============
-This document is for hardware developers who want to integrate the AIRISC RISC-V core or the AIRISC Core Complex into their own FPGA- or ASIC-designs.
-It is also for embedded software developers who use an AIRISC based target platform.
+This document is for hardware developers who want to integrate the AIRISC RISC-V core or the AIRISC
+Core Complex into their own FPGA- or ASIC-designs. It is also for embedded software developers who
+use an AIRISC based target platform.
 
 
 Introduction
@@ -24,11 +25,19 @@ The following revisions of the RISC-V specification is implemented in the curren
 
 AIRISC architecture overview
 ----------------------------
-The AIRISC core implements the RISC-V ISA as a 32 bit harvard architecture with a five-stage pipeline. There are two AHB lite system interfaces for instruction and data access. The base ISA is RV32I. Extensions to the ISA can be added via a coprocessor interface (PCPI and RVX are supported). The AIRISC Core Complex comprises a hardware multiplier / divider unit (MUL/DIV), an IEEE 754-complaint floating point unit as well as compressed instructions (RV32IMFC) as standard extensions.
+The AIRISC core implements the RISC-V ISA as a 32 bit harvard architecture with a five-stage pipeline.
+There are two AHB lite system interfaces for instruction and data access. The base ISA is RV32I.
+Extensions to the ISA can be added via a coprocessor interface (PCPI and RVX are supported). The
+AIRISC Core Complex comprises a hardware multiplier / divider unit (MUL/DIV) as well as compressed
+instructions (RV32IMC) as standard extensions.
 
-Several standard peripherals are included in the AIRISC Core Complex: an MTIME-compatible system timer, a UART, an SPI master device, an ICAP dynamic reconfiguration port (on Xilinx FPGAs) and a JTAG-based debug transport module.
+Several standard peripherals are included in the AIRISC Core Complex: an MTIME compatible timer, a
+UART, an SPI master device, an ICAP dynamic reconfiguration port (on FPGAs) and a JTAG based debug
+transport module.
 
-Additional ISA extenstion modules are available under a comercial license from `Fraunhofer IMS <http://www.ims.fraunhofer.de>`_ and will be relased under Solderpad license after a comercial-only period. Currently available extensions are:
+Additional ISA extenstion modules are available under a comercial license from
+`Fraunhofer IMS <http://www.ims.fraunhofer.de>`_ and will be relased under Solderpad license after
+a comercial-only period. Currently available extensions are:
 
 * P - SIMD extension
 * eAI - embedded AI package including hardware accelerators and software libraries
@@ -36,7 +45,9 @@ Additional ISA extenstion modules are available under a comercial license from `
 
 Memory map
 ==========
-Fig. 1 shows the memory map of the processor. A modification of the memory partitioning is feasible, e.g. to change mapping of peripherals of add additional memory areas (e.g. for non volatile memory). The following list shows a suggestion for the basic memory organization:
+Fig. 1 shows the memory map of the processor. A modification of the memory partitioning is feasible,
+e.g. to change mapping of peripherals of add additional memory areas (e.g. for non volatile memory).
+The following list shows a suggestion for the basic memory organization:
 
 *   Address ``0x80000000`` is the entrance point after reset
 *   The area below ``0x80000000`` is reserved for debug functionality
@@ -51,9 +62,11 @@ Fig. 1 shows the memory map of the processor. A modification of the memory parti
 
 |
 
-The base address for all peripherals included in the Core Complex can be configured in the file ``airi5c_arch_options.vh``. Tab. 1 shows a summary of all available peripherals and their default base addresses.
+The base address for all peripherals included within the Core Complex can be configured via the
+``airi5c_arch_options.vh`` file (section "Memory mapped peripherals"). Tab. 1 shows a summary of
+all default peripherals and their default base addresses.
 
-Tab. 1: Peripherals and corresponding memory addresses in the AIRISC Core Complex
+Tab. 1: Default peripherals and corresponding memory addresses in the AIRISC Core Complex
 
 +----------------+------------+-------------------+--------------------------------------+
 | address        | access     | name              | description                          |
@@ -66,65 +79,9 @@ Tab. 1: Peripherals and corresponding memory addresses in the AIRISC Core Comple
 +----------------+------------+-------------------+--------------------------------------+
 | ``0xC000010C`` | R/W        | TIMECMPH          | System Timer Compare Register (MSB)  |
 +----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000200`` | R/W        | UART0 DATA        | Tx/rx FIFO                           |
+| ``0xC0000200`` | R/W        | UART0             | Base address of UART0                |
 +----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000204`` | R/W        | UART0 CTRL        | Control Reg (data bits, baud etc.)   |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000208`` | W          | UART0 CTRL_SET    | Set bits in control register         |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC000020C`` | W          | UART0 CTRL_CLR    | Clear bits in control register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000210`` | R/W        | UART0 TX_STAT     | tx status register (tx size, errors) |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000214`` | W          | UART0 TX_STAT_SET | set bits in tx status register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000218`` | W          | UART0 TX_STAT_CLR | Clear bits in tx status register     |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC000021C`` | R/W        | UART0 RX_STAT     | Rx status register (rx size, errors) |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000220`` | R/W        | UART0 RX_STAT_SET | Set bits in rx status register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000224`` | R/W        | UART0 RX_STAT_CLR | Clear bits in rx status register     |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000400`` | R/W        | SPI0 DATA         | Tx/rx FIFO                           |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000404`` | R/W        | SPI0 CTRL         | Control Reg (clk div, phase etc.)    |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000408`` | W          | SPI0 CTRL_SET     | Set bits in control register         |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC000040C`` | W          | SPI0 CTRL_CLR     | Clear bits in control register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000410`` | R/W        | SPI0 TX_STAT      | tx status register (tx size, errors) |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000414`` | W          | SPI0 TX_STAT_SET  | set bits in tx status register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000418`` | W          | SPI0 TX_STAT_CLR  | Clear bits in tx status register     |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC000041C`` | R/W        | SPI0 RX_STAT      | Rx status register (rx size, errors) |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000420`` | W          | SPI0 RX_STAT_SET  | Set bits in rx status register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000424`` | W          | SPI0 RX_STAT_CLR  | Clear bits in rx status register     |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000500`` | R/W        | SPI1 DATA         | Tx/rx FIFO                           |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000504`` | R/W        | SPI1 CTRL         | Control Reg (clk div, phase etc.)    |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000508`` | W          | SPI1 CTRL_SET     | Set bits in control register         |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC000050C`` | W          | SPI1 CTRL_CLR     | Clear bits in control register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000510`` | R/W        | SPI1 TX_STAT      | tx status register (tx size, errors) |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000514`` | W          | SPI1 TX_STAT_SET  | set bits in tx status register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000518`` | W          | SPI1 TX_STAT_CLR  | Clear bits in tx status register     |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC000051C`` | R/W        | SPI1 RX_STAT      | Rx status register (rx size, errors) |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000520`` | W          | SPI1 RX_STAT_SET  | Set bits in rx status register       |
-+----------------+------------+-------------------+--------------------------------------+
-| ``0xC0000524`` | W          | SPI1 RX_STAT_CLR  | Clear bits in rx status register     |
+| ``0xC0000400`` | R/W        | SPI0              | Base address of SPI0                 |
 +----------------+------------+-------------------+--------------------------------------+
 | ``0xC0000600`` | R/W        | GPIO0 DATA        | Set/Clear GPIO bits                  |
 +----------------+------------+-------------------+--------------------------------------+
@@ -134,11 +91,14 @@ Tab. 1: Peripherals and corresponding memory addresses in the AIRISC Core Comple
 +----------------+------------+-------------------+--------------------------------------+
 | ``0xC0000744`` | R/W        | ICAPDATA          | Dynamic Function Exchange data       |
 +----------------+------------+-------------------+--------------------------------------+
+| ``0xC0000800`` | R/W        | TRNG              | True-Random Number Generator         |
++----------------+------------+-------------------+--------------------------------------+
 
 AIRISC Core Complex
 ===================
 
-The so called Core Complex comprises a timer, UART, SPI and GPIO in addition to the base core. A block diagram of the AIRISC core complex is shown in Fig. 2.
+The so called Core Complex comprises a timer, a TRNG, UART, SPI and GPIO in addition to the base core.
+A block diagram of the AIRISC core complex is shown in Fig. 2.
 
 |
 
@@ -151,7 +111,8 @@ The so called Core Complex comprises a timer, UART, SPI and GPIO in addition to 
 
 Configuration
 -------------
-All configurable parameters, such as the base address of peripherals or the activation of instruction set extensions are applied in the file ``src/airi5c_arch_options.vh``.
+All configurable parameters, such as the base address of peripherals or the activation of
+instruction set extensions are applied in the file ``src/airi5c_arch_options.vh``.
 
 List of AIRISC Core Complex top level ports
 -------------------------------------------
@@ -246,16 +207,24 @@ Tab. 2: Ports of the AIRISC top level module
 
 Instruction set extensions 
 --------------------------
-The standard configuration contains the ISA extensions ``M``, ``F`` and ``C``. All extensions can be activated and deactivated in the corresponding configuration file to optimize for area, performance and current consumption.
+The standard configuration contains the ISA extensions ``M`` and ``C``. All extensions can be
+activated and deactivated in the corresponding configuration file to optimize for are and
+current consumption.
 
 
 E extension, reduced register set
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A substantial amount of are consumption is caused by the general purpose registers (GPR). The number of GPR can be reduced from 32 to 16 for extreme area critical applications, e.g. when the AIRISC core simply replaced the implementation of a state machine (FSM). Additionally, some optional control and status registers (CSR) are deactivated when applying the E extension.
+A substantial amount of are consumption is caused by the general purpose registers (GPR).
+The number of GPR can be reduced from 32 to 16 for extreme area critical applications, e.g.
+when the AIRISC core simply replaced the implementation of a state machine (FSM). Additionally,
+some optional control and status registers (CSR) are deactivated when applying the E extension.
 
 C extension, compressed instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The C extension introduces 16 bit instructions and the strict demand on 32 bit alignment is relaxed. The 16 bit compressed instructions are decoded to their 32 bit equivalent in the first pipeline stage. For correct operation, the used memory has to support 32 bit read accesses with 16 bit alignment.
+The C extension introduces 16 bit instructions and the strict demand on 32 bit alignment is
+relaxed. The 16 bit compressed instructions are decoded to their 32 bit equivalent in the first
+pipeline stage. For correct operation, the used memory has to support 32 bit read accesses with
+16 bit alignment.
 
 M extension, harware multiplier/divider
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -268,14 +237,15 @@ The RISC-V F ISa extensions adds a full-scale IEEE754-complaint floating-point u
 
 Standard peripherals
 --------------------
-The AIRISC Core Complex comprises a set of standard peripherals that are controlled via memory mapped registers. These are described in the following sections.
+The AIRISC Core Complex comprises a set of standard peripherals that are controlled via memory
+mapped registers. These are described in the following sections.
 
 
 TIMER1 - MTIME Compliant Timer - 0xC0000100
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 +----------------+------------------+--------+---------+--------------------------------------+
-| Adresse        | Name             | Width  | Zugriff | Beschreibung                         | 
+| Address        | Name             | Width  | Access  | Description                          | 
 +================+==================+========+=========+======================================+
 | ``0xC0000100`` | TIMEL            |   32   |   R/W   | 64 Bit Timer Register (LSB)          |
 +----------------+------------------+--------+---------+--------------------------------------+
@@ -286,9 +256,14 @@ TIMER1 - MTIME Compliant Timer - 0xC0000100
 | ``0xC000010C`` | TIMECMPH         |   32   |   R/W   | 64 Bit Timer Compare Register (MSB)  |
 +----------------+------------------+--------+---------+--------------------------------------+
 
-The timer consists of a 64 bit counter (MTIMEH/MTIMEL) and a 64 bit compare register (MTIMECMPH/MTIMECMPL). The counter is incremented with every system clock. As soon and as long as the content of the counter is greater or equal to the timer compare register a timer interrupt is triggered. It is compatible to the RISC-V MTIME system timer specifications (privileged ISA spec.).
+The timer consists of a 64 bit counter (MTIMEH/MTIMEL) and a 64 bit compare register
+(MTIMECMPH/MTIMECMPL). The counter is incremented with every system clock. As soon and as long
+as the content of the counter is greater or equal to the timer compare register a timer interrupt
+is triggered. An interrupt will never be triggered if the timer compare register is set to
+``0x00000000_00000000``.
 
 The timer is often used to implement a scheduler for simple multi-threading or multi-tasking.
+
 
 UART
 ^^^^
@@ -296,18 +271,19 @@ UART
 Summary
 '''''''
 
-Acting as a peripheral, the UART module provides serial communication capabilities to the Airi5c processor. After a complete redesign, this Module now supports the following features:
+Acting as a peripheral, the UART module provides serial communication capabilities to the AIRISC
+processor. After a complete redesign, this Module now supports the following features:
 
 *	AHB-Lite interface
-*	Separate registers for control, rx and tx status, all with set/clear access capability
-*	configurable and independent rx and tx fifo size (1 – 256 frames)
+*	Separate registers for control, RX and TX status, all with set/clear access capability
+*	configurable and independent RX and TX fifo size (1 – 256 frames)
 *	configurable number of data bits (5, 6, 7, 8, 9)
 *	configurable parity settings (none, odd, even)
 *	configurable number of stop bits (1, 1.5, 2)
 *	support for hardware flow control (rts/cts)
 *	support for default and none default baud rates
-*	accessible rx and tx FIFO fill levels
-*	configurable and independent watermark settings for rx and tx FIFO fill level with interrupt generation
+*	accessible RX and TX FIFO fill levels
+*	configurable and independent watermark settings for RX and TX FIFO fill level with interrupt generation
 *	error detection
 *	extensive interrupt capabilities
 
@@ -321,22 +297,29 @@ These parameters have to be set at compile time, they cannot be changed at runti
 +================+=============+================================================================================================================+
 | BASE_ADDR      | 0xC0000200  | Base address of the UART module, the addresses of all registers are increments of 4 beginning at this address  |
 +----------------+-------------+----------------------------------------------------------------------------------------------------------------+
-| TX_ADDR_WIDTH  | 5           | Address width of the tx FIFO, defining the max size of the tx FIFO (size=2^width)                              |
+| TX_ADDR_WIDTH  | 5           | Address width of the TX FIFO, defining the max size of the TX FIFO (size=2^width)                              |
 +----------------+-------------+----------------------------------------------------------------------------------------------------------------+
-| RX_ADDR_WIDTH  | 5           | Address width of the rx FIFO, defining the max size of the rx FIFO (size=2^width)                              |
+| RX_ADDR_WIDTH  | 5           | Address width of the RX FIFO, defining the max size of the RX FIFO (size=2^width)                              |
 +----------------+-------------+----------------------------------------------------------------------------------------------------------------+
 
 Registers
 '''''''''
 
-The UART module includes the following 10 32-bit data, control and status registers, which can be accessed via AHB-Lite interface. In the old processor design, the address space of each peripheral was restricted to 4 32-bit words. With the introduction of the new UART module this number has been increased to 64. Remember that the base address of each peripheral has been changed accordingly and need to be changed in your programs too!
+The UART module includes the following 10 32-bit data, control and status registers, which can be
+accessed via AHB-Lite interface. In the old processor design, the address space of each peripheral
+was restricted to 4 32-bit words. With the introduction of the new UART module this number has been
+increased to 64. Remember that the base address of each peripheral has been changed accordingly and
+need to be changed in your programs too!
 
-Reserved fields are hardwired to zero, writing to those fields has no effect. Errors are normally set at the end of the particular frame where the error occurred. The only exceptions are tx overflow error and rx underflow error, which are set immediately. Once set, all error stay set as long as they get reset manually.
+Reserved fields are hardwired to zero, writing to those fields has no effect. Errors are normally
+set at the end of the particular frame where the error occurred. The only exceptions are TX overflow
+error and RX underflow error, which are set immediately. Once set, all error stay set as long as
+they get reset manually.
 
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
 | Address                        | Type             | Description                                                                                                           |
 +================================+==================+=======================================================================================================================+
-| BASE_ADDR + 0x00 (0xC0000200)  | DATA             | Write access writes to tx FIFO, read access reads from rx FIFO                                                        |
+| BASE_ADDR + 0x00 (0xC0000200)  | DATA             | Write access writes to TX FIFO, read access reads from RX FIFO                                                        |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
 | BASE_ADDR + 0x04 (0xC0000204)  | Ctrl reg         | This register contains all communication settings, such as data bits, parity, stop bits, flow control and baud rate   |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
@@ -344,17 +327,17 @@ Reserved fields are hardwired to zero, writing to those fields has no effect. Er
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
 | BASE_ADDR + 0x0C (0xC000020C)  | Ctrl reg clr     | Writing to this register automatically clears the specified bits in ctrl reg                                          |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x10 (0xC0000210)  | Tx stat reg      | This register contains the tx status, such as tx FIFO size, errors and interrupt enables                              |
+| BASE_ADDR + 0x10 (0xC0000210)  | TX stat reg      | This register contains the TX status, such as TX FIFO size, errors and interrupt enables                              |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x14 (0xC0000214)  | Tx stat reg set  | Writing to this register automatically sets the specified bits in tx stat reg                                         |
+| BASE_ADDR + 0x14 (0xC0000214)  | TX stat reg set  | Writing to this register automatically sets the specified bits in TX stat reg                                         |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x18 (0xC0000218)  | Tx stat reg clr  | Writing to this register automatically clears the specified bits in tx stat reg                                       |
+| BASE_ADDR + 0x18 (0xC0000218)  | TX stat reg clr  | Writing to this register automatically clears the specified bits in TX stat reg                                       |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x1C (0xC000021C)  | Rx stat reg      | This register contains the rx status, such as rx FIFO size, errors and interrupt enables                              |
+| BASE_ADDR + 0x1C (0xC000021C)  | RX stat reg      | This register contains the RX status, such as RX FIFO size, errors and interrupt enables                              |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x20 (0xC0000220)  | Rx stat reg set  | Writing to this register automatically sets the specified bits in rx stat reg                                         |
+| BASE_ADDR + 0x20 (0xC0000220)  | RX stat reg set  | Writing to this register automatically sets the specified bits in RX stat reg                                         |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x24 (0xC0000224)  | Rx stat reg clr  | Writing to this register automatically clears the specified bits in rx stat reg                                       |
+| BASE_ADDR + 0x24 (0xC0000224)  | RX stat reg clr  | Writing to this register automatically clears the specified bits in RX stat reg                                       |
 +--------------------------------+------------------+-----------------------------------------------------------------------------------------------------------------------+
 
 Control Register
@@ -374,7 +357,12 @@ Control Register
 | 23:0  | rw      | Number of clock cycles per bit (c_bit=f_osc/BAUD)      |
 +-------+---------+--------------------------------------------------------+
 
-If the number of data bits is set to 9, the number of stop bits is automatically set to 1 and parity is set to none. When writing an invalid value (e.g. 0b101: 10 data bits), the particular field is set to the highest possible value instead. A set access resulting in an invalid value is ignored. Modifications of the bits in the control register come into effect immediately. Make sure that there is no active communication when modifying this register, otherwise data loss and communication errors can occur. The default communication settings are:
+If the number of data bits is set to 9, the number of stop bits is automatically set to 1 and parity
+is set to none. When writing an invalid value (e.g. 0b101: 10 data bits), the particular field is set
+to the highest possible value instead. A set access resulting in an invalid value is ignored.
+Modifications of the bits in the control register come into effect immediately. Make sure that there
+is no active communication when modifying this register, otherwise data loss and communication errors
+can occur. The default communication settings are:
 
 *	Data bits: 8
 *	Parity: none
@@ -382,120 +370,151 @@ If the number of data bits is set to 9, the number of stop bits is automatically
 *	Flow control: none
 *	Baud rate: 9600 (at 32 MHz)
 
-Tx Status Register
+TX Status Register
 ''''''''''''''''''
 
 +-------+---------+---------------------------------------------+
 | Bits  | Access  | Description                                 |
 +=======+=========+=============================================+
-| 31    | rw      | Clear tx FIFO                               |
+| 31    | rw      | Clear TX FIFO                               |
 +-------+---------+---------------------------------------------+
 | 30:27 | r       | Reserved                                    |
 +-------+---------+---------------------------------------------+
-| 26    | rw      | Tx overflow error interrupt enable          |
+| 26    | rw      | TX overflow error interrupt enable          |
 +-------+---------+---------------------------------------------+
-| 25    | rw      | Tx watermark reached interrupt enable       |
+| 25    | rw      | TX watermark reached interrupt enable       |
 +-------+---------+---------------------------------------------+
-| 24    | rw      | Tx empty interrupt enable                   |
+| 24    | rw      | TX empty interrupt enable                   |
 +-------+---------+---------------------------------------------+
 | 23:20 | r       | reserved                                    |
 +-------+---------+---------------------------------------------+
-| 19    | rw      | Tx overflow error (write to full tx FIFO)   |
+| 19    | rw      | TX overflow error (write to full TX FIFO)   |
 +-------+---------+---------------------------------------------+
-| 18    | r       | Tx fill level \leq tx watermark             |
+| 18    | r       | TX fill level \leq TX watermark             |
 +-------+---------+---------------------------------------------+
-| 17    | r       | Tx empty                                    |
+| 17    | r       | TX empty                                    |
 +-------+---------+---------------------------------------------+
-| 16    | r       | Tx full                                     |
+| 16    | r       | TX full                                     |
 +-------+---------+---------------------------------------------+
-| 15:8  | r       | Tx watermark                                |
+| 15:8  | r       | TX watermark                                |
 +-------+---------+---------------------------------------------+
-| 7:0   | r       | Tx fill level                               |
+| 7:0   | r       | TX fill level                               |
 +-------+---------+---------------------------------------------+
 
-Rx Status Register
+RX Status Register
 ''''''''''''''''''
 
 +-------+---------+------------------------------------------------------------+
 | Bits  | Access  | Description                                                |
 +=======+=========+============================================================+
-| 31    | rw      | Clear rx FIFO                                              |
+| 31    | rw      | Clear RX FIFO                                              |
 +-------+---------+------------------------------------------------------------+
-| 30    | rw      | Rx frame error interrupt enable                            |
+| 30    | rw      | RX frame error interrupt enable                            |
 +-------+---------+------------------------------------------------------------+
-| 29    | rw      | Rx parity error interrupt enable                           |
+| 29    | rw      | RX parity error interrupt enable                           |
 +-------+---------+------------------------------------------------------------+
-| 28    | rw      | Rx noise error interrupt enable                            |
+| 28    | rw      | RX noise error interrupt enable                            |
 +-------+---------+------------------------------------------------------------+
-| 27    | rw      | Rx underflow error interrupt enable                        |
+| 27    | rw      | RX underflow error interrupt enable                        |
 +-------+---------+------------------------------------------------------------+
-| 26    | rw      | Rx overflow error interrupt enable                         |
+| 26    | rw      | RX overflow error interrupt enable                         |
 +-------+---------+------------------------------------------------------------+
-| 25    | rw      | Rx watermark reached interrupt enable                      |
+| 25    | rw      | RX watermark reached interrupt enable                      |
 +-------+---------+------------------------------------------------------------+
-| 24    | rw      | Rx  full interrupt enable                                  |
+| 24    | rw      | RX  full interrupt enable                                  |
 +-------+---------+------------------------------------------------------------+
-| 23    | rw      | Rx frame error (no stop bit detected)                      |
+| 23    | rw      | RX frame error (no stop bit detected)                      |
 +-------+---------+------------------------------------------------------------+
-| 22    | rw      | Rx parity error (parity received \neq calculated)          |
+| 22    | rw      | RX parity error (parity received \neq calculated)          |
 +-------+---------+------------------------------------------------------------+
-| 21    | rw      | Rx noise error (samples taken from one bit differ)         |
+| 21    | rw      | RX noise error (samples taken from one bit differ)         |
 +-------+---------+------------------------------------------------------------+
-| 20    | rw      | Rx underflow error (read from empty rx FIFO)               |
+| 20    | rw      | RX underflow error (read from empty RX FIFO)               |
 +-------+---------+------------------------------------------------------------+
-| 19    | rw      | Rx overflow error (received data while rx FIFO was full)   |
+| 19    | rw      | RX overflow error (received data while RX FIFO was full)   |
 +-------+---------+------------------------------------------------------------+
-| 18    | r       | Rx fill level \geq rx watermark                            |
+| 18    | r       | RX fill level \geq RX watermark                            |
 +-------+---------+------------------------------------------------------------+
-| 17    | r       | Rx empty                                                   |
+| 17    | r       | RX empty                                                   |
 +-------+---------+------------------------------------------------------------+
-| 16    | r       | Rx full                                                    |
+| 16    | r       | RX full                                                    |
 +-------+---------+------------------------------------------------------------+
-| 15:8  | rw      | Rx watermark                                               |
+| 15:8  | rw      | RX watermark                                               |
 +-------+---------+------------------------------------------------------------+
-| 7:0   | r       | Rx fill level                                              |
+| 7:0   | r       | RX fill level                                              |
 +-------+---------+------------------------------------------------------------+
 
 Interrupts
 ''''''''''
 
-The UART module supports several interrupts, which are stated in the tx and rx status register. All interrupts are disabled by default and have to be enabled manually if desired. Besides the individual interrupt signals, there is also a special signal “int_any” available at the port of this module which is set whenever at least one interrupt has occurred. Some interrupt signals are connected to the specific error signals. In this case an interrupt service routine has to reset the specific error flag, otherwise the interrupt will fire again and again.
+The UART module supports several interrupts, which are stated in the TX and RX status register.
+All interrupts are disabled by default and have to be enabled manually if desired. Besides the
+individual interrupt signals, there is also a special signal "int_any" available at the port of
+this module which is set whenever at least one interrupt has occurred. Some interrupt signals are
+connected to the specific error signals. In this case an interrupt service routine has to reset the
+specific error flag, otherwise the interrupt will fire again and again.
 
 Functionality
 '''''''''''''
 
-Transmitting data can be achieved writing to the DATA address, which effectively writes to the tx FIFO. As long as the tx FIFO is not full, new data can be written to it immediately in a row. The UART module automatically reads the data in the tx FIFO and transmits it via the tx pin. When writing to the tx FIFO while it is full, the data written to it is lost and the tx overflow error is set.
-Incoming data via the rx pin is automatically written to the rx FIFO, which can be read from by reading from the DATA address. As long as the rx FIFO is not full, data can be received. As soon as the rx FIFO is full, any incoming data is lost and the rx overflow error is set. The data in the rx FIFO (as well as the tx FIFO) never gets overwritten. In order to free FIFO memory, data has to be read.
-Each bit of incoming data is sampled 3 times at and around its timed midpoint. If the samples differ, the noise error is set at the end of the specific frame.
+Transmitting data can be achieved writing to the DATA address, which effectively writes to the TX FIFO.
+As long as the TX FIFO is not full, new data can be written to it immediately in a row. The UART
+module automatically reads the data in the TX FIFO and transmits it via the TX pin. When writing
+to the TX FIFO while it is full, the data written to it is lost and the TX overflow error is set.
+Incoming data via the RX pin is automatically written to the RX FIFO, which can be read from by
+reading from the DATA address. As long as the RX FIFO is not full, data can be received. As soon
+as the RX FIFO is full, any incoming data is lost and the RX overflow error is set. The data in the
+RX FIFO (as well as the TX FIFO) never gets overwritten. In order to free FIFO memory, data has to
+be read.
+Each bit of incoming data is sampled 3 times at and around its timed midpoint. If the samples differ,
+the noise error is set at the end of the specific frame.
 
 
 Flow Control
 ''''''''''''
 
-The UART module supports rts/cts hardware flow control. Rts is an output of the receiver called ready to send which is connected to the cts input of the transmitter called clear to send (and vice versa). Set to high, rts signals the transmitter, that its rx FIFO is not full and new data can be received. As soon as the rx FIFO is full, rts is set to low, signaling the transmitter that it has to stop transmission. To prevent data loss, rts is already set to low, when there is only space for 4 more frames in the rx FIFO.
+The UART module supports rts/cts hardware flow control. Rts is an output of the receiver called ready
+to send which is connected to the cts input of the transmitter called clear to send (and vice versa).
+Set to high, rts signals the transmitter, that its RX FIFO is not full and new data can be received.
+As soon as the RX FIFO is full, rts is set to low, signaling the transmitter that it has to stop transmission.
+To prevent data loss, rts is already set to low, when there is only space for 4 more frames in the RX FIFO.
 
 The rts and cts pins are currently not connected in our FPGA designs!
 
+
 GPIO
 ^^^^
-The GPIO module has a configurable width with a default value of 8 bit. Separate signals are available for data output, data input and activation of the pad driver to support the integration into ASIC designs. Tab. 6 shows a list of registers available through the GPIO module. Read- and write access is done through through GPIODATA. The byte value is put on the processor bus when a read access is issued in the topmodule ``iGPIO_I``. When a write access is issued, the corresponding value is read from the processor bus and written to ``oGPIO_D`` of the top module. Write access to GPIOEN do only have an effect on the output ``oGPIO_EN``. The bi-directionality of an IO pin can be realized this way within the higher-ranking hierarchy (e.g. inside an FPGA by connection of an ``inout`` or inside an ASIC by routing to a appropriate IO pad).
+The GPIO module has a configurable width with a default value of 8 bit. Separate signals are available
+for data output, data input and activation of the pad driver to support the integration into ASIC
+designs. Tab. 6 shows a list of registers available through the GPIO module. Read- and write access
+is done through through GPIODATA. The byte value is put on the processor bus when a read access is
+issued in the topmodule ``iGPIO_I``. When a write access is issued, the corresponding value is read
+from the processor bus and written to ``oGPIO_D`` of the top module. Write access to GPIOEN do only
+have an effect on the output ``oGPIO_EN``. The bi-directionality of an IO pin can be realized this
+way within the higher-ranking hierarchy (e.g. inside an FPGA by connection of an ``inout`` or inside
+an ASIC by routing to a appropriate IO pad).
 
 Tab. 6: Register of the  GPIO module.
 
 +----------------+------------------+--------+---------+--------------------------------------+
-| Adresse        | Name             | Width  | Zugriff | Beschreibung                         | 
+| Address        | Name             | Width  | Access  | Description                          | 
 +================+==================+========+=========+======================================+
 | ``0xC0000400`` | DATA             | 32(8)* |   R/W   | GPIO Data I/O                        |
 +----------------+------------------+--------+---------+--------------------------------------+
 | ``0xC0000404`` | EN               | 32(8)* |   R/W   | GPIO Output Enable                   |
 +----------------+------------------+--------+---------+--------------------------------------+
 
+
 ICAP
 ^^^^
-The ICAP peripheral offers a method to encapsule the configuration interface for FPGAs which allow the dynamic partial reconfiguration during operation (e.g. Xilinx Dynamic Function Exchange). Partial bitstreams can be written to the address of the ICAP peripheral by the AIRISC processor to perform a partial reconfiguration of an FPGA. The ICAP module is currently an experimental feature and will probably undergo significant changes in future developments.
+The ICAP peripheral offers a method to encapsule the configuration interface for FPGAs which allow
+the dynamic partial reconfiguration during operation (e.g. Xilinx Dynamic Function Exchange).
+Partial bitstreams can be written to the address of the ICAP peripheral by the AIRISC processor to
+perform a partial reconfiguration of an FPGA. The ICAP module is currently an experimental feature
+and will probably undergo significant changes in future developments.
 
 +----------------+------------------+--------+---------+--------------------------------------+
-| Adresse        | Name             | Width  | Zugriff | Beschreibung                         | 
+| Address        | Name             | Width  | Access  | Description                          | 
 +================+==================+========+=========+======================================+
 | ``0xC0000500`` | CTRL             |   32   |   R/W   | ICAP Status and control              |
 +----------------+------------------+--------+---------+--------------------------------------+
@@ -505,7 +524,7 @@ The ICAP peripheral offers a method to encapsule the configuration interface for
 +----------------+------------------+--------+---------+--------------------------------------+
 
 +-------------------------------+
-| CTRL (Adresse: 0xC0000500)    |
+| CTRL (Address: 0xC0000500)    |
 +==================+============+
 |       31:1       |     0      |
 +------------------+------------+
@@ -518,23 +537,25 @@ If the ``ICAP_LOCK`` bit is set (1), the access to the PCPI interface within the
 This prevents unknown states to occur when reconfiguring a partition connected to the PCPI interface 
 during runtime.
 
+
 SPI
 ^^^
 
 Summary
 '''''''
 
-Acting as a peripheral, the SPI module provides fast serial communication capabilities to the Airi5c processor. After a complete redesign, this Module now supports the following features:
+Acting as a peripheral, the SPI module provides fast serial communication capabilities to the AIRISC
+processor. After a complete redesign, this Module now supports the following features:
 
 *	AHB-Lite interface
-*	Separate registers for control, rx and tx status, all with set/clear access capability
-*	configurable rx/tx FIFO size (1 – 256 frames)
+*	Separate registers for control, RX and TX status, all with set/clear access capability
+*	configurable RX/TX FIFO size (1 – 256 frames)
 *	configurable number of data bits
 *	master and slave support
 *	4 slave select pins
 *	Full asynchronous Slave design
-*	accessible rx and tx FIFO fill levels
-*	configurable and independent watermark settings for rx and tx FIFO fill level with interrupt generation
+*	accessible RX and TX FIFO fill levels
+*	configurable and independent watermark settings for RX and TX FIFO fill level with interrupt generation
 *	error detection
 *	extensive interrupt capabilities
 
@@ -543,46 +564,49 @@ Parameters
 
 These parameters have to be set at synthesis, they cannot be changed at runtime.
 
-+-----------------+-------------+----------------------------------------------------------------------------------------------------------------+
-| Parameter       | Default     | Description                                                                                                    |
-+=================+=============+================================================================================================================+
-| BASE_ADDR       | 0xC0000500  | Base address of the SPI module, the addresses of all registers are increments of 4 beginning at this address   |
-+-----------------+-------------+----------------------------------------------------------------------------------------------------------------+
-| MASTER_ON_RESET | 0           | Defines whether the module acts as a master or slave after reset                                               |
-+-----------------+-------------+----------------------------------------------------------------------------------------------------------------+
-| ADDR_WIDTH      | 2           | Address width of the tx/rx FIFO, defining the max fill level (size=2^width)                                    |
-+-----------------+-------------+----------------------------------------------------------------------------------------------------------------+
-| ADDR_WIDTH      | 8           | Defines the word the word length and accordingly the number of bits in the internal tx/rx shift registers      |
-+-----------------+-------------+----------------------------------------------------------------------------------------------------------------+
++-----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Parameter       | Default     | Description                                                                                                                                                                                 |
++=================+=============+=============================================================================================================================================================================================+
+| BASE_ADDR       | 0xC0000500  | Base address of the SPI module, the addresses of all registers are increments of 4 beginning at this address.                                                                               |
++-----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| RESET_CONF      | 1           | Defines whether the module acts as a master (1) or slave (0) after reset.                                                                                                                   |
++-----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| FIXED_CONF      | 0           | Disables the ability to change the master/slave configuration at runtime and thus allows the unwanted part to be synthesized away. If this bit is 1, the module always uses its RESET_CONF. |
++-----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ADDR_WIDTH      | 2           | Address width of the TX/RX FIFO, defining the max fill level (size=2^width).                                                                                                                |
++-----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| ADDR_WIDTH      | 8           | Defines the word the word length and accordingly the number of bits in the internal TX/RX shift registers.                                                                                  |
++-----------------+-------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Registers
 '''''''''
 
-The SPI module includes the following 10 32-bit data, control and status registers, which can be accessed via AHB-Lite interface. In the current processor design, there are two SPI modules: SPI0 and SPI1. SPI0 is located at base address 0xC0000400 and is hardwired to QSPI in some FPGA boards including NexysVideo. Make sure to use SPI1 at base address 0xC0000500 instead if other purposes are intended. On reset, SPI0 is configured as a master and SPI1 as a slave device.
+The SPI module includes the following 10 32-bit data, control and status registers,
+which can be accessed via AHB-Lite interface.
 
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| Address                                                | Type             | Description                                                                                                                           |
-+========================================================+==================+=======================================================================================================================================+
-| BASE_ADDR + 0x00 (SPI0: 0xC0000400, SPI1: 0xC0000500)  | DATA             | Write access writes to tx FIFO, read access reads from rx FIFO                                                                        |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x04 (SPI0: 0xC0000404, SPI1: 0xC0000504)  | Ctrl reg         | This register contains all communication settings, such as clock divider, polarity phase, slave select and master/slave configuration |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x08 (SPI0: 0xC0000408, SPI1: 0xC0000508)  | Ctrl reg set     | Writing to this register automatically sets the specified bits in ctrl reg                                                            |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x0C (SPI0: 0xC000040C, SPI1: 0xC000050C)  | Ctrl reg clr     | Writing to this register automatically clears the specified bits in ctrl reg                                                          |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x10 (SPI0: 0xC0000410, SPI1: 0xC0000510)  | Tx stat reg      | This register contains the tx status, such as tx FIFO fill level, errors and interrupt enables                                        |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x14 (SPI0: 0xC0000414, SPI1: 0xC0000514)  | Tx stat reg set  | Writing to this register automatically sets the specified bits in tx stat reg                                                         |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x18 (SPI0: 0xC0000418, SPI1: 0xC0000518)  | Tx stat reg clr  | Writing to this register automatically clears the specified bits in tx stat reg                                                       |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x1C (SPI0: 0xC000041C, SPI1: 0xC000051C)  | Rx stat reg      | This register contains the rx status, such as rx FIFO fill level, errors and interrupt enables                                        |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x20 (SPI0: 0xC0000420, SPI1: 0xC0000520)  | Rx stat reg set  | Writing to this register automatically sets the specified bits in rx stat reg                                                         |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
-| BASE_ADDR + 0x24 (SPI0: 0xC0000424, SPI1: 0xC0000524)  | Rx stat reg clr  | Writing to this register automatically clears the specified bits in rx stat reg                                                       |
-+--------------------------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| Address                             | Type             | Description                                                                                                                           |
++=====================================+==================+=======================================================================================================================================+
+| BASE_ADDR + 0x00 (SPI0: 0xC0000400) | DATA             | Write access writes to TX FIFO, read access reads from RX FIFO                                                                        |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x04 (SPI0: 0xC0000404) | Ctrl reg         | This register contains all communication settings, such as clock divider, polarity phase, slave select and master/slave configuration |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x08 (SPI0: 0xC0000408) | Ctrl reg set     | Writing to this register automatically sets the specified bits in ctrl reg                                                            |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x0C (SPI0: 0xC000040C) | Ctrl reg clr     | Writing to this register automatically clears the specified bits in ctrl reg                                                          |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x10 (SPI0: 0xC0000410) | TX stat reg      | This register contains the TX status, such as TX FIFO fill level, errors and interrupt enables                                        |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x14 (SPI0: 0xC0000414) | TX stat reg set  | Writing to this register automatically sets the specified bits in TX stat reg                                                         |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x18 (SPI0: 0xC0000418) | TX stat reg clr  | Writing to this register automatically clears the specified bits in TX stat reg                                                       |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x1C (SPI0: 0xC000041C) | RX stat reg      | This register contains the RX status, such as RX FIFO fill level, errors and interrupt enables                                        |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x20 (SPI0: 0xC0000420) | RX stat reg set  | Writing to this register automatically sets the specified bits in RX stat reg                                                         |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
+| BASE_ADDR + 0x24 (SPI0: 0xC0000424) | RX stat reg clr  | Writing to this register automatically clears the specified bits in RX stat reg                                                       |
++-------------------------------------+------------------+---------------------------------------------------------------------------------------------------------------------------------------+
 
 Control Register
 ''''''''''''''''
@@ -590,15 +614,27 @@ Control Register
 +-------+---------+---------------------------------------------------------------------------------+
 | Bits  | Access  | Description                                                                     |
 +=======+=========+=================================================================================+
-| 31:17 | r       | reserved                                                                        |
+| 31:25 | r       | reserved                                                                        |
++-------+---------+---------------------------------------------------------------------------------+
+| 24    | rw      | Output enable                                                                   |
++-------+---------+---------------------------------------------------------------------------------+
+| 23:22 | r       | reserved                                                                        |
++-------+---------+---------------------------------------------------------------------------------+
+| 21    | r       | FIXED_CONF                                                                      |
++-------+---------+---------------------------------------------------------------------------------+
+| 20    | r       | RESET_CONF                                                                      |
++-------+---------+---------------------------------------------------------------------------------+
+| 19:17 | rw      | reserved                                                                        |
 +-------+---------+---------------------------------------------------------------------------------+
 | 16    | rw      | Defines whether the device is master (1) or slave (0)                           |
 +-------+---------+---------------------------------------------------------------------------------+
-| 15:14 | r       | reserved                                                                        |
+| 15    | r       | reserved                                                                        |
 +-------+---------+---------------------------------------------------------------------------------+
-| 13    | rw      | Defines whether slave select is driven by master (0) or manual slave select (1) |
+| 14    | rw      | slave select pulse mode enable                                                  |
 +-------+---------+---------------------------------------------------------------------------------+
-| 12    | rw      | Manual slave select                                                             |
+| 13    | rw      | Defines whether slave select is driven by hardware (0) or software (1)          |
++-------+---------+---------------------------------------------------------------------------------+
+| 12    | rw      | software slave select (only used if bit 13 is set)                              |
 +-------+---------+---------------------------------------------------------------------------------+
 | 11:10 | r       | reserved                                                                        |
 +-------+---------+---------------------------------------------------------------------------------+
@@ -613,97 +649,174 @@ Control Register
 | 3:0   | rw      | Clock divider (clk_div=2^(x+1))                                                 |
 +-------+---------+---------------------------------------------------------------------------------+
 
-Tx Status Register
+TX Status Register
 ''''''''''''''''''
 
 +-------+---------+----------------------------------------------------+
 | Bits  | Access  | Description                                        |
 +=======+=========+====================================================+
-| 31:28 | r       | reserved                                           |
+| 31    | rw      | tx_ena                                             |
 +-------+---------+----------------------------------------------------+
-| 27    | rw      | Tx ready interrupt enable                          |
+| 30:28 | r       | reserved                                           |
 +-------+---------+----------------------------------------------------+
-| 26    | rw      | Tx overflow error interrupt enable                 |
+| 27    | rw      | TX ready interrupt enable                          |
 +-------+---------+----------------------------------------------------+
-| 25    | rw      | Tx watermark reached interrupt enable              |
+| 26    | rw      | TX overflow error interrupt enable                 |
 +-------+---------+----------------------------------------------------+
-| 24    | rw      | Tx empty interrupt enable                          |
+| 25    | rw      | TX watermark reached interrupt enable              |
++-------+---------+----------------------------------------------------+
+| 24    | rw      | TX empty interrupt enable                          |
 +-------+---------+----------------------------------------------------+
 | 23:21 | r       | reserved                                           |
 +-------+---------+----------------------------------------------------+
-| 20    | rw      | Tx ready                                           |
+| 20    | rw      | TX ready                                           |
 +-------+---------+----------------------------------------------------+
-| 19    | rw      | Tx overflow error (write access when FIFO is full) |
+| 19    | rw      | TX overflow error (write access when FIFO is full) |
 +-------+---------+----------------------------------------------------+
-| 18    | r       | Tx fill level \leq tx watermark                    |
+| 18    | r       | TX fill level \leq TX watermark                    |
 +-------+---------+----------------------------------------------------+
-| 17    | r       | Tx empty                                           |
+| 17    | r       | TX empty                                           |
 +-------+---------+----------------------------------------------------+
-| 16    | r       | Tx full                                            |
+| 16    | r       | TX full                                            |
 +-------+---------+----------------------------------------------------+
-| 15:8  | r       | Tx watermark                                       |
+| 15:8  | r       | TX watermark                                       |
 +-------+---------+----------------------------------------------------+
-| 7:0   | rw      | Tx fill level                                      |
+| 7:0   | rw      | TX fill level                                      |
 +-------+---------+----------------------------------------------------+
 
-Rx Status Register
+RX Status Register
 ''''''''''''''''''
 
 +-------+---------+----------------------------------------------------------+
 | Bits  | Access  | Description                                              |
 +=======+=========+==========================================================+
-| 31    | rw      | Rx ignore                                                |
+| 31    | rw      | RX ignore                                                |
 +-------+---------+----------------------------------------------------------+
 | 30:28 | r       | reserved                                                 |
 +-------+---------+----------------------------------------------------------+
-| 27    | rw      | Rx underflow error interrupt enable                      |
+| 27    | rw      | RX underflow error interrupt enable                      |
 +-------+---------+----------------------------------------------------------+
-| 26    | rw      | Rx overflow error interrupt enable                       |
+| 26    | rw      | RX overflow error interrupt enable                       |
 +-------+---------+----------------------------------------------------------+
-| 25    | rw      | Rx watermark reached interrupt enable                    |
+| 25    | rw      | RX watermark reached interrupt enable                    |
 +-------+---------+----------------------------------------------------------+
-| 24    | rw      | Rx full interrupt enable                                 |
+| 24    | rw      | RX full interrupt enable                                 |
 +-------+---------+----------------------------------------------------------+
 | 23:21 | r       | reserved                                                 |
 +-------+---------+----------------------------------------------------------+
-| 20    | rw      | Rx underflow error (read from empty rx FIFO)             |
+| 20    | rw      | RX underflow error (read from empty RX FIFO)             |
 +-------+---------+----------------------------------------------------------+
-| 19    | rw      | Rx overflow error (received data while rx FIFO was full) |
+| 19    | rw      | RX overflow error (received data while RX FIFO was full) |
 +-------+---------+----------------------------------------------------------+
-| 18    | r       | Rx fill level \geq rx watermark                          |
+| 18    | r       | RX fill level \geq RX watermark                          |
 +-------+---------+----------------------------------------------------------+
-| 17    | r       | Rx empty                                                 |
+| 17    | r       | RX empty                                                 |
 +-------+---------+----------------------------------------------------------+
-| 16    | r       | Rx full                                                  |
+| 16    | r       | RX full                                                  |
 +-------+---------+----------------------------------------------------------+
-| 15:8  | rw      | Rx watermark                                             |
+| 15:8  | rw      | RX watermark                                             |
 +-------+---------+----------------------------------------------------------+
-| 7:0   | r       | Rx fill level                                            |
+| 7:0   | r       | RX fill level                                            |
 +-------+---------+----------------------------------------------------------+
 
-Reserved fields are hardwired to zero, writing to those fields has no effect. Once set, all errors stay set as long as they get reset manually.
+Reserved fields are hardwired to zero, writing to those fields has no effect.
+Once set, all errors stay set as long as they get reset manually.
 
 Interrupts
 ''''''''''
 
-The SPI module supports several interrupts, which are stated in the tx and rx status registers. All interrupts are disabled by default and have to be enabled manually if desired. Besides the individual interrupt signals, there is also a special signal “int_any” available at the port of this module which is set whenever at least one interrupt has occurred. Some interrupt signals are connected to the specific error signals. In this case an interrupt service routine has to reset the specific error flag, otherwise the interrupt will fire again and again.
+The SPI module supports several interrupts, which are stated in the TX and RX status registers.
+All interrupts are disabled by default and have to be enabled manually if desired. Besides the
+individual interrupt signals, there is also a special signal "int_any" available at the port of
+this module which is set whenever at least one interrupt has occurred. Some interrupt signals are
+connected to the specific error signals. In this case an interrupt service routine has to reset
+the specific error flag, otherwise the interrupt will fire again and again.
 
 Functionality
 '''''''''''''
 
-Transmitting data can be achieved writing to the DATA address, which effectively writes to the tx FIFO. As long as the tx FIFO is not full, new data can be written to it immediately in a row. The SPI module then reads the data in the tx FIFO automatically and transmits it via the mosi pin in master or the miso pin in slave mode. Transactions are initiated by the master. Data written to the tx FIFO of the slave device is hold, until data from the master is received, meaning, for each frame sent, one frame is received. If the tx FIFO of the slave is empty, zeros are transmitted instead. Incoming data is automatically written to the rx FIFO, which can be read from by reading from the DATA address. To ignore any incoming data, the rx ignore flag can be set. As long as the rx FIFO is not full, data can be received. As soon as the rx FIFO is full, any incoming data is lost and the rx overflow error is set. Due to the asynchronous slave design, data transmission is always triggered on clock edges of the master clock, allowing high data rates and an idle slave clock. The very first byte sent in slave mode is always 0x00, due to clock domain crossing.
+Transmitting data can be achieved writing to the DATA address, which effectively writes to the TX
+FIFO. As long as the TX FIFO is not full, new data can be written to it immediately in a row. The
+SPI module then reads the data in the TX FIFO automatically and transmits it via the mosi pin in
+master or the miso pin in slave mode. Transactions are initiated by the master. Data written to the
+TX FIFO of the slave device is hold, until data from the master is received, meaning, for each frame
+sent, one frame is received. If the TX FIFO of the slave is empty, zeros are transmitted instead.
+Incoming data is automatically written to the RX FIFO, which can be read from by reading from the
+DATA address. To ignore any incoming data, the RX ignore flag can be set. As long as the RX FIFO
+is not full, data can be received. As soon as the RX FIFO is full, any incoming data is lost and
+the RX overflow error is set. Due to the asynchronous slave design, data transmission is always
+triggered on clock edges of the master clock, allowing high data rates and an idle slave clock.
+The very first byte sent in slave mode is always 0x00, due to clock domain crossing.
+
+The board support package of the AIRI5C contains an extensive API with every function supported
+by the SPI module.
+
+
+TRNG - True-Random Number Generator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The TRNG module provides true-random numbers obtained from a physical entropy source. The TRNG core
+instantiates the `neoTRNG (GitHub) <https://github.com/stnolting/neoTRNG>` module, which implements
+a technology-agnostic physical entropy source based on ring oscillators (combinatorial loops!).
+This module can be synthesized for any (FPGA) target technology. See the neoTRNG GitHub page for more
+information.
+
+Make sure to clone the project recursively as the TRNG core is included as (Git) submodule.
+
+slow entropy source.
++----------------+------------------+--------+---------+--------------------------------------+
+| Address        | Name             | Width  | Access  | Description                          | 
++================+==================+========+=========+======================================+
+| ``0xC0000800`` | TRNG_CTRL        |   32   |   R/W   | Control and data register            |
++----------------+------------------+--------+---------+--------------------------------------+
+
+Control and Data Register Bits
+''''''''''''''''''''''''''''''
+
++-------+--------+---------------------------------------------------------------------------------------------------------+
+| Bits  | Access | Description                                                                                             |
++=======+========+=========================================================================================================+
+| 31    | r/-    | Valid bit, set when random data byte is valid, auto-clears when reading                                 |
++-------+--------+---------------------------------------------------------------------------------------------------------+
+| 30    | r/w    | TRNG enable; clearing this bit will reset the entropy source and will also clear the random pool (FIFO) |
++-------+--------+---------------------------------------------------------------------------------------------------------+
+| 29    | r/w    | Simulation notifier: if this bit is set the AIRISC is being simulated (see note)                        |
++-------+--------+---------------------------------------------------------------------------------------------------------+
+| 28:8  | r/-    | reserved, read as zero                                                                                  |
++-------+--------+---------------------------------------------------------------------------------------------------------+
+| 7:0   | r/-    | Random data byte, valid if bit 31 is set - otherwise the data byte is forced to all-zero                |
++-------+--------+---------------------------------------------------------------------------------------------------------+
+
+The module provides a tranparent data FIFO with 32 entries to gather a "pool" of random data from
+the realtive slow entropy source. This FIFO can be cleared at any time by disabling and re-enabling
+the TRNG using bit 30 of the control register.
+
+The TRNG provides a simulation mode that allows to provide "random" data even in rtl simulation. Note that
+for the simulation mode the ring-osciallator-based entropy cells are automatically removed and replaced by
+a plain "pseudo-random" generator based on a small LFSR (which provides poor random data quality!).
+
+Simulation mode is automatically enabled during HDL source elaboration. Bit 29 of the TRNG control register is
+hardwired to 1 if simulation mode is enabled.
 
 
 JTAG Debug Transport Module (DTM)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The RISC-V External Debug Support Standard defines a transport layer (DTM) between the debug module and the external debugger, which converts any protocol to the internal debug module interface. The only DTM currently supported by the GNU toolchain is a JTAG TAP. This is included in the AIRISC code tree, but is strictly speaking not part of the AIRISC Core Complex, but is typically instantiated at the top level of the FPGA or ASIC design and can here, in addition to communication with the Core Complex, also take over other functions of a JTAG-TAP, e.g. for the scan test.
+The RISC-V External Debug Support Standard defines a transport layer (DTM) between the debug
+module and the external debugger, which converts any protocol to the internal debug module interface.
+The only DTM currently supported by the GNU toolchain is a JTAG TAP. This is included in the AIRISC
+code tree, but is strictly speaking not part of the AIRISC Core Complex, but is typically instantiated
+at the top level of the FPGA or ASIC design and can here, in addition to communication with the Core
+Complex, also take over other functions of a JTAG-TAP, e.g. for the scan test.
 
 System-Bus
 ----------
 
 AHB-Lite
 ^^^^^^^^
-The standard bus for accessing memory and peripheral elements is AHB-Lite. The processor works as the only master in the system. Table 11 lists the typical signals and names their respective functions. For detailed descriptions of the signals, please refer to the `AMBA 3 AHB-Lite Protocol Specification <https://developer.arm.com/documentation/ihi0033/a>`_.
+The standard bus for accessing memory and peripheral elements is AHB-Lite. The processor works as
+the only master in the system. Table 11 lists the typical signals and names their respective functions.
+For detailed descriptions of the signals, please refer to the `AMBA 3 AHB-Lite Protocol
+Specification <https://developer.arm.com/documentation/ihi0033/a>`_.
 
 Tab. 11: Signals within the AIRISC AHB-Lite Interface
 
@@ -748,7 +861,13 @@ Tab. 11: Signals within the AIRISC AHB-Lite Interface
      - Response bit for signaling errors
      - 1
 
-Fig. 3 shows the signal characteristics of the AHB-Lite bus during read and write accesses to a memory. The memory assumed here has a latency of one clock cycle and therefore requires no further waiting cycles for a read access. In the case of a write access, the value to be written is not available until one clock cycle after the address has been applied, which is why the memory requests a wait cycle of one clock cycle (highlighted on the corresponding edges a and b). The processor's read data (hrdata) is not written with a new value until a new transaction occurs. This can be seen at the edges c and d. 
+Fig. 3 shows the signal characteristics of the AHB-Lite bus during read and write accesses to
+a memory. The memory assumed here has a latency of one clock cycle and therefore requires no
+further waiting cycles for a read access. In the case of a write access, the value to be written
+is not available until one clock cycle after the address has been applied, which is why the memory
+requests a wait cycle of one clock cycle (highlighted on the corresponding edges a and b).
+The processor's read data (hrdata) is not written with a new value until a new transaction occurs.
+This can be seen at the edges c and d. 
 
 
 .. figure:: gfx/AHBLite_RW_wavedrom.png
@@ -759,7 +878,11 @@ Fig.3: Signal characteristics at the AHB-Lite bus.
 
 AXI4
 ^^^^
-For the connection of arbitrary memory units to the processor a translation from AHB-Lite to AXI4 can be done with the help of the module ``airi5c_axi_if.v``. For detailed descriptions of the signals, please refer to the `AMBA AXI and ACE Protocol Specification <https://developer.arm.com/documentation/ihi0022/latest>`_. The AXI4 interface is currently an experimental feature and may be subject to significant changes in the future.
+For the connection of arbitrary memory units to the processor a translation from AHB-Lite to AXI4
+can be done with the help of the module ``airi5c_axi_if.v``. For detailed descriptions of the
+signals, please refer to the `AMBA AXI and ACE Protocol Specification
+<https://developer.arm.com/documentation/ihi0022/latest>`_. The AXI4 interface is currently an
+experimental feature and may be subject to significant changes in the future.
 
 
 AIRISC architecture in detail
@@ -781,27 +904,44 @@ Fig. 4 illustrates the various pipeline stages of the processor, which are discu
 
 Instruction Prefetch and Decompression (IF)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The IF stage fetches the next instruction from the memory and handles wait cycles of the memory or those due to pipeline stalls. The purpose of a separate IF stage is to allow the memory a full clock cycle access time. As long as no redirect is reported by the EX stage, the IF stage calculates the next address itself. 
+The IF stage fetches the next instruction from the memory and handles wait cycles of the memory
+or those due to pipeline stalls. The purpose of a separate IF stage is to allow the memory a full
+clock cycle access time. As long as no redirect is reported by the EX stage, the IF stage
+calculates the next address itself. 
 
 Fetch and Decode Unit (DE)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-The DE unit decodes the instructions and generates the control signals for the EX unit or ALU. These are then stored in the DE-EX pipeline registers, so that the EX stage/ALU has a full clock cycle available for the calculation.
+The DE unit decodes the instructions and generates the control signals for the EX unit or ALU.
+These are then stored in the DE-EX pipeline registers, so that the EX stage/ALU has a full clock
+cycle available for the calculation.
 
 Execute Unit (EX)
 ^^^^^^^^^^^^^^^^^
-The EX unit includes the ALU and the generation of synchronous exceptions when interrupts, breakpoints (EBREAK) and system calls (ECALL) occur. It can be extended by additional instructions and accelerators via the PCPI interface.
+The EX unit includes the ALU and the generation of synchronous exceptions when interrupts,
+breakpoints (EBREAK) and system calls (ECALL) occur. It can be extended by additional instructions
+and accelerators via the PCPI interface.
 
 Writeback (WB)
 ^^^^^^^^^^^^^^
-The WB stage writes results to GPR/CSR registers and - in case of load/store instructions - also from/to the data bus. It generates breakpoint exceptions in case of single step execution and counts the completely executed instructions. 
+The WB stage writes results to GPR/CSR registers and - in case of load/store instructions - also
+from/to the data bus. It generates breakpoint exceptions in case of single step execution and
+counts the completely executed instructions. 
 
 Control Unit (CTRL)
 ^^^^^^^^^^^^^^^^^^^
-The CTRL unit is a cross-stage module in which the basic control of the pipeline is performed. The main tasks of the module are the detection and interception of hazards, the stopping of the pipeline in case of arbitrarily long latencies by a connected memory as well as the aborting of instructions in case of exceptions, interrupts or branches. For this purpose, individual kill and stall signals are available for the pipeline stages, with which the pipeline can be stopped or emptied at any point. 
+The CTRL unit is a cross-stage module in which the basic control of the pipeline is performed.
+The main tasks of the module are the detection and interception of hazards, the stopping of the
+pipeline in case of arbitrarily long latencies by a connected memory as well as the aborting of
+instructions in case of exceptions, interrupts or branches. For this purpose, individual kill 
+and stall signals are available for the pipeline stages, with which the pipeline can be stopped
+or emptied at any point. 
 
 PCPI-Interface
 --------------
-The `PCPI-Interface <https://github.com/cliffordwolf/picorv32#pico-co-processor-interface-pcpi>`_ provides a simple interface for extensions of the ALU/EX-Stage. This concerns in particular specialized arithmetic functions. Fig. 5 illustrates an example of the timing for an interaction with a coprocessor. 
+The `PCPI-Interface <https://github.com/cliffordwolf/picorv32#pico-co-processor-interface-pcpi>`_
+provides a simple interface for extensions of the ALU/EX-Stage. This concerns in particular
+specialized arithmetic functions. Fig. 5 illustrates an example of the timing for an interaction
+with a coprocessor. 
 
 .. figure:: gfx/pcpi_waveform.jpg
    :width: 512
@@ -821,13 +961,22 @@ The interface consists of the following signals::
     input         pcpi_wait     // Coprocessor processes instruction
     input         pcpi_ready    // pcpi_rd and pcpi_wr valid
 
-The input signals are shared with other modules, the output signals are linked by a wired-or. Its timing is a possible limit to the number of instruction set extensions. 
+The input signals are shared with other modules, the output signals are linked by a wired-or.
+Its timing is a possible limit to the number of instruction set extensions. 
 
-The ``pcpi_valid`` signal indicates to the instruction set extension that the ``pcpi_insn, pcpi_rs1 and pcpi_rs2`` registers are valid. These are passed to the instruction set extension. This in turn sets the ``pcpi_wait`` signal high, signaling that the instruction is being processed (this must happen on the same clock as the ``pcpi_valid``). If the ``pcpi_wait`` signal is not set to ``HIGH`` after 16 clock cycles, an ``illegal_instruction`` exception is thrown. If the instruction is successfully processed, the ``pcpi_ready`` signal is set to ``HIGH`` and the pipeline can continue. 
+The ``pcpi_valid`` signal indicates to the instruction set extension that the
+``pcpi_insn, pcpi_rs1 and pcpi_rs2`` registers are valid. These are passed to the instruction
+set extension. This in turn sets the ``pcpi_wait`` signal high, signaling that the instruction
+is being processed (this must happen on the same clock as the ``pcpi_valid``). If the
+``pcpi_wait`` signal is not set to ``HIGH`` after 16 clock cycles, an ``illegal_instruction``
+exception is thrown. If the instruction is successfully processed, the ``pcpi_ready`` signal
+is set to ``HIGH`` and the pipeline can continue. 
 
-Instruction set extensions cannot raise exceptions and only general purpose registers can serve as source and destination registers.
+Instruction set extensions cannot raise exceptions and only general purpose registers can
+serve as source and destination registers.
 
-In software, instruction set extensions can be accessed by inline assembly. The following listing represents an example: ::
+In software, instruction set extensions can be accessed by inline assembly. The following
+listing represents an example: ::
 
     __inline__
     uint32_t __rv__bitrev_emu(uint32_t a) {
@@ -843,34 +992,56 @@ In software, instruction set extensions can be accessed by inline assembly. The 
 
 Privilege Mode
 ---------------
-Three privilege modes are supported: Debug mode, machine mode and user mode. The core starts after a reset in machine mode. In the startup-file (crt0.S) the main routine "main" is started by a preload of the EPC register with the target address and a subsequent MRET and at the same time changed into the user mode. 
+Three privilege modes are supported: Debug mode, machine mode and user mode. The core starts after
+a reset in machine mode. In the startup-file (crt0.S) the main routine "main" is started by a
+preload of the EPC register with the target address and a subsequent MRET and at the same time
+changed into the user mode. 
 
-A change into the machine mode is then executed by interrupts and exceptions or explicitly by an ECALL command.
+A change into the machine mode is then executed by interrupts and exceptions or explicitly by an
+ECALL command.
 
-The debug mode is activated after a software breakpoint (EBREAK), after a program step in the single-step mode which is created by the debug module on stop request. In this mode the core is usually in the park loop stored in the debug ROM and waits for commands from the debug module. However, the debug mode can also be specifically activated (but not exited) from the running program by jumping into the debug ROM.
+The debug mode is activated after a software breakpoint (EBREAK), after a program step in the
+single-step mode which is created by the debug module on stop request. In this mode the core is
+usually in the park loop stored in the debug ROM and waits for commands from the debug module.
+However, the debug mode can also be specifically activated (but not exited) from the running
+program by jumping into the debug ROM.
 
 
 Interrupts
 ----------
 
-There are internal interrupts, which are generated in the AIRISC core complex e.g. by the timer or the UART peripheral, as well as external ones, which are set via the EXT_INT lines of the core complex. 
+There are internal interrupts, which are generated in the AIRISC core complex e.g. by the timer
+or the UART peripheral, as well as external ones, which are set via the EXT_INT lines of the core
+complex. 
 
-All interrupts - if they are not masked in the respective privilege level - are recognized in the DX stage and converted into a synchronous exception, which leads to a jump to the MTVEC address with a clock delay in the WB stage. The interrupt type is stored in the MCAUSE register.
+All interrupts - if they are not masked in the respective privilege level - are recognized in the
+DX stage and converted into a synchronous exception, which leads to a jump to the MTVEC address
+with a clock delay in the WB stage. The interrupt type is stored in the MCAUSE register.
 
 
 Exceptions
 ----------
 
-Exceptions occur either as a result of errors (e.g. invalid OpCodes, memory access errors), due to EBREAK/ECALL/ERET instructions or Halt requests by the debug module. 
+Exceptions occur either as a result of errors (e.g. invalid OpCodes, memory access errors), due to
+EBREAK/ECALL/ERET instructions or Halt requests by the debug module. 
 
-The RISC-V specification does not allow arithmetic exceptions. Exceptions due to errors in the ALU therefore *do not* occur. Arithmetic exceptions such as division by zero are instead encoded using error values.
+The RISC-V specification does not allow arithmetic exceptions. Exceptions due to errors in the ALU
+therefore *do not* occur. Arithmetic exceptions such as division by zero are instead encoded using
+error values.
 
-All exceptions are generated in the EX stage, with the exception of the exception after the complete processing of an instruction in single-step mode. This is generated in the WB stage. 
+All exceptions are generated in the EX stage, with the exception of the exception after the
+complete processing of an instruction in single-step mode. This is generated in the WB stage. 
 
 Debug Support
 -------------
 
-The core complex includes a debug module and debug transfer module for communication via JTAG. Register accesses via the debug module are implemented as abstract instructions for both GPR and CSR. They can be performed while the core is running and have priority over concurrent write accesses of the core itself. Memory accesses to the system memory are implemented program buffer-based. The debug module can write to a two-line program buffer (with implicit EBREAK after the second instruction) and execute it with limited privileges. The second line in the program buffer also allows bulk read/write with automatic increment of the target address.
+The core complex includes a debug module and debug transfer module for communication via JTAG.
+Register accesses via the debug module are implemented as abstract instructions for both GPR and
+CSR. They can be performed while the core is running and have priority over concurrent write
+accesses of the core itself. Memory accesses to the system memory are implemented program
+buffer-based. The debug module can write to a two-line program buffer (with implicit EBREAK
+after the second instruction) and execute it with limited privileges. The second line in the
+program buffer also allows bulk read/write with automatic increment of the target address.
 
 
 First steps with the virtual prototype
@@ -885,7 +1056,7 @@ Prerequisite for the commissioning of the virtual prototype
 Commissioning of the virtual prototype
 --------------------------------------
 
-Using openOCD together with Cadence Incisive allows to setup a virtual prototype:
+Using Cadence Incisive and OpenOCD a virtual prototype can be used:
 
 1. start the simulation without a stop condition with ``make sim_vpi``, check if signal probing is disabled in the simIUS/simsetup.tcl file.
 2. in a second terminal start OpenOCD from the tb directory with ``../tools/openocd -f./vpi.cfg"`` (with the -d flag you can output more debugging messages).
@@ -907,14 +1078,18 @@ Prerequisite for bitstream generation and FPGA deployment
 
 Commissioning on the Digilent Nexys Video FPGA Board
 ----------------------------------------------------
-For deployment on the Nexys Video FPGA board there are basically two possibilities. The first (simpler) one runs via the Makefile in the ``fpga`` directory. 
-The second option is to crate the Vivado project manually, import the RTL sources, generate the required IP blocks and run the synthesis, P&R and programming from the Vivado IDE. 
+For deployment on the Nexys Video FPGA board there are basically two possibilities. The first (simpler)
+one runs via the Makefile in the ``fpga`` directory. 
+The second option is to crate the Vivado project manually, import the RTL sources, generate the required
+IP blocks and run the synthesis, P&R and programming from the Vivado IDE. 
 
 Create Vivado project and FPGA Bitstream automatically using the makefile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-To create the Vivado project, generate the bitstream and upload it to the FPGA, first enter the ``fpga`` subdirectory and run
+To create the Vivado project, generate the bitstream and upload it to the FPGA, first enter the
+``fpga`` subdirectory and run
     ``make all-fpga``
-The bitstream is created and the FPGA is loaded with it. There are also other make target defined, which execute partial steps of the workflow.
+The bitstream is created and the FPGA is loaded with it. There are also other make target defined,
+which execute partial steps of the workflow.
 
 
 Create Vivado project manually and generate bitstream
@@ -966,8 +1141,10 @@ Create Vivado project manually and generate bitstream
 Commissioning on the Digilent Arty-A7 FPGA Board
 ------------------------------------------------
 The automatic commissioning on the Digilent Arty-A7 FPGA board runs analog to the Nexys board:
-In the ``fpga`` subdirectory, in ``Makefile`` change the variables ``BOARD`` and ``PROJ_NAME`` to one of the values mentioned in the comments. Afterwards, the deployment can be started by running ``make all-fpga``. 
-Alternatively the Vivado GUI can be used as described above with two modifications: use the constraints file and ``FPGA_Top.v``from the ``src_ArtyA7`` subdirectory.
+In the ``fpga`` subdirectory, in ``Makefile`` change the variables ``BOARD`` and ``PROJ_NAME`` to one
+of the values mentioned in the comments. Afterwards, the deployment can be started by running
+``make all-fpga``. Alternatively the Vivado GUI can be used as described above with two modifications:
+use the constraints file and ``FPGA_Top.v`` from the ``src_ArtyA7`` subdirectory.
 
 
 Software development on the AIRISC
@@ -977,14 +1154,15 @@ Software prerequisite for software development for AIRISC
 ---------------------------------------------------------
 - OpenOCD (ver. 0.10.0+dev-01259) with the suitable configuration file (in /bsp) (for OpenOCD usage in the Eclipse IDE see ``Eclipse``_)
 - GDB (ver. 9.10) (Or GDB integrated into ``Eclipse``_ ver. 2020-12 4.18.0)
-- RISC-V C/C++ compiler toolchain (see ``IDE and install the toolchain``_ )
+- RISC-V C/C++ compiler toolchain (see ``Install IDE and the toolchain``_ )
 - RISC-V build tools
 - Highly recommended: Eclipse IDE 
 
 Other Prerequisite for software development
 -------------------------------------------
 1. FPGA is configured with a suitable bitstream
-2. A JTAG connection is set up using either a virtual USB-to-Serial Port provided by the FPGA board (on NexysVideo and CMOD-A7) or an external JTAG dongle (for Arty-A7 and others, see `Connection of the Olimex JTAG Adapter (Arty-A7 only)`_ ) 
+2. A JTAG connection is set up using either a virtual USB-to-Serial Port provided by the FPGA board
+(on NexysVideo and CMOD-A7) or an external JTAG dongle (for Arty-A7 and others, see `Connection of the Olimex JTAG Adapter (Arty-A7 only)`_ ) 
 
 Components of the software development and debugging setup
 ----------------------------------------------------------
@@ -1006,20 +1184,34 @@ The dashed connection takes place virtually in the software.
 
 Install IDE and the toolchain
 -----------------------------
-The firmware installation / debugging is done using GNU Debugger (GDB), OpenOCD and a USB<->JTAG interface. Normally this is done during software development using the Eclipse MCU IDE, but before that the communication with the debug module should be checked to verify the hardware setup.
+The firmware installation / debugging is done using GNU Debugger (GDB), OpenOCD and a USB<->JTAG interface.
+Normally this is done during software development using the Eclipse MCU IDE, but before that the
+communication with the debug module should be checked to verify the hardware setup.
 
-By default, the Nexys Video Board uses the second channel of the built-in USB<->JTAG converter to access the debug module. I.e. debugging is done over the same cable as programming the FPGA. On the PC side OpenOCD is used to generate JTAG signals. OpenOCD requires a WinUSB compatible driver for the USB-JTAG interface. This must first be installed under Windows using `Zadig <https://zadig.akeo.ie/>`_. 
+By default, the Nexys Video Board uses the second channel of the built-in USB<->JTAG converter to
+access the debug module. I.e. debugging is done over the same cable as programming the FPGA. On the
+PC side OpenOCD is used to generate JTAG signals. OpenOCD requires a WinUSB compatible driver for the
+USB-JTAG interface. This must first be installed under Windows using `Zadig <https://zadig.akeo.ie/>`_. 
 
-We then recommend installing the `Eclipse MCU <https://eclipse-embed-cdt.github.io/plugins/install/>`_ environment, as well as the RISC-V toolchain and Windows Build Tools linked there. (Alternatively, the `RISC-V GNU Toolchain <https://github.com/riscv/riscv-gnu-toolchain>`_ and `OpenOCD <https://github.com/riscv/riscv-openocd>`_ can be installed manually).
+We then recommend installing the `Eclipse MCU <https://eclipse-embed-cdt.github.io/plugins/install/>`_
+environment, as well as the RISC-V toolchain and Windows Build Tools linked there. (Alternatively, the
+`RISC-V GNU Toolchain <https://github.com/riscv/riscv-gnu-toolchain>`_ and `OpenOCD
+<https://github.com/riscv/riscv-openocd>`_ can be installed manually).
 
 Board Support Package (BSP)
 ---------------------------
-The Board Support Package includes the HAL (hardware abstraction layer) for using the peripherals and core features, the AIRISC-specific linker script and start-up code, syscall implementations, configuration scripts for OpenOCD and GDB and simple example program, which can be compiled using the provided Makefile (no IDE required).
+The Board Support Package includes examples of linker scripts, syscall implementations,
+and configuration scripts for OpenOCD, GDB, and other tools.
 
 
 Connection of the Olimex JTAG Adapter (Arty-A7 only)
 ----------------------------------------------------
-The Arty-A7 FPGA board does not have an integrated JTAG interface. Instead the PMOD header ``JA`` serves as such. For this an external USB to JTAG interface is connected. Here the connection of an Olimex ARM-JTAG-TINY-H is demonstrated. Similarly, with an adapted OpenOCD configuration file, another adapter should also work. The layout of the JTAG adapter is shown in Fig. 7. For the Nexys video board, a USB connector serves as the JTAG interface and the subsequent connection at the PMOD header is not necessary. 
+The Arty-A7 FPGA board does not have an integrated JTAG interface. Instead the PMOD header ``JA``
+serves as such. For this an external USB to JTAG interface is connected. Here the connection of
+an Olimex ARM-JTAG-TINY-H is demonstrated. Similarly, with an adapted OpenOCD configuration file,
+another adapter should also work. The layout of the JTAG adapter is shown in Fig. 7. For the Nexys
+video board, a USB connector serves as the JTAG interface and the subsequent connection at the
+PMOD header is not necessary. 
 
 |
 
@@ -1031,7 +1223,8 @@ The Arty-A7 FPGA board does not have an integrated JTAG interface. Instead the P
 |
 
 
-The header PMOD JA on the board has a pinout according to Fig. 8, its first pin is marked with a square. Tab. 13 shows a schematic assignment of the corresponding PMOD pins to the Olimex. 
+The header PMOD JA on the board has a pinout according to Fig. 8, its first pin is marked with a
+square. Tab. 13 shows a schematic assignment of the corresponding PMOD pins to the Olimex. 
 
 
 
@@ -1066,7 +1259,14 @@ Tab. 13: Connection scheme for the Olimex debugger
 
 OpenOCD
 -------
-OpenOCD provides an interface for GDB to communicate with AIRISC. This is configured by ``.cfg`` files. For the Olimex there is one already in the ``/usr/local/share/openocd/scripts/interface/ftdi/`` directory, which is created during installation. There are also configurations for different interfaces. A second configuration file is located in ``/bsp/airi5c.cfg`` and contains specific settings for the AIRISC like its ID. In case of a connection via USB (like with the Nexsy Video) it is sufficient to use only the ``/bsp/airi5c_usb.cfg`` file with the ``-f`` flag. A complete call for the Arty-A7 would be for example: ``airi5c-base-core/bsp$ openocd -f /usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg -f airi5c.cfg``. Analogously for the connection via USB: ``airi5c-base-core/bsp$ openocd -f airi5c_usb.cfg``.
+OpenOCD provides an interface for GDB to communicate with AIRISC. This is configured by ``.cfg``
+files. For the Olimex there is one already in the ``/usr/local/share/openocd/scripts/interface/ftdi/``
+directory, which is created during installation. There are also configurations for different interfaces.
+A second configuration file is located in ``/bsp/airi5c.cfg`` and contains specific settings for the
+AIRISC like its ID. In case of a connection via USB (like with the Nexsy Video) it is sufficient to
+use only the ``/bsp/airi5c_usb.cfg`` file with the ``-f`` flag. A complete call for the Arty-A7 would
+be for example: ``airi5c-base-core/bsp$ openocd -f /usr/local/share/openocd/scripts/interface/ftdi/olimex-arm-usb-tiny-h.cfg -f airi5c.cfg``.
+Analogously for the connection via USB: ``airi5c-base-core/bsp$ openocd -f airi5c_usb.cfg``.
 
 
 Its output is the following:  ::
@@ -1093,33 +1293,46 @@ Critical here is that the RISC-V core is found. This can be seen from the follow
     Info : Examined RISC-V core; found 1 harts
     Info :  hart 0: XLEN=32, misa=0x101124
 
-``airi5c_usb.cfg`` must be located in the directory and can be found in the repository under ``./bsp/airi5c_usb.cfg``. In this configuration file the interface to be used as well as the expected JEDEC IDs of the AIRISC soft core are specified. 
+``airi5c_usb.cfg`` must be located in the directory and can be found in the repository under
+``./bsp/airi5c_usb.cfg``. In this configuration file the interface to be used as well as the
+expected JEDEC IDs of the AIRISC soft core are specified. 
 
-Upon successful communication and FPGA configuration, OpenOCD displays the connection to the AIRISC debug module and waits for a connection using either telnet or GDB.
+Upon successful communication and FPGA configuration, OpenOCD displays the connection to the
+AIRISC debug module and waits for a connection using either telnet or GDB.
 
 Further hints:
 
-- To connect to the AIRISC via OpenOCD, an alternative driver has to be installed for the corresponding USB device. Use the zadig tool and install the WinUSB driver. This applies as well for the connection with or without the Olimex debugging interface. Example: Connection via OpenOCD using bsp/airi5c_usb.cfg, no Olimex debugger. Install the WinUSB driver using zadig on Digilent USB device (Interface 0).
+- To connect to the AIRISC via OpenOCD, an alternative driver has to be installed for the corresponding
+USB device. Use the zadig tool and install the WinUSB driver. This applies as well for the connection
+with or without the Olimex debugging interface. Example: Connection via OpenOCD using bsp/airi5c_usb.cfg,
+no Olimex debugger. Install the WinUSB driver using zadig on Digilent USB device (Interface 0).
 
 GDB
 ---
-The GNU Debugging Bridge is used for debugging software on the AIRISC. The version used is 9.1. This communicates with OpenOCD and can stop the processor at a defined point and e.g. display register contents. This makes finding bugs much easier. To start this powerful tool you should first make sure to start the GDB of the RISC-V toolchain and not the one of the host system architecture. The correct call is therefore as follows: 
+The GNU Debugging Bridge is used for debugging software on the AIRISC. The version used is 9.1. This
+communicates with OpenOCD and can stop the processor at a defined point and e.g. display register
+contents. This makes finding bugs much easier. To start this powerful tool you should first make
+sure to start the GDB of the RISC-V toolchain and not the one of the host system architecture. The
+correct call is therefore as follows: 
 ``:~$ riscv32-unknown-elf-gdb``
 
-After that, the architecture must be specified and a connection to OpenOCD must be established. This is done as follows: ::
+After that, the architecture must be specified and a connection to OpenOCD must be established.
+This is done as follows: ::
 
     set arch riscv:rv32
     target extended-remote localhost:3333
     monitor reset halt
 
-To avoid having to type this manually every time GDB is started, a ``.gdbinit`` file can be created in the home directory. Content of this file are the three lines mentioned above. 
+To avoid having to type this manually every time GDB is started, a ``.gdbinit`` file can be created
+in the home directory. Content of this file are the three lines mentioned above. 
 
 In the OpenOCD console the following entry should appear: ::
 
     Info : accepting 'gdb' connection on tcp/3333
     Info : JTAG tap: airi5c.tap tap/device found: 0x10001001 (mfg: 0x000 (<invalid>), part: 0x0001, ver: 0x1)
 
-In the GDB console the .elf file must be loaded into memory. This is done by ``file test.elf`` and ``load``. After a successful load, the console should show which segments were loaded: ::
+In the GDB console the .elf file must be loaded into memory. This is done by ``file test.elf`` and
+``load``. After a successful load, the console should show which segments were loaded: ::
 
     (gdb) load
     Loading section .init, size 0x1f4 lma 0x80000000
@@ -1161,7 +1374,15 @@ Output characters to the UART console::
 
 Eclipse
 -------
-A good option for developing software is the Eclipse IDE. For this, neither OpenOCD nor GDB has to be operated manually. Eclipse uses these tools in the background and offers a comfortable interface. The connection with the JTAG interface must exist for this (`Connection of the Olimex JTAG Adapter (Arty-A7 only)`_ or via USB ). For the RISC-V the *Eclipse IDE for Embedded C/C++ Developers* should be installed in the current version. At the time of publishing this documentation we use version 2020-12 (4.18.0) Build id: 20201210-1552. Here as an example the project from the ``\sw`` folder should be imported and configured. Software development with Eclipse is not mandatory, it is also possible to work with a Makefile and the RISC-V toolchain manually via the console. However, Eclipse makes the workflow more comfortable. 
+A good option for developing software is the Eclipse IDE. For this, neither OpenOCD nor GDB has to
+be operated manually. Eclipse uses these tools in the background and offers a comfortable interface.
+The connection with the JTAG interface must exist for this (`Connection of the Olimex JTAG Adapter
+(Arty-A7 only)`_ or via USB ). For the RISC-V the *Eclipse IDE for Embedded C/C++ Developers* should
+be installed in the current version. At the time of publishing this documentation we use version
+2020-12 (4.18.0) Build id: 20201210-1552. Here as an example the project from the ``\bsp`` folder
+should be imported and configured. Software development with Eclipse is not mandatory, it is also
+possible to work with a Makefile and the RISC-V toolchain manually via the console. However,
+Eclipse makes the workflow more comfortable. 
 
 |
 
@@ -1175,7 +1396,10 @@ A good option for developing software is the Eclipse IDE. For this, neither Open
 
 Import of the software project into Eclipse
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The software is located in the subfolder ``sw`` and can be loaded into Eclipse using the Eclipse Import Wizard. To do this, select ``Import`` from the ``File`` menu. In the opening wizard ``General`` - ``Existing Projects into Workspace`` is selected and the file location is specified by ``Next``. There the folder is selected and by clicking ``Finish`` the project ends up in the workspace. 
+The software is located in the subfolder ``bsp`` and can be loaded into Eclipse using the Eclipse
+Import Wizard. To do this, select ``Import`` from the ``File`` menu. In the opening wizard
+``General`` - ``Existing Projects into Workspace`` is selected and the file location is specified by
+``Next``. There the folder is selected and by clicking ``Finish`` the project ends up in the workspace. 
 
 |
 
@@ -1198,7 +1422,8 @@ The software is located in the subfolder ``sw`` and can be loaded into Eclipse u
 
 |
 
-Alternatively, the Git repository can be imported instead of the Zip archive. In this case, it must be ensured that the Git project is imported as a general project. (cf. Fig. 12)
+Alternatively, the Git repository can be imported instead of the Zip archive. In this case, it must
+be ensured that the Git project is imported as a general project. (cf. Fig. 12)
 
 |
 
@@ -1212,7 +1437,9 @@ Alternatively, the Git repository can be imported instead of the Zip archive. In
 
 Eclipse configuration
 ^^^^^^^^^^^^^^^^^^^^^
-After the import process, Eclipse should be configured. To do this, first specify the correct toolchain path in the ``Preferences`` menu under ``Windows``. Similarly, the path to OpenOCD must also be specified. 
+After the import process, Eclipse should be configured. To do this, first specify the correct
+toolchain path in the ``Preferences`` menu under ``Windows``. Similarly, the path to OpenOCD
+must also be specified. 
 
 |
 
@@ -1234,7 +1461,9 @@ After the import process, Eclipse should be configured. To do this, first specif
 
 |
 
-Depending on the installed toolchain, its name must be adjusted in Eclipse. This is done in the project settings. A right click on the project name - ``Properties`` opens the corresponding dialog. There you can specify under ``C/C++ Build`` - ``Settings`` - ``Toolchains`` how the prefix is.
+Depending on the installed toolchain, its name must be adjusted in Eclipse. This is done in the
+project settings. A right click on the project name - ``Properties`` opens the corresponding
+dialog. There you can specify under ``C/C++ Build`` - ``Settings`` - ``Toolchains`` how the prefix is.
 
 |
 
@@ -1246,7 +1475,11 @@ Depending on the installed toolchain, its name must be adjusted in Eclipse. This
 
 |
 
-After that a Debug Configuration should be created. This is done by right clicking on the project name - ``Debug As`` - ``Debug Configuration``. There you select GDB OpenOCD Debugging and create a new config by clicking the small icons in the upper left corner. In the new dialog you have to make the changes according to Fig. 17 for a USB Adapter. In case you use the Olimex JTAG Adapter, you have to change the Debug configuration according to Figure 18.
+After that a Debug Configuration should be created. This is done by right clicking on the project
+name - ``Debug As`` - ``Debug Configuration``. There you select GDB OpenOCD Debugging and create
+a new config by clicking the small icons in the upper left corner. In the new dialog you have to
+make the changes according to Fig. 17 for a USB Adapter. In case you use the Olimex JTAG Adapter,
+you have to change the Debug configuration according to Figure 18.
 
 |
 
@@ -1278,7 +1511,11 @@ After that a Debug Configuration should be created. This is done by right clicki
 
 Zadiq
 ^^^^^
-When you work under Windows, an alternative driver has to be installed for the corresponding USB devices to connect to the AIRISC via OpenOCD, Use the zadig tool and install the WinUSB driver. This applies as well for the connection with or without the Olimex debugging interface. Example: Connection via OpenOCD using bsp/airi5c_usb.cfg, no Olimex debugger. Install the WinUSB driver using zadig on Digilent USB device (Interface 0).
+When you work under Windows, an alternative driver has to be installed for the corresponding USB
+devices to connect to the AIRISC via OpenOCD, Use the zadig tool and install the WinUSB driver.
+This applies as well for the connection with or without the Olimex debugging interface. Example:
+Connection via OpenOCD using bsp/airi5c_usb.cfg, no Olimex debugger. Install the WinUSB driver
+using zadig on Digilent USB device (Interface 0).
 https://zadig.akeo.ie/
 
 
@@ -1308,14 +1545,19 @@ Test and validation
 
 Hello World
 -----------
-In the "Hello World" Eclipse project, the basic functionality is demonstrated. The following components of the core are used for this purpose:
+In the "Hello World" Eclipse project, the basic functionality is demonstrated.
+The following components of the core are used for this purpose:
 
 - UART Interface
 - TIMER
 - GPIO
 - Custom Instructions
 
-After a start the program displays a menu on the serial console, there the options are described. On the one hand the state of the GPIOs can be toggled, these are connected to the on-board LEDs on the FPGA. On the other hand a timer can be started, this gives a message on the serial console every second. Additionally a custom instruction can be executed, this demonstrates the possibility to extend the core with the PCPI interface to implement special hardware acceleration. 
+After a start the program displays a menu on the serial console, there the options are described.
+On the one hand the state of the GPIOs can be toggled, these are connected to the on-board LEDs
+on the FPGA. On the other hand a timer can be started, this gives a message on the serial console
+every second. Additionally a custom instruction can be executed, this demonstrates the possibility
+to extend the core with the PCPI interface to implement special hardware acceleration. 
 
 
 Benchmarking
@@ -1323,7 +1565,12 @@ Benchmarking
 
 CoreMark
 ^^^^^^^^
-CoreMark is the de facto standard to compare the performance of processors in the embedded area. The implementation for AIRISC is located in the ``airi5c`` folder in the ``coremark`` directory. To compile this, the riscv-toolchain must have been fully installed, then it is sufficient to run make with a reference to the appropriate port. This is done from the ``coremark`` directory as follows: ``make PORT_DIR=airi5c``. The binary is named ``coremark.elf`` and is located in the same directory. 
+CoreMark is the de facto standard to compare the performance of processors in the embedded area.
+The implementation for AIRISC is located in the ``airi5c`` folder in the ``coremark`` directory.
+To compile this, the riscv-toolchain must have been fully installed, then it is sufficient to run
+make with a reference to the appropriate port. This is done from the ``coremark`` directory as
+follows: ``make PORT_DIR=airi5c``. The binary is named ``coremark.elf`` and is located in the
+same directory. 
 
 The results of the core are listed in the front page's README.md for an FPGA implementation.
 
@@ -1334,9 +1581,14 @@ Reference portings
 FreeRTOS
 ^^^^^^^^
 
-A FreeRTOS demo application is located as an Eclipse project in the subdirectory ``\sw\AIRI5C_FreeRTOS``. This is a port of the official FreeRTOS blinky demo. Two processes are created which communicate with each other. The first process sends a message to the second one, which prints the message over the serial console. In the background a scheduler ensures that both processes get the necessary execution time on the processor. The functionality of the two privilege levels U/M and the system timer is shown. 
+A FreeRTOS demo application is located as an Eclipse project in the subdirectory ``\sw\AIRI5C_FreeRTOS``.
+This is a port of the official FreeRTOS blinky demo. Two processes are created which communicate with
+each other. The first process sends a message to the second one, which prints the message over the
+serial console. In the background a scheduler ensures that both processes get the necessary execution
+time on the processor. The functionality of the two privilege levels U/M and the system timer is shown. 
 
-The output of the serial console can be displayed e.g. with Cutecom or Putty. The baud rate is 76800, the parity even. The following output should appear in the console::
+The output of the serial console can be displayed e.g. with Cutecom or Putty. The baud rate is 76800,
+the parity even. The following output should appear in the console::
 
     Starting...Blink
     Blink
