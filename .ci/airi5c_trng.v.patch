@@ -1,0 +1,21 @@
+--- ../src/modules/airi5c_trng/src/airi5c_trng.v	2023-05-04 13:20:17.598938000 +0200
++++ ../src/modules/airi5c_trng/src/airi5c_trng.dummy.v	2023-05-04 14:08:11.078699000 +0200
+@@ -110,7 +110,7 @@
+ // ----------------------------------------------------------------------
+ //  TRNG Core
+ // ----------------------------------------------------------------------
+-
++/*
+   // the TRNG core (entropy source + post-processing)
+   // https://github.com/stnolting/neoTRNG
+   // uses a "know-good" configuration
+@@ -130,6 +130,9 @@
+     .data_o(trng_data),
+     .valid_o(trng_valid)
+   );
++*/
++assign trng_valid = 1'b1;
++assign trng_data = 8'haa;
+ 
+   // random data buffer (re-use the CPU's instruction prefetch buffer as general purpose FIFO)
+   airi5c_prebuf_fifo
