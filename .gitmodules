@@ -4,9 +4,6 @@
 [submodule "external/elf2hex"]
 	path = external/elf2hex
 	url = https://github.com/sifive/elf2hex.git
-[submodule "external/bin2coe"]
-	path = external/bin2coe
-	url = ../../risc-v/bin2coe.git
 [submodule "external/neoTRNG"]
 	path = external/neoTRNG
 	url = https://github.com/stnolting/neoTRNG.git
