@@ -1,14 +1,20 @@
 //
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
-// --- All rights reserved --- 
+// --- All rights reserved ---
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
+//
+//
+// File             : airisc.h
+// Author           : S. Nolting
+// Last Modified    : 18.01.2023
+// Abstract         : Main AIRISC include file. Include only this file using '#include <airisc.h>'.
 //
 
 /* Main include file */
@@ -16,22 +22,29 @@
 #ifndef AIRISC_H_
 #define AIRISC_H_
 
+/**********************************************************************//**
+ * Standard libraries
+ **************************************************************************/
 #include <stdint.h>
 
+
+/**********************************************************************//**
+ * Core headers
+ **************************************************************************/
 #include "airisc_csr.h"
 #include "airisc_defines.h"
 #include "airisc_spi.h"
 #include "airisc_syscalls.h"
 #include "airisc_timer.h"
+#include "airisc_trng.h"
 #include "airisc_uart.h"
 #include "airisc_spi.h"
 #include "airisc_custom.h"
-
 #include "airisc_simd.h"
 
 
 /**********************************************************************//**
- * Memory-mapped primtives.
+ * Memory-mapped primtives
  **************************************************************************/
 #define MMREG8  (volatile uint8_t*)
 #define MMREG16 (volatile uint16_t*)
@@ -43,16 +56,18 @@
 
 
 /**********************************************************************//**
- * Debug output primitive.
+ * Debug output primitive
  **************************************************************************/
-#define DEBUG_OUT (*(MMRAM32 0x80010000UL)) // write-only, simulation-only
+#define DEBUG_OUT (*(MMREG32 0x80010000UL)) // write-only, simulation-only
 
 
 /**********************************************************************//**
- * Prototypes.
+ * Prototypes
  **************************************************************************/
 void __attribute__((__interrupt__, aligned(4))) __trap_entry(void);
 void interrupt_handler(uint32_t cause, uint32_t epc);
 void exception_handler(uint32_t cause, uint32_t epc, uint32_t tval);
+int  get_num_xirq(void);
+void get_misa_string(char* res);
 
 #endif

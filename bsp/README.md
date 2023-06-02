@@ -6,7 +6,9 @@ an AIRISC executable.
 - [Folder Structure](#Folder-Structure)
 - [How to Use](#How-to-Use)
 - [CPU Boot](#CPU-Boot)
-- [Executable Layout](#Executable-Layout)
+
+:warning: Make sure to have the `bin` folder of your RISC-V GCC toolchain in your
+`PATH` environment variable. Run `make check` to check the toolchain installation.
 
 
 ## Folder Structure
@@ -14,14 +16,14 @@ an AIRISC executable.
 - `.gitignore`: ignore build artifacts (like object files)
 - `common`: linker script, start-up code, main application makefile
 - `debugger`: on-chip-debugger: openOCD configuration scripts, GDB helper scripts
-- `example`: simple example SW project including a Makefile
+- `example`: default example SW project including a Makefile
 - `include`: CPU core and peripheral headers (HAL)
 - `source`: CPU core and peripheral sources (HAL)
 
 
 ## Example Program
 
-The `example` folder provides a simple demo program. Run `make` to see the help menu of the
+The `example` folder provides the default AIRISC demo program. Run `make` to see the help menu of the
 Makefile. This will show all available targets as well as all variables that can be customized.
 
 To generate an ELF file (ready for upload via GDB) run:
@@ -56,14 +58,16 @@ library header, which will automatically include all further AIRISC header files
 ```c
 #include <airisc.h>
 ```
-:warning: You want to call the provided test functions `simd_test_uart();` for SIMD and `ai_acc_test();` for AI_ACC, just add them in the `bsp/example/main.c`!
+:warning: If you want to call the provided test functions for the proprietary
+SIMD and AI accelerators, you can do so by calling the provided test function
+(`simd_test_uart()` and `ai_acc_test()`, respectively) from `bsp/example/main.c`.
 
 ### Using Makefile
 
 Copy and rename the `example` folder and use _that_ for your project. Adjust the default
 project-local `Makefile` to include additional source files and headers.
 
-Show help screen and list makefile variables:
+#### Show help screen and list makefile variables
 
 ```bash
 airi5c-base-core/bsp/example$ make help
@@ -76,7 +80,7 @@ AIRISC Software Application Makefile
 ...
 ```
 
-Check the installed RISC-V GCC toolchain:
+#### Check the installed RISC-V GCC toolchain
 
 ```bash
 airi5c-base-core/bsp/example$ make check
@@ -92,7 +96,7 @@ Target: riscv32-unknown-elf
 ...
 ```
 
-Check the makefile configuration (flags and variables):
+#### Check the makefile configuration (flags and variables)
 
 ```bash
 airi5c-base-core/bsp/example$ make info
@@ -107,7 +111,33 @@ AIRISC home folder (AIRISC_HOME): ../..
 ...
 ```
 
-:bulb: **TIP** You can override the Makefile variables during invokation of _make_. Example: `make EFFORT=-O3 clean_all elf`
+:bulb: **TIP** You can override the Makefile variables during invokation
+of _make_. Example: `make EFFORT=-O3 clean_all elf`
+
+#### Configure the memory layout for a specific implementation
+
+Memory sizes and base addresses
+
+Linker script defines three memory regions (base address and length in size)
+
+| Name | Base address | Size (in bytes) | Description |
+|:-----|:-------------|:----------------|:------------|
+| RAM     | `__airisc_ram_base`   | `__airisc_ram_size`   | general purpose RAM for data and instructions
+| CCRAM   | `__airisc_ccram_base` | `__airisc_ccram_size` | closely-coupled RAM (designated for stack, head, etc.)
+| EXT_MEM | `__airisc_xmem_base`  | `__airisc_xmem_size`  | _optional_ external memory
+
+:warning: It is **not recommened** to change the default values of the linker script
+to keep the code-base clean.
+
+To customize the memory layout for a specifi project you can override the default
+value of the linker script using linker commands in the project-local makefile.
+
+The following example configures the RAM segment for a size of 64kB:
+
+```makefile
+USER_FLAGS="-Wl,--defsym,__airisc_ram_size=64k"
+```
+
 
 ### Using an IDE
 
@@ -123,18 +153,14 @@ preparing the C runtime environment.
 * setup stack pointer and global pointer according to linker script smybols
 * initialize all relevant CSRs 
   * setup trap vector (first-level trap handler defined in `airisc.c`)
-  * disable interrupts globally
+  * disable interrupts sources
   * reset cycle counter `mcycle` and instructions-retired counter `minstret`
 * clear all MTIME timer registers (reset system time)
 * initialize all integer registers to zero (only register 1..15 if `E` ISA extension is enabled)
 * clear `.bss` section (defined by linker script)
 * call applications's `main` function; `argc` = `argv` = 0
 * if `main` function returns:
-  * disable interrupts globally
+  * disable interrupts sources
   * copy `main`'s return value to `mscratch` (for inspection via debugger)
   * (try to) enter sleep mode executing `wfi`
   * stall in an endless loop
-
-## Executable Layout
-
-Coming soon.

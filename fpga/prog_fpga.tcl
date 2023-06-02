@@ -2,11 +2,11 @@
 # Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 # --- All rights reserved --- 
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+# Licensed under the Solderpad Hardware License v 2.1 (the "License");
 # you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 # You may obtain a copy of the License at
 # https://solderpad.org/licenses/SHL-2.1/
-# Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+# Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 #
@@ -27,6 +27,17 @@ if { $argc != 2 } {
 
 open_hw_manager
 connect_hw_server
+
+puts "FPGAs connected to this hw_server\n"
+#foreach cell [get_hw_targets *] {puts " - $cell\n"}
+foreach cell [get_hw_targets *] {
+	puts " - JTAG target:$cell\n"
+	open_hw_target $cell
+     foreach cell [get_hw_devices *] {
+     		puts " -- Device: $cell\n"
+	}
+     close_hw_target 
+ }
 
 
 if {$BOARD == {NexysVideo}} {
@@ -62,7 +73,7 @@ if {$BOARD == {NexysVideo}} {
 #   disconnect_hw_server 
 #   connect_hw_server
 #   open_hw_target [lindex [get_hw_targets] 0]
-   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210328AFE306A}
+   open_hw_target {localhost:3121/xilinx_tcf/Digilent/210328B2504CA}
   set_property PROGRAM.FILE $BITFILE [get_hw_devices xc7a35t_0]
   current_hw_device [get_hw_devices xc7a35t_0]
   refresh_hw_device -update_hw_probes false [lindex [get_hw_devices xc7a35t_0] 0]

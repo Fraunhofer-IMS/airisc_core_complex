@@ -1,14 +1,19 @@
 #
-# Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
-# --- All rights reserved --- 
+# Copyright 2023 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
+# --- All rights reserved ---
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+# Licensed under the Solderpad Hardware License v 2.1 (the "License");
 # you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 # You may obtain a copy of the License at
 # https://solderpad.org/licenses/SHL-2.1/
-# Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+# Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
+#
+# File          : common.mk
+# Author        : S. Nolting
+# Last Modified : 08.03.2023
+# Abstract      : Central AIRISC application makefile.
 #
 
 # -----------------------------------------------------------------------------
@@ -38,6 +43,12 @@ USER_FLAGS ?=
 # Relative or absolute path to the "AIRISC Base Core" home folder
 AIRISC_HOME ?= ../..
 
+# Sections not required for MEM file
+MEM_RM_SECTIONS  = -R .debug_info -R .debug_abbrev -R .debug_loc -R .debug_aranges
+MEM_RM_SECTIONS += -R .debug_ranges -R .debug_line -R .debug_str -R .comment
+MEM_RM_SECTIONS += -R .debug_frame -R .riscv.attributes
+MEM_RM_SECTIONS += -R .symtab -R .strtab -R .shstrtab
+
 
 # -----------------------------------------------------------------------------
 # AIRISC framework
@@ -56,6 +67,9 @@ AIRISC_COM_PATH = $(AIRISC_BSP_PATH)/common
 CRT0_FILE = $(AIRISC_COM_PATH)/crt0.S
 # Linker script
 LD_SCRIPT = $(AIRISC_COM_PATH)/link.ld
+
+# Path to elf2hex executable
+ELF2HEX_BIN = $(AIRISC_HOME)/external/elf2hex/elf2hex
 
 
 # -----------------------------------------------------------------------------
@@ -86,6 +100,7 @@ SIZE    = $(RISCV_PREFIX)size
 
 # GCC flags
 CC_OPTS = -march=$(MARCH) -mabi=$(MABI) $(EFFORT) -Wall -ffunction-sections -fdata-sections -nostartfiles -Wl,--gc-sections -lm -lc -lgcc -lc -g
+CC_OPTS += $(USER_FLAGS)
 
 
 # -----------------------------------------------------------------------------
@@ -98,12 +113,14 @@ CC_OPTS = -march=$(MARCH) -mabi=$(MABI) $(EFFORT) -Wall -ffunction-sections -fda
 APP_ELF = main.elf
 APP_ASM = main.asm
 APP_MEM = main.mem
+APP_BIN = main.bin
 
 # Main targets
 asm: $(APP_ASM)
 elf: $(APP_ELF)
 mem: $(APP_MEM)
-all: $(APP_ASM) $(APP_ELF) $(APP_MEM)
+bin: $(APP_BIN)
+all: $(APP_ASM) $(APP_ELF) $(APP_MEM) $(APP_BIN)
 
 
 # -----------------------------------------------------------------------------
@@ -131,31 +148,32 @@ $(APP_ELF): $(OBJ)
 	@echo "Memory utilization:"
 	@$(SIZE) $(APP_ELF)
 
-# Assembly listing file (for debugging)
+# Assembly listing file
 $(APP_ASM): $(APP_ELF)
-	@$(OBJDUMP) -d -S -z $< > $@
+	@$(OBJDUMP) -D -S -z $< > $@
 
-# Convert to ASCII-HEX memory initialization file (section-by-section version)
+$(APP_BIN): $(APP_ELF)
+	@$(OBJCOPY) -O binary $(APP_ELF) $(APP_BIN)
+
+# Convert to ASCII-HEX memory initialization file using hexdump and xxd
+# This will also remove all irrelevant sections
+# Suitable for Verilog's "readmemh" used by the default AIRISC testbench
+mem_plain: $(APP_ELF)
+	@$(OBJCOPY) -I elf32-little $(APP_ELF) $(MEM_RM_SECTIONS) -O binary mem.bin
+	@hexdump -v -e '1/4 "%08x"' -e '"\n"' mem.bin | xxd -r -p > mem.swapped.bin
+	@xxd -c 4 -ps mem.swapped.bin > $(APP_MEM)
+	@rm -f mem.bin mem.swapped.bin
+
+# Convert to ASCII-HEX memory initialization file using ELF2HEX
+# Suitable for Verilog's "readmemh" used by the default AIRISC testbench
 $(APP_MEM): $(APP_ELF)
-	@echo "Generating BINARY executable. WARNING! This is still experimental!!!"
-	@$(OBJCOPY) -I elf32-little --reverse-bytes=4 $< -j .init   -O binary init.bin
-	@$(OBJCOPY) -I elf32-little --reverse-bytes=4 $< -j .text   -O binary text.bin
-	@$(OBJCOPY) -I elf32-little --reverse-bytes=4 $< -j .rodata -O binary rodata.bin
-	@cat init.bin text.bin rodata.bin > tmp.bin
-	@xxd -c 4 -ps tmp.bin > $@
-	@rm -f init.bin text.bin rodata.bin tmp.bin
-
-## Convert to ASCII-HEX memory initialization file (straight forward version); endianness issue!
-#$(APP_MEM): $(APP_ELF)
-#	@$(OBJCOPY) -I elf32-little $(APP_ELF) -O verilog --verilog-data-width 4 tmp.mem
-#	@sed 's/\r//g' tmp.mem > $(APP_MEM)
-#	@rm -f tmp.mem
+	@$(ELF2HEX_BIN) --bit-width 32 --input main.elf --output $(APP_MEM)
 
 
 # -----------------------------------------------------------------------------
 # Check toolchain
 # -----------------------------------------------------------------------------
-check: 
+check:
 	@echo "---------------- Check: Shell ----------------"
 	@echo ${SHELL}
 	@readlink -f ${SHELL}
@@ -174,7 +192,7 @@ check:
 
 
 # -----------------------------------------------------------------------------
-# Show final ELF details (just for debugging)
+# Show final ELF details
 # -----------------------------------------------------------------------------
 elf_info: $(APP_ELF)
 	@$(OBJDUMP) -x $(APP_ELF)
@@ -242,7 +260,9 @@ help:
 	@echo " info      - Show makefile/toolchain configuration"
 	@echo " elf       - Compile and generate <$(APP_ELF)> ELF file"
 	@echo " asm       - Compile and generate <$(APP_ASM)> assembly listing file"
-	@echo " mem       - Compile and generate <$(APP_MEM)> Verilog memory initialization file"
+	@echo " bin       - Compile and generate <$(APP_MEM)> raw memory image"
+	@echo " mem       - Compile and generate <$(APP_MEM)> Verilog memory initialization file (using ELF2HEX submodule"
+	@echo " mem_plain - Compile and generate <$(APP_MEM)> Verilog memory initialization file (using objcopy, hexdump and xxd)"
 	@echo " all       - Run targets elf + asm + mem"
 	@echo " elf_info  - Show ELF layout information"
 	@echo " clean     - Clean up project home folder"

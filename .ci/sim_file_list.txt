@@ -45,6 +45,8 @@
 
 ../src/modules/airi5c_timer/src/airi5c_timer.v
 
+../src/modules/airi5c_trng/src/airi5c_trng.v
+
 
 ../src/airi5c_alu.v
 ../src/airi5c_branch_prediction.v

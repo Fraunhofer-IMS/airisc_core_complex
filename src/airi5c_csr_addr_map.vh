@@ -2,11 +2,11 @@
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
@@ -453,7 +453,7 @@
 // ======================================================
 // ==           MCAUSE values after trap                =
 // ======================================================
-`define MCAUSE_WIDTH                     4
+`define MCAUSE_WIDTH                     5
 
 //`define MCAUSE_SOFTWARE_INT_U            0 -- now reserved
 `define MCAUSE_SOFTWARE_INT_S            1
@@ -471,6 +471,24 @@
 `define MCAUSE_EXT_INT_M                 11
 
 `define MCAUSE_INT_RESERVED              12
+
+// external fast IRQs (AIRISC-/platform-specific extension) --
+`define MCAUSE_XIRQ0_INT                 16
+`define MCAUSE_XIRQ1_INT                 17
+`define MCAUSE_XIRQ2_INT                 18
+`define MCAUSE_XIRQ3_INT                 19
+`define MCAUSE_XIRQ4_INT                 20
+`define MCAUSE_XIRQ5_INT                 21
+`define MCAUSE_XIRQ6_INT                 22
+`define MCAUSE_XIRQ7_INT                 23
+`define MCAUSE_XIRQ8_INT                 24
+`define MCAUSE_XIRQ9_INT                 25
+`define MCAUSE_XIRQ10_INT                26
+`define MCAUSE_XIRQ11_INT                27
+`define MCAUSE_XIRQ12_INT                28
+`define MCAUSE_XIRQ13_INT                29
+`define MCAUSE_XIRQ14_INT                30
+`define MCAUSE_XIRQ15_INT                31
 
 `define MCAUSE_INST_ADDR_MISALIGNED      0
 `define MCAUSE_INST_ACCESS_FAULT         1

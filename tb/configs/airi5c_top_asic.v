@@ -2,11 +2,11 @@
 // Copyright 2022 FRAUNHOFER INSTITUTE OF MICROELECTRONIC CIRCUITS AND SYSTEMS (IMS), DUISBURG, GERMANY.
 // --- All rights reserved --- 
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”);
+// Licensed under the Solderpad Hardware License v 2.1 (the "License");
 // you may not use this file except in compliance with the License, or, at your option, the Apache License version 2.0.
 // You may obtain a copy of the License at
 // https://solderpad.org/licenses/SHL-2.1/
-// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an “AS IS” BASIS,
+// Unless required by applicable law or agreed to in writing, any work distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and limitations under the License.
 //
@@ -144,6 +144,10 @@ module airi5c_top_asic(
   wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_icap;
   wire                            per_hready_icap;
 
+  wire [`HASTI_BUS_WIDTH-1:0]     per_hrdata_trng;
+  wire [`HASTI_RESP_WIDTH-1:0]    per_hresp_trng;
+  wire                            per_hready_trng;
+
   wire                            nrst = nreset & ndmreset;
   wire                            system_timer_tick;
 
@@ -184,13 +188,13 @@ always@(*) begin
 end
 `endif
 
-// DMEM bus multiplexer
+  // DMEM bus multiplexer
   // ====================
   airi5c_periph_mux #
   (
-    .S_COUNT(6),
-    .S_BASE_ADDR({`MEMORY_BASE_ADDR,`SYSTEM_TIMER_BASE_ADDR,`UART0_BASE_ADDR,`SPI0_BASE_ADDR,`GPIO0_BASE_ADDR,`ICAP_BASE_ADDR}),
-    .S_ADDR_WIDTH({`MEMORY_ADDR_WIDTH,`SYSTEM_TIMER_ADDR_WIDTH,`UART0_ADDR_WIDTH,`SPI0_ADDR_WIDTH,`GPIO0_ADDR_WIDTH,`ICAP_ADDR_WIDTH})
+    .S_COUNT(7),
+    .S_BASE_ADDR({`MEMORY_BASE_ADDR,`SYSTEM_TIMER_BASE_ADDR,`UART0_BASE_ADDR,`SPI0_BASE_ADDR,`GPIO0_BASE_ADDR,`ICAP_BASE_ADDR,`TRNG_BASE_ADDR}),
+    .S_ADDR_WIDTH({`MEMORY_ADDR_WIDTH,`SYSTEM_TIMER_ADDR_WIDTH,`UART0_ADDR_WIDTH,`SPI0_ADDR_WIDTH,`GPIO0_ADDR_WIDTH,`ICAP_ADDR_WIDTH,`TRNG_ADDR_WIDTH})
   )
   peripheral_mux ( 
     .clk_i(clk),
@@ -201,16 +205,19 @@ end
     .m_hresp(muxed_hresp),
     .m_hrdata(muxed_hrdata), 
     
-    .s_hready({dmem_hready,per_hready_system_timer,per_hready_uart0,per_hready_spi0,per_hready_gpio0,per_hready_icap}),
-    .s_hresp({dmem_hresp,per_hresp_system_timer,per_hresp_uart0,per_hresp_spi0,per_hresp_gpio0,per_hresp_icap}),
-    .s_hrdata({dmem_hrdata,per_hrdata_system_timer,per_hrdata_uart0,per_hrdata_spi0,per_hrdata_gpio0,per_hrdata_icap})
+    .s_hready({dmem_hready,per_hready_system_timer,per_hready_uart0,per_hready_spi0,per_hready_gpio0,per_hready_icap,per_hready_trng}),
+    .s_hresp({dmem_hresp,per_hresp_system_timer,per_hresp_uart0,per_hresp_spi0,per_hresp_gpio0,per_hresp_icap,per_hresp_trng}),
+    .s_hrdata({dmem_hrdata,per_hrdata_system_timer,per_hrdata_uart0,per_hrdata_spi0,per_hrdata_gpio0,per_hrdata_icap,per_hrdata_trng})
   );
 
   // Core Complex peripherals
   // ========================
 
-  airi5c_timer #(.BASE_ADDR(`SYSTEM_TIMER_BASE_ADDR)) system_timer
-  (
+  airi5c_timer
+  #(
+    .BASE_ADDR(`SYSTEM_TIMER_BASE_ADDR)
+  )
+  system_timer (
     .nreset(nrst),
     .clk(clk),
 
@@ -229,9 +236,12 @@ end
     .hresp(per_hresp_system_timer)
   );
 
-
-  airi5c_gpio #(.BASE_ADDR(`GPIO0_BASE_ADDR),.WIDTH(8))
-  gpio0(
+  airi5c_gpio
+  #(
+    .BASE_ADDR(`GPIO0_BASE_ADDR),
+    .WIDTH(8)
+  )
+  gpio0 (
     .nreset(nrst),
     .clk(clk),
 
@@ -252,12 +262,13 @@ end
     .hresp(per_hresp_gpio0)
   );
 
-  airi5c_uart #(
+  airi5c_uart
+  #(
     .BASE_ADDR(`UART0_BASE_ADDR),
     .TX_ADDR_WIDTH(5),
     .RX_ADDR_WIDTH(5)
-  ) uart0
-  (
+  )
+  uart0 (
     .n_reset(nrst),
     .clk(clk),
 
@@ -287,16 +298,17 @@ end
     .hresp(per_hresp_uart0)
   );
 
-airi5c_spi
-#(
-  .BASE_ADDR(`SPI0_BASE_ADDR),
-  .MASTER_ON_RESET(1'b1),
-  .ADDR_WIDTH(3),
-  .DATA_WIDTH(8)
-) spi0
-(
-  .n_reset(nrst),
-  .clk(clk),
+  airi5c_spi
+  #(
+    .BASE_ADDR(`SPI0_BASE_ADDR),
+    .RESET_CONF(1'b1),
+    .FIXED_CONF(1'b0),
+    .ADDR_WIDTH(3),
+    .DATA_WIDTH(8)
+  )
+  spi0 (
+    .n_reset(nrst),
+    .clk(clk),
 
   .mosi_out(spi0_mosi_out),
   .mosi_in(spi0_mosi_in),
@@ -314,15 +326,7 @@ airi5c_spi
   .ss_in(spi0_ss_in),
   .ss_oe(spi0_ss_oe),
 
-  .int_any(),
-  .int_tx_empty(),
-  .int_tx_watermark_reached(),
-  .int_tx_overflow_error(),
-  .int_tx_ready(),
-  .int_rx_full(),
-  .int_rx_watermark_reached(),
-  .int_rx_overflow_error(),
-  .int_rx_underflow_error(),  
+  .Int(),  
 
   .haddr(dmem_haddr),
   .hwrite(dmem_hwrite),
@@ -333,9 +337,12 @@ airi5c_spi
   .hresp(per_hresp_spi0)
 );
 
-  airi5c_icap #(.BASE_ADDR(`ICAP_BASE_ADDR),
-        .CLK_FREQ_HZ(`SYS_CLK_HZ))
-    icap1(
+  airi5c_icap
+  #(
+    .BASE_ADDR(`ICAP_BASE_ADDR),
+    .CLK_FREQ_HZ(`SYS_CLK_HZ)
+  )
+  icap1 (
     .n_reset(nrst),
     .clk(clk),
 
@@ -352,6 +359,24 @@ airi5c_spi
     .hrdata(per_hrdata_icap),
     .hready(per_hready_icap),
     .hresp(per_hresp_icap)
+  );
+
+  airi5c_trng
+  #(
+    .BASE_ADDR(`TRNG_BASE_ADDR), 
+    .FIFO_DEPTH(5)
+  )
+  trng (
+    .n_reset(nrst),
+    .clk(clk),
+
+    .haddr(dmem_haddr),
+    .hwrite(dmem_hwrite),
+    .htrans(dmem_htrans),
+    .hwdata(dmem_hwdata),
+    .hrdata(per_hrdata_trng),
+    .hready(per_hready_trng),
+    .hresp(per_hresp_trng)
   );
 
 // core/hart instances

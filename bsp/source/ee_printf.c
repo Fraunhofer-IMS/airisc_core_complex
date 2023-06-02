@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 #include <stdarg.h>
-#include <airisc.h>
+#include "airisc.h"
 
 // ---------- portable.config ----------
 typedef size_t ee_size_t;
@@ -666,7 +666,8 @@ ee_vsprintf(char *buf, const char *fmt, va_list args)
 void
 uart_send_char(char c)
 {
-    fputc(c, stdout);
+    //fputc(c, stdout);
+	uart_writeByte(uart0, c);
 }
 
 int

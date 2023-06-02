@@ -312,3 +312,11 @@ resize_pblock [get_pblocks pblock_custom] -add {SLICE_X84Y50:SLICE_X99Y99}
 set_property SNAPPING_MODE ON [get_pblocks pblock_custom]
 
 set_property CONFIG_MODE SPIx4 [current_design]
+
+
+## combinatorial loops (TRNG) [stnolting]
+set_property IS_ENABLED 0 [get_drc_checks LUTLP-1]
+set_property IS_ENABLED 0 [get_drc_checks {CSCL-1}]
+set_property ALLOW_COMBINATORIAL_LOOPS true [get_nets -of_objects [get_cells [list DUT/airi5c/trn]]]
+set_property SEVERITY {Warning} [get_drc_checks LUTLP-1]
+set_property SEVERITY {Warning} [get_drc_checks NSTD-1]

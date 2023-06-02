@@ -5,7 +5,6 @@
 [![Fraunhofer_IMS](https://img.shields.io/badge/Fraunhofer-IMS-179c7d.svg?longCache=true&style=flat-square&logo=fraunhofergesellschaft&logoColor=179c7d)](https://www.ims.fraunhofer.de/en.html)
 [![GitHub Pages](https://img.shields.io/website.svg?label=Documentation%20@%20GitHub%20Pages&longCache=true&style=flat-square&url=http%3A%2F%2Ffraunhofer-ims.github.io%2Fairisc_core_complex%2Findex.html&logo=GitHub)](https://fraunhofer-ims.github.io/airisc_core_complex/index.html)
 [![airisc-sim_check](https://img.shields.io/github/actions/workflow/status/Fraunhofer-IMS/airisc_core_complex/main.yml?branch=main&longCache=true&style=flat-square&label=airisc-sim&logo=Github%20Actions&logoColor=fff)](https://github.com/Fraunhofer-IMS/airisc_core_complex/actions/workflows/main.yml)
-[![sw_build](https://img.shields.io/github/actions/workflow/status/Fraunhofer-IMS/airisc_core_complex/sw_build.yml?branch=main&longCache=true&style=flat-square&label=SW-Build&logo=Github%20Actions&logoColor=fff)](https://github.com/Fraunhofer-IMS/airisc_core_complex/actions/workflows/sw_build.yml)
 
 The Fraunhofer IMS **AIRISC** is a RISC-V-powered ASIC- and FPGA-proven processor core optimized for embedded AI
 applications. It comes with a set of common peripherals together with a wide variety of optional extensions to build
@@ -25,6 +24,9 @@ a customizable yet powerful system on chip (SoC).
 [![RISC-V](https://raw.githubusercontent.com/Fraunhofer-IMS/airisc_core_complex/main/doc/gfx/riscv_logo_small.png)](https://riscv.org/)
 
 [![MARCHID](https://img.shields.io/badge/RISC--V%20Architecture%20ID-31-000000.svg?longCache=true&style=flat-square&colorA=273274&colorB=fbb517)](https://github.com/riscv/riscv-isa-manual/blob/master/marchid.md)
+
+
+[![AIRISC_CORE_COMPLEX](https://raw.githubusercontent.com/Fraunhofer-IMS/airisc_core_complex/main/doc/gfx/block_diagram.png)](https://raw.githubusercontent.com/Fraunhofer-IMS/airisc_core_complex/main/doc/gfx/block_diagram.png)
 
 The AIRISC Core Complex is based on a 32-bit RISC-V CPU compatible to the
 [RISC-V unprivileged and privileged specifications](https://riscv.org/technical/specifications/) also supporting
