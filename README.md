@@ -220,7 +220,6 @@ airisc_core_complex/.ci$ sh iverilog_sim.sh
 Fraunhofer Institute for Microelectronic Circuits and Systems, Duisburg, Germany
 
 - Homepage: [ims.fraunhofer.de/en.html](https://www.ims.fraunhofer.de/en.html)
-- Project maintainer: [Alexander Utz](mailto:alexander.utz@ims.fraunhofer.de)
 - Contact for questions regarding license and exploitation: [AIRISC-support](mailto:airisc@ims.fraunhofer.de)
 
 
